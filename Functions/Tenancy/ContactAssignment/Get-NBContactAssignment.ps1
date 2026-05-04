@@ -14,11 +14,11 @@ function Get-NBContactAssignment {
     .PARAMETER Id
         The database ID of the contact assignment.
 
-    .PARAMETER Content_Type_Id
-        Filter by content type database ID.
+    .PARAMETER Object_Type_Id
+        Filter by object type database ID.
 
-    .PARAMETER Content_Type
-        Filter by content type name (e.g., 'dcim.device', 'dcim.site').
+    .PARAMETER Object_Type
+        Filter by object type name (e.g., 'dcim.device', 'dcim.site').
 
     .PARAMETER Object_Id
         Filter by the assigned object's database ID.
@@ -88,10 +88,10 @@ function Get-NBContactAssignment {
         [uint64[]]$Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Content_Type_Id,
+        [uint64]$Object_Type_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Content_Type,
+        [string]$Object_Type,
 
         [Parameter(ParameterSetName = 'Query')]
         [uint64]$Object_Id,

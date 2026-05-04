@@ -7,8 +7,8 @@ function New-NBContactAssignment {
     .DESCRIPTION
         Creates a new contact role assignment in Netbox
 
-    .PARAMETER Content_Type
-        The content type for this assignment.
+    .PARAMETER Object_Type
+        The type of the object for this assignment.
 
     .PARAMETER Object_Id
         ID of the object to assign.
@@ -26,10 +26,10 @@ function New-NBContactAssignment {
         Return the unparsed data from the HTTP request
 
     .EXAMPLE
-        PS C:\> New-NBContactAssignment -Content_Type 'dcim.location' -Object_id 10 -Contact 15 -Role 10 -Priority 'Primary'
+        PS C:\> New-NBContactAssignment -Object_Type 'dcim.location' -Object_Id 10 -Contact 15 -Role 10 -Priority 'Primary'
 
     .NOTES
-        Valid content types: https://docs.netbox.dev/en/stable/features/contacts/#contacts_1
+        Valid object types: https://docs.netbox.dev/en/stable/features/contacts/#contacts_1
 #>
 
     [CmdletBinding(ConfirmImpact = 'Low',
@@ -40,7 +40,8 @@ function New-NBContactAssignment {
         [Parameter(Mandatory = $true,
                    ValueFromPipelineByPropertyName = $true)]
         [ValidateSet('circuits.circuit', 'circuits.provider', 'circuits.provideraccount', 'dcim.device', 'dcim.location', 'dcim.manufacturer', 'dcim.powerpanel', 'dcim.rack', 'dcim.region', 'dcim.site', 'dcim.sitegroup', 'tenancy.tenant', 'virtualization.cluster', 'virtualization.clustergroup', 'virtualization.virtualmachine', IgnoreCase = $true)]
-        [string]$Content_Type,
+        [Alias('Content_Type')]
+        [string]$Object_Type,
 
         [Parameter(Mandatory = $true)]
         [uint64]$Object_Id,
@@ -68,7 +69,7 @@ function New-NBContactAssignment {
 
         $URI = BuildNewURI -Segments $URIComponents.Segments
 
-        if ($PSCmdlet.ShouldProcess($Content_Type, 'Create new contact assignment')) {
+        if ($PSCmdlet.ShouldProcess($Object_Type, 'Create new contact assignment')) {
             InvokeNetboxRequest -URI $URI -Method POST -Body $URIComponents.Parameters -Raw:$Raw
         }
     }
