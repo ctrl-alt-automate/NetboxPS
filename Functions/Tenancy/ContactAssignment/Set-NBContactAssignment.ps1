@@ -8,8 +8,11 @@ function Set-NBContactAssignment {
     .DESCRIPTION
         Updates a contact role assignment in Netbox
 
-    .PARAMETER Content_Type
-        The content type for this assignment.
+    .PARAMETER Id
+        The database ID of the contact assignment to update.
+
+    .PARAMETER Object_Type
+        The object type for this assignment.
 
     .PARAMETER Object_Id
         ID of the object to assign.
@@ -27,10 +30,10 @@ function Set-NBContactAssignment {
         Return the unparsed data from the HTTP request
 
     .EXAMPLE
-        PS C:\> Set-NBContactAssignment -Id 11 -Content_Type 'dcim.location' -Object_id 10 -Contact 15 -Role 10 -Priority 'Primary'
+        PS C:\> Set-NBContactAssignment -Id 11 -Object_Type 'dcim.location' -Object_id 10 -Contact 15 -Role 10 -Priority 'Primary'
 
     .NOTES
-        Valid content types: https://docs.netbox.dev/en/stable/features/contacts/#contacts_1
+        Valid object types: https://docs.netbox.dev/en/stable/features/contacts/#contacts_1
 #>
 
     [CmdletBinding(ConfirmImpact = 'Medium',
@@ -44,7 +47,7 @@ function Set-NBContactAssignment {
 
         [Parameter(ValueFromPipelineByPropertyName = $true)]
         [ValidateSet('circuits.circuit', 'circuits.provider', 'circuits.provideraccount', 'dcim.device', 'dcim.location', 'dcim.manufacturer', 'dcim.powerpanel', 'dcim.rack', 'dcim.region', 'dcim.site', 'dcim.sitegroup', 'tenancy.tenant', 'virtualization.cluster', 'virtualization.clustergroup', 'virtualization.virtualmachine', IgnoreCase = $true)]
-        [string]$Content_Type,
+        [string]$Object_Type,
 
         [uint64]$Object_Id,
 
