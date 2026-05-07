@@ -385,7 +385,7 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
     Context "WhatIf Support" {
         $whatIfTestCases = @(
             @{ Command = 'New-NBContact'; Parameters = @{ Name = 'whatif-test' } }
-            @{ Command = 'New-NBContactAssignment'; Parameters = @{ Content_Type = 'dcim.device'; Object_Id = 1; Contact = 1; Role = 1 } }
+            @{ Command = 'New-NBContactAssignment'; Parameters = @{ Object_Type = 'dcim.device'; Object_Id = 1; Contact = 1; Role = 1 } }
             @{ Command = 'New-NBContactRole'; Parameters = @{ Name = 'whatif-test'; Slug = 'whatif-test' } }
             @{ Command = 'New-NBTenant'; Parameters = @{ Name = 'whatif-test'; Slug = 'whatif-test' } }
             @{ Command = 'New-NBTenantGroup'; Parameters = @{ Name = 'whatif-test' } }

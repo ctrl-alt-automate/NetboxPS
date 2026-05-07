@@ -1336,7 +1336,7 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             $splat = @{
                 Id       = $script:TestContactAssignmentId
                 Priority = 'secondary'
-                Content_Type = 'dcim.site'
+                Object_Type = 'dcim.site'
             }
             $assignment = Set-NBContactAssignment @splat
 
