@@ -46,6 +46,7 @@ function Set-NBContactAssignment {
         [uint64]$Id,
 
         [Parameter(ValueFromPipelineByPropertyName = $true)]
+        [Alias('Content_Type')]
         [ValidateSet('circuits.circuit', 'circuits.provider', 'circuits.provideraccount', 'dcim.device', 'dcim.location', 'dcim.manufacturer', 'dcim.powerpanel', 'dcim.rack', 'dcim.region', 'dcim.site', 'dcim.sitegroup', 'tenancy.tenant', 'virtualization.cluster', 'virtualization.clustergroup', 'virtualization.virtualmachine', IgnoreCase = $true)]
         [string]$Object_Type,
 

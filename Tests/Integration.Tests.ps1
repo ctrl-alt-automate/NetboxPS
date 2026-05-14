@@ -435,6 +435,11 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         # Cleanup in reverse dependency order (most dependent first)
 
         # Level 1: Most dependent resources
+        # ContactAssignments first — NetBox cascades them when their target (Device/VM/Site/…) is removed,
+        # so deleting the target before the assignment causes the explicit cleanup to 404.
+        foreach ($id in $script:CreatedResources.ContactAssignments) {
+            Remove-TestResource -ResourceType 'ContactAssignment' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBContactAssignment -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
+        }
         foreach ($id in $script:CreatedResources.Devices) {
             Remove-TestResource -ResourceType 'Device' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBDCIMDevice -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
         }
@@ -443,9 +448,6 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
         foreach ($id in $script:CreatedResources.Interfaces) {
             Remove-TestResource -ResourceType 'Interface' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBDCIMInterface -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
-        }
-        foreach ($id in $script:CreatedResources.ContactAssignments) {
-            Remove-TestResource -ResourceType 'ContactAssignment' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBContactAssignment -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
         }
 
         # Level 2: Mid-level resources
