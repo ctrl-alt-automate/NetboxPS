@@ -27,9 +27,9 @@ on:
   workflow_dispatch:
     inputs:
       netbox_version:
-        description: 'Netbox Docker image tag (e.g., v4.5.8-4.0.2)'
+        description: 'Netbox Docker image tag (e.g., v4.6.0-5.0.1)'
         required: false
-        default: 'v4.5.8-4.0.2'
+        default: 'v4.6.0-5.0.1'
         type: string
   # Run weekly to catch upstream Netbox changes
   schedule:
@@ -74,10 +74,17 @@ jobs:
             experimental: false
 
           # ----------------------------------------------------------
-          # Latest version - Netbox 4.5.8 (netbox-docker 4.0.2)
+          # Stable 4.5.x - Netbox 4.5.10 (final 4.5.x, netbox-docker 4.0.2)
           # ----------------------------------------------------------
-          - netbox: "v4.5.8-4.0.2"
-            netbox_short: "4.5.8"
+          - netbox: "v4.5.10-4.0.2"
+            netbox_short: "4.5.10"
+            experimental: false
+
+          # ----------------------------------------------------------
+          # Latest version - Netbox 4.6.0 (primary target, netbox-docker 5.0.1)
+          # ----------------------------------------------------------
+          - netbox: "v4.6.0-5.0.1"
+            netbox_short: "4.6.0"
             experimental: false
 
     env:

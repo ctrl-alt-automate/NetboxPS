@@ -32,14 +32,14 @@ on:
   workflow_dispatch:
     inputs:
       netbox_version:
-        description: 'Netbox Docker image tag (e.g., v4.5.0-3.4.2)'
+        description: 'Netbox Docker image tag (e.g., v4.6.0-5.0.1)'
         required: false
-        default: 'v4.5.8-4.0.2'
+        default: 'v4.6.0-5.0.1'
         type: string
       branching_version:
-        description: 'Branching plugin version (e.g., 0.8.0)'
+        description: 'Branching plugin version (e.g., 1.0.3)'
         required: false
-        default: '0.8.0'
+        default: '1.0.3'
         type: string
 
 env:
@@ -57,10 +57,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Netbox 4.5.x with branching 0.8.0 (netbox-docker 4.0.2)
-          - netbox: "v4.5.8-4.0.2"
-            netbox_short: "4.5.8"
-            branching: "0.8.0"
+          # Netbox 4.5.x with branching 1.0.3 (final 4.5.x, netbox-docker 4.0.2)
+          - netbox: "v4.5.10-4.0.2"
+            netbox_short: "4.5.10"
+            branching: "1.0.3"
+
+          # Netbox 4.6.x with branching 1.0.3 (primary target, netbox-docker 5.0.1)
+          - netbox: "v4.6.0-5.0.1"
+            netbox_short: "4.6.0"
+            branching: "1.0.3"
 
     env:
       NETBOX_VERSION: ${{ github.event.inputs.netbox_version || matrix.netbox }}
