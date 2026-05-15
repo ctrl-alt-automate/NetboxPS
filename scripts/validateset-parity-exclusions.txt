@@ -63,3 +63,6 @@ DCIM/Interfaces/Set-NBDCIMInterface.ps1::Duplex
 DCIM/Interfaces/Set-NBDCIMInterface.ps1::POE_Mode
 DCIM/Interfaces/Set-NBDCIMInterface.ps1::POE_Type
 DCIM/Interfaces/Set-NBDCIMInterface.ps1::RF_Role
+# NetBox 4.6 Rack airflow/form_factor (#395 Phase 1) — same '' sentinel pattern.
+DCIM/Racks/Set-NBDCIMRack.ps1::Airflow
+DCIM/Racks/Set-NBDCIMRack.ps1::Form_Factor

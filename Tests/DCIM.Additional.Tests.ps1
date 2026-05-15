@@ -1128,6 +1128,11 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
             $Result.Method | Should -Be 'POST'
             $Result.Uri | Should -Be 'https://netbox.domain.com/api/dcim/module-bays/'
         }
+
+        It "Should send enabled (NetBox 4.6+, #395 Phase 1)" {
+            $Result = New-NBDCIMModuleBay -Device 1 -Name 'ModBay1' -Enabled $false
+            ($Result.Body | ConvertFrom-Json).enabled | Should -Be $false
+        }
     }
 
     Context "Set-NBDCIMModuleBay" {
@@ -1141,6 +1146,11 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
             $Result = Set-NBDCIMModuleBay -Id 1 -Description 'Updated' -Confirm:$false
             $Result.Method | Should -Be 'PATCH'
             $Result.Uri | Should -Match '/api/dcim/module-bays/1/'
+        }
+
+        It "Should set enabled (NetBox 4.6+, #395 Phase 1)" {
+            $Result = Set-NBDCIMModuleBay -Id 1 -Enabled $false -Confirm:$false
+            ($Result.Body | ConvertFrom-Json).enabled | Should -Be $false
         }
     }
 
@@ -1893,6 +1903,60 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
             param($Command)
             $Result = [pscustomobject]@{ 'Id' = 10 } | & $Command
             $Result.Uri | Should -Match '/10/'
+        }
+    }
+    #endregion
+
+    #region RackGroups (NetBox 4.6+, #395 Phase 2)
+    Context "Get-NBDCIMRackGroup" {
+        It "Should request the list endpoint" {
+            $Result = Get-NBDCIMRackGroup
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/dcim/rack-groups/'
+        }
+        It "Should request a rack group by ID" {
+            $Result = Get-NBDCIMRackGroup -Id 5
+            $Result.Uri | Should -Match '/api/dcim/rack-groups/5/'
+        }
+        It "Should filter by name" {
+            $Result = Get-NBDCIMRackGroup -Name 'Row A'
+            $Result.Uri | Should -Match 'name=Row(\+|%20)A'
+        }
+    }
+
+    Context "New-NBDCIMRackGroup" {
+        It "Should create a rack group and auto-generate the slug" {
+            $Result = New-NBDCIMRackGroup -Name 'Row A'
+            $Result.Method | Should -Be 'POST'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/dcim/rack-groups/'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.name | Should -Be 'Row A'
+            $bodyObj.slug | Should -Be 'row-a'
+        }
+        It "Should honour an explicit slug" {
+            $Result = New-NBDCIMRackGroup -Name 'Row B' -Slug 'custom-b'
+            ($Result.Body | ConvertFrom-Json).slug | Should -Be 'custom-b'
+        }
+    }
+
+    Context "Set-NBDCIMRackGroup" {
+        It "Should update a rack group" {
+            $Result = Set-NBDCIMRackGroup -Id 1 -Description 'Updated' -Confirm:$false
+            $Result.Method | Should -Be 'PATCH'
+            $Result.Uri | Should -Match '/api/dcim/rack-groups/1/'
+            ($Result.Body | ConvertFrom-Json).description | Should -Be 'Updated'
+        }
+    }
+
+    Context "Remove-NBDCIMRackGroup" {
+        It "Should delete a rack group" {
+            $Result = Remove-NBDCIMRackGroup -Id 1 -Confirm:$false
+            $Result.Method | Should -Be 'DELETE'
+            $Result.Uri | Should -Match '/api/dcim/rack-groups/1/'
+        }
+        It "Should accept pipeline input by property name" {
+            $Result = [pscustomobject]@{ Id = 9 } | Remove-NBDCIMRackGroup -Confirm:$false
+            $Result.Uri | Should -Match '/api/dcim/rack-groups/9/'
         }
     }
     #endregion

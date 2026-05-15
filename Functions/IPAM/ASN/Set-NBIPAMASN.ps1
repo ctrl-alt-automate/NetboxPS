@@ -18,6 +18,9 @@ function Set-NBIPAMASN {
     .PARAMETER Tenant
         The tenant ID
 
+    .PARAMETER Role
+        The role ID assigned to this ASN (NetBox 4.6+). Pass $null to clear.
+
     .PARAMETER Description
         A description of the ASN
 
@@ -52,6 +55,8 @@ function Set-NBIPAMASN {
         [uint64]$RIR,
 
         [uint64]$Tenant,
+
+        [Nullable[uint64]]$Role,
 
         [string]$Description,
 

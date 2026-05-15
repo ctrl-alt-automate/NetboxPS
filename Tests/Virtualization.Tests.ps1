@@ -300,6 +300,18 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $bodyObj.cluster | Should -Be 1
         }
 
+        It "Should create a device-attached VM without a cluster (NetBox 4.6+, #12024)" {
+            $Result = New-NBVirtualMachine -Name 'edge-vm' -Device 7
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.device | Should -Be 7
+            $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'cluster'
+        }
+
+        It "Should send virtual_machine_type (NetBox 4.6+, #5795)" {
+            $Result = New-NBVirtualMachine -Name 'typed-vm' -Cluster 1 -Virtual_Machine_Type 4
+            ($Result.Body | ConvertFrom-Json).virtual_machine_type | Should -Be 4
+        }
+
         It "Should create a VM with CPUs, Memory, Disk, tenancy, and comments" {
             $Result = New-NBVirtualMachine -Name 'testvm' -Cluster 1 -Status Active -vCPUs 4 -Memory 4096 -Tenant 11 -Disk 50 -Comments "these are comments"
             $Result.Method | Should -Be 'POST'
@@ -386,6 +398,20 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $Result.Method | Should -Be 'PATCH'
             $Result.URI | Should -Be 'https://netbox.domain.com/api/virtualization/virtual-machines/1234/'
             $Result.Body | Should -Be '{"name":"newtestname"}'
+        }
+
+        It "Should set device + virtual_machine_type (NetBox 4.6+)" {
+            $Result = Set-NBVirtualMachine -Id 1234 -Device 7 -Virtual_Machine_Type 4 -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.device | Should -Be 7
+            $bodyObj.virtual_machine_type | Should -Be 4
+        }
+
+        It "Should clear device with `$null (NetBox 4.6+)" {
+            $Result = Set-NBVirtualMachine -Id 1234 -Device $null -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.PSObject.Properties.Name | Should -Contain 'device'
+            $bodyObj.device | Should -BeNullOrEmpty
         }
 
         It "Should set a VM with a new name, cluster, platform, and status" {
@@ -797,6 +823,56 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             param($Command)
             $Result = [pscustomobject]@{ 'Id' = 10 } | & $Command
             $Result.Uri | Should -Match '/10/'
+        }
+    }
+    #endregion
+
+    #region VirtualMachineType (NetBox 4.6+, #395 Phase 2)
+    Context "Get-NBVirtualMachineType" {
+        It "Should request the list endpoint" {
+            $Result = Get-NBVirtualMachineType
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/virtualization/virtual-machine-types/'
+        }
+        It "Should request a VM type by ID" {
+            $Result = Get-NBVirtualMachineType -Id 3
+            $Result.Uri | Should -Match '/api/virtualization/virtual-machine-types/3/'
+        }
+    }
+
+    Context "New-NBVirtualMachineType" {
+        It "Should create a VM type and auto-generate the slug" {
+            $Result = New-NBVirtualMachineType -Name 't3 medium' -Default_vCPUs 2 -Default_Memory 4096
+            $Result.Method | Should -Be 'POST'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/virtualization/virtual-machine-types/'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.name | Should -Be 't3 medium'
+            $bodyObj.slug | Should -Be 't3-medium'
+            $bodyObj.default_vcpus | Should -Be 2
+            $bodyObj.default_memory | Should -Be 4096
+        }
+    }
+
+    Context "Set-NBVirtualMachineType" {
+        It "Should update a VM type" {
+            $Result = Set-NBVirtualMachineType -Id 1 -Default_Memory 8192 -Confirm:$false
+            $Result.Method | Should -Be 'PATCH'
+            $Result.Uri | Should -Match '/api/virtualization/virtual-machine-types/1/'
+            ($Result.Body | ConvertFrom-Json).default_memory | Should -Be 8192
+        }
+        It "Should clear default_platform with `$null" {
+            $Result = Set-NBVirtualMachineType -Id 1 -Default_Platform $null -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.PSObject.Properties.Name | Should -Contain 'default_platform'
+            $bodyObj.default_platform | Should -BeNullOrEmpty
+        }
+    }
+
+    Context "Remove-NBVirtualMachineType" {
+        It "Should delete a VM type" {
+            $Result = Remove-NBVirtualMachineType -Id 1 -Confirm:$false
+            $Result.Method | Should -Be 'DELETE'
+            $Result.Uri | Should -Match '/api/virtualization/virtual-machine-types/1/'
         }
     }
     #endregion
