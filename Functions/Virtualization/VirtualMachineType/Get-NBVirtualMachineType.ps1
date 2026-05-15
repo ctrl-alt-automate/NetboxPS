@@ -16,6 +16,9 @@
 .PARAMETER Slug
     Filter by slug.
 
+.PARAMETER Query
+    Free-text search filter (NetBox ?q= parameter).
+
 .PARAMETER Brief
     Return the brief representation.
 

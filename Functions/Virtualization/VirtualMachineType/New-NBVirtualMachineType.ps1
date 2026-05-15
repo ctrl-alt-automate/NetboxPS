@@ -60,7 +60,7 @@ function New-NBVirtualMachineType {
 
         [string]$Slug,
 
-        [uint16]$Default_vCPUs,
+        [decimal]$Default_vCPUs,
 
         [uint64]$Default_Memory,
 
