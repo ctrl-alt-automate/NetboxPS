@@ -800,4 +800,55 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
         }
     }
     #endregion
+
+    #region VirtualDisk (#413, NetBox 4.0+, #395 Phase 2)
+    Context "Get-NBVirtualDisk" {
+        It "Should request the list endpoint" {
+            $Result = Get-NBVirtualDisk
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/virtualization/virtual-disks/'
+        }
+        It "Should request a virtual disk by ID" {
+            $Result = Get-NBVirtualDisk -Id 8
+            $Result.Uri | Should -Match '/api/virtualization/virtual-disks/8/'
+        }
+        It "Should filter by virtual_machine_id" {
+            $Result = Get-NBVirtualDisk -Virtual_Machine_Id 42
+            $Result.Uri | Should -Match 'virtual_machine_id=42'
+        }
+    }
+
+    Context "New-NBVirtualDisk" {
+        It "Should create a virtual disk" {
+            $Result = New-NBVirtualDisk -Name 'disk0' -Virtual_Machine 42 -Size 100
+            $Result.Method | Should -Be 'POST'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/virtualization/virtual-disks/'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.name | Should -Be 'disk0'
+            $bodyObj.virtual_machine | Should -Be 42
+            $bodyObj.size | Should -Be 100
+        }
+        It "Should require Name, Virtual_Machine and Size" {
+            (Get-Command New-NBVirtualDisk).Parameters['Virtual_Machine'].Attributes.Mandatory | Should -Contain $true
+            (Get-Command New-NBVirtualDisk).Parameters['Size'].Attributes.Mandatory | Should -Contain $true
+        }
+    }
+
+    Context "Set-NBVirtualDisk" {
+        It "Should update a virtual disk" {
+            $Result = Set-NBVirtualDisk -Id 1 -Size 200 -Confirm:$false
+            $Result.Method | Should -Be 'PATCH'
+            $Result.Uri | Should -Match '/api/virtualization/virtual-disks/1/'
+            ($Result.Body | ConvertFrom-Json).size | Should -Be 200
+        }
+    }
+
+    Context "Remove-NBVirtualDisk" {
+        It "Should delete a virtual disk" {
+            $Result = Remove-NBVirtualDisk -Id 1 -Confirm:$false
+            $Result.Method | Should -Be 'DELETE'
+            $Result.Uri | Should -Match '/api/virtualization/virtual-disks/1/'
+        }
+    }
+    #endregion
 }
