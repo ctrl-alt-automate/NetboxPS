@@ -2,7 +2,7 @@ name: Build and deploy docs
 
 on:
   push:
-    branches: [dev, main, docs/mkdocs-site]
+    branches: [dev, main]
     paths:
       - 'Functions/**/*.ps1'
       - 'docs/**'
@@ -104,7 +104,7 @@ jobs:
           path: docs-build/site
 
   deploy:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/docs/mkdocs-site')
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     needs: build
     runs-on: ubuntu-latest
     environment:
