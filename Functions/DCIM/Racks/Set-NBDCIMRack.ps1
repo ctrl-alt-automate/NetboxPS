@@ -36,6 +36,14 @@ function Set-NBDCIMRack {
     .PARAMETER Rack_Type
         The rack type ID
 
+    .PARAMETER Airflow
+        The rack airflow direction (NetBox 4.6+): 'front-to-rear' or 'rear-to-front'.
+        Pass '' to clear the field server-side (sent as JSON null).
+
+    .PARAMETER Form_Factor
+        The rack form factor (NetBox 4.6+), e.g. '2-post-frame', '4-post-cabinet'.
+        Pass '' to clear the field server-side (sent as JSON null).
+
     .PARAMETER Width
         The rack width (10 or 19 inches)
 

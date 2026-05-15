@@ -24,6 +24,9 @@ function Get-NBIPAMASN {
     .PARAMETER Site_Id
         Filter by site ID
 
+    .PARAMETER Role_Id
+        Filter by role ID (NetBox 4.6+)
+
     .PARAMETER Limit
         Limit the number of results
 

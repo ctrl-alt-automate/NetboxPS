@@ -33,6 +33,12 @@ function New-NBDCIMRack {
     .PARAMETER Rack_Type
         The rack type ID
 
+    .PARAMETER Airflow
+        The rack airflow direction (NetBox 4.6+): 'front-to-rear' or 'rear-to-front'.
+
+    .PARAMETER Form_Factor
+        The rack form factor (NetBox 4.6+), e.g. '2-post-frame', '4-post-cabinet', 'wall-cabinet'.
+
     .PARAMETER Width
         The rack width (10 or 19 inches)
 

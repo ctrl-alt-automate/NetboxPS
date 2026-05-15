@@ -21,6 +21,12 @@
 .PARAMETER Cluster
     The cluster ID.
 
+.PARAMETER Device
+    The device ID to attach this VM to (NetBox 4.6+). Pass $null to clear.
+
+.PARAMETER Virtual_Machine_Type
+    The virtual machine type ID (NetBox 4.6+). Pass $null to clear.
+
 .PARAMETER Status
     Status of the VM.
 
