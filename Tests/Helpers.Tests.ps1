@@ -1079,4 +1079,23 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             }
         }
     }
+
+    Context "Register-NBArgumentCompleters does not trigger the module auto-loader (#418)" {
+        It "Loads exactly one PowerNetbox module after import" {
+            # The regression: Get-Command -Module PowerNetbox inside
+            # Register-NBArgumentCompleters side-loaded a second copy.
+            (Get-Module PowerNetbox).Count | Should -Be 1
+        }
+
+        It "Resolves exported names from the manifest, never via Get-Command -Module" {
+            InModuleScope -ModuleName 'PowerNetbox' {
+                Mock Register-ArgumentCompleter -MockWith { }
+                Mock Get-Command -MockWith { throw 'Get-Command must not be used to enumerate the module (auto-load risk, #418)' }
+
+                { Register-NBArgumentCompleters } | Should -Not -Throw
+                Should -Not -Invoke Get-Command
+                Should -Invoke Register-ArgumentCompleter -Scope It
+            }
+        }
+    }
 }

@@ -455,13 +455,32 @@ function Register-NBArgumentCompleters {
     [OutputType([void])]
     param()
 
-    # Get all PowerNetbox commands
-    $moduleCommands = Get-Command -Module PowerNetbox -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandType -eq 'Function' }
-
-    if (-not $moduleCommands) {
-        Write-Verbose "PowerNetbox module not loaded, skipping completer registration"
+    # Resolve exported function names from THIS module's manifest instead of
+    # `Get-Command -Module PowerNetbox`. That call triggers PowerShell's module
+    # auto-loader, which side-loads any PowerNetbox copy found on
+    # $env:PSModulePath. A fork developer who also has a PSGallery build
+    # installed then ends up with two PowerNetbox modules in one session,
+    # breaking Pester ("Multiple script or manifest modules named
+    # 'PowerNetbox'") — see #418. Reading FunctionsToExport from the manifest
+    # is auto-load-free, also works under $PSModuleAutoLoadingPreference='None',
+    # and mirrors whatever deploy.ps1 wrote (dev build = all functions,
+    # prod build = public only).
+    $manifestPath = Join-Path $PSScriptRoot 'PowerNetbox.psd1'
+    if (-not (Test-Path -LiteralPath $manifestPath)) {
+        Write-Verbose "PowerNetbox manifest not found at $manifestPath, skipping completer registration"
         return
+    }
+
+    $exportedNames = (Import-PowerShellDataFile -LiteralPath $manifestPath).FunctionsToExport
+    if (-not $exportedNames) {
+        Write-Verbose "PowerNetbox manifest exports no functions, skipping completer registration"
+        return
+    }
+
+    # Shape into objects with a .Name property so the rest of this function,
+    # which filters on $_.Name, is unchanged.
+    $moduleCommands = foreach ($exportedName in $exportedNames) {
+        [pscustomobject]@{ Name = $exportedName }
     }
 
     # Status completers - context-specific
