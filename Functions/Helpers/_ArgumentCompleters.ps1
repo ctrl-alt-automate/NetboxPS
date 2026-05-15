@@ -465,6 +465,14 @@ function Register-NBArgumentCompleters {
     # is auto-load-free, also works under $PSModuleAutoLoadingPreference='None',
     # and mirrors whatever deploy.ps1 wrote (dev build = all functions,
     # prod build = public only).
+    #
+    # NOTE on $PSScriptRoot: this source file is never imported on its own.
+    # deploy.ps1 concatenates every Functions/**/*.ps1 into the built
+    # PowerNetbox.psm1, and the module is always loaded from that psm1 (dev
+    # build dir or the PSGallery install dir). In both, PowerNetbox.psm1 and
+    # PowerNetbox.psd1 are siblings, so for a function defined in the psm1
+    # $PSScriptRoot is the module root and the manifest sits right next to it.
+    # (Verified: arg completers register correctly at real import.)
     $manifestPath = Join-Path $PSScriptRoot 'PowerNetbox.psd1'
     if (-not (Test-Path -LiteralPath $manifestPath)) {
         Write-Verbose "PowerNetbox manifest not found at $manifestPath, skipping completer registration"
