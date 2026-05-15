@@ -116,6 +116,12 @@ function Set-NBVirtualMachine {
         [uint64]$Cluster,
 
         [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$Device,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$Virtual_Machine_Type,
+
+        [Parameter(ParameterSetName = 'Single')]
         [ValidateSet('offline', 'active', 'planned', 'staged', 'failed', 'decommissioning', 'paused', IgnoreCase = $true)]
         [string]$Status,
 

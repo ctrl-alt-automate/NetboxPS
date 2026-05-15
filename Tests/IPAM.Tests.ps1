@@ -670,6 +670,12 @@ Describe "IPAM tests" -Tag 'Ipam' {
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.asn | Should -Be 65000
         }
+
+        It "Should send the role (NetBox 4.6+)" {
+            $Result = New-NBIPAMASN -ASN 65001 -Role 3
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.role | Should -Be 3
+        }
     }
 
     Context "Set-NBIPAMASN" {
@@ -677,6 +683,16 @@ Describe "IPAM tests" -Tag 'Ipam' {
             $Result = Set-NBIPAMASN -Id 1 -Description 'Updated' -Confirm:$false
             $Result.Method | Should -Be 'PATCH'
             $Result.Uri | Should -Match '/api/ipam/asns/1/'
+        }
+
+        It "Should set the role (NetBox 4.6+)" {
+            $Result = Set-NBIPAMASN -Id 1 -Role 5 -Confirm:$false
+            ($Result.Body | ConvertFrom-Json).role | Should -Be 5
+        }
+
+        It "Should clear the role with `$null (NetBox 4.6+)" {
+            $Result = Set-NBIPAMASN -Id 1 -Role $null -Confirm:$false
+            $Result.Body | ConvertFrom-Json | Select-Object -ExpandProperty role | Should -BeNullOrEmpty
         }
     }
 

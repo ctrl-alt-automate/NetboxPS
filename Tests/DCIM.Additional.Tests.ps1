@@ -1128,6 +1128,11 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
             $Result.Method | Should -Be 'POST'
             $Result.Uri | Should -Be 'https://netbox.domain.com/api/dcim/module-bays/'
         }
+
+        It "Should send enabled (NetBox 4.6+, #395 Phase 1)" {
+            $Result = New-NBDCIMModuleBay -Device 1 -Name 'ModBay1' -Enabled $false
+            ($Result.Body | ConvertFrom-Json).enabled | Should -Be $false
+        }
     }
 
     Context "Set-NBDCIMModuleBay" {
@@ -1141,6 +1146,11 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
             $Result = Set-NBDCIMModuleBay -Id 1 -Description 'Updated' -Confirm:$false
             $Result.Method | Should -Be 'PATCH'
             $Result.Uri | Should -Match '/api/dcim/module-bays/1/'
+        }
+
+        It "Should set enabled (NetBox 4.6+, #395 Phase 1)" {
+            $Result = Set-NBDCIMModuleBay -Id 1 -Enabled $false -Confirm:$false
+            ($Result.Body | ConvertFrom-Json).enabled | Should -Be $false
         }
     }
 

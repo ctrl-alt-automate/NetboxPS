@@ -115,6 +115,12 @@ function New-NBVirtualMachine {
         [uint64]$Cluster,
 
         [Parameter(ParameterSetName = 'Single')]
+        [uint64]$Device,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [uint64]$Virtual_Machine_Type,
+
+        [Parameter(ParameterSetName = 'Single')]
         [uint64]$Tenant,
 
         [Parameter(ParameterSetName = 'Single')]

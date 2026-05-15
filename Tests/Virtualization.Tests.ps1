@@ -300,6 +300,18 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $bodyObj.cluster | Should -Be 1
         }
 
+        It "Should create a device-attached VM without a cluster (NetBox 4.6+, #12024)" {
+            $Result = New-NBVirtualMachine -Name 'edge-vm' -Device 7
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.device | Should -Be 7
+            $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'cluster'
+        }
+
+        It "Should send virtual_machine_type (NetBox 4.6+, #5795)" {
+            $Result = New-NBVirtualMachine -Name 'typed-vm' -Cluster 1 -Virtual_Machine_Type 4
+            ($Result.Body | ConvertFrom-Json).virtual_machine_type | Should -Be 4
+        }
+
         It "Should create a VM with CPUs, Memory, Disk, tenancy, and comments" {
             $Result = New-NBVirtualMachine -Name 'testvm' -Cluster 1 -Status Active -vCPUs 4 -Memory 4096 -Tenant 11 -Disk 50 -Comments "these are comments"
             $Result.Method | Should -Be 'POST'
@@ -386,6 +398,20 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $Result.Method | Should -Be 'PATCH'
             $Result.URI | Should -Be 'https://netbox.domain.com/api/virtualization/virtual-machines/1234/'
             $Result.Body | Should -Be '{"name":"newtestname"}'
+        }
+
+        It "Should set device + virtual_machine_type (NetBox 4.6+)" {
+            $Result = Set-NBVirtualMachine -Id 1234 -Device 7 -Virtual_Machine_Type 4 -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.device | Should -Be 7
+            $bodyObj.virtual_machine_type | Should -Be 4
+        }
+
+        It "Should clear device with `$null (NetBox 4.6+)" {
+            $Result = Set-NBVirtualMachine -Id 1234 -Device $null -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.PSObject.Properties.Name | Should -Contain 'device'
+            $bodyObj.device | Should -BeNullOrEmpty
         }
 
         It "Should set a VM with a new name, cluster, platform, and status" {

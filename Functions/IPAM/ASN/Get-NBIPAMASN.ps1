@@ -101,6 +101,9 @@ function Get-NBIPAMASN {
         [Parameter(ParameterSetName = 'Query')]
         [uint64]$Site_Id,
 
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64]$Role_Id,
+
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
 

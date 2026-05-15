@@ -6,6 +6,9 @@
     Updates an existing DCIM ModuleBay in Netbox DCIM module.
     Supports pipeline input for Id parameter where applicable.
 
+.PARAMETER Enabled
+    Whether the module bay is enabled (NetBox 4.6+).
+
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
@@ -29,6 +32,7 @@ function Set-NBDCIMModuleBay {
         [string]$Name,
         [string]$Label,
         [string]$Position,
+        [bool]$Enabled,
         [string]$Description,
         [string[]]$Tags,
         [hashtable]$Custom_Fields,

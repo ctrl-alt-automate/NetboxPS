@@ -121,6 +121,12 @@ function New-NBDCIMRack {
 
         [uint64]$Rack_Type,
 
+        [ValidateSet('front-to-rear', 'rear-to-front', IgnoreCase = $true)]
+        [string]$Airflow,
+
+        [ValidateSet('2-post-frame', '4-post-frame', '4-post-cabinet', 'wall-frame', 'wall-frame-vertical', 'wall-cabinet', 'wall-cabinet-vertical', IgnoreCase = $true)]
+        [string]$Form_Factor,
+
         [ValidateSet(10, 19, 21, 23)]
         [uint16]$Width,
 
