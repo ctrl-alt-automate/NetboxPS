@@ -41,7 +41,8 @@
     The rack ID.
 
 .PARAMETER Position
-    Position in the rack.
+    Rack-unit position (U). Accepts fractional values for half-U devices
+    (e.g. 1.5, 2.5). Pass $null to clear (unrack the device).
 
 .PARAMETER Face
     Face of the device in the rack.
@@ -158,7 +159,12 @@ function Set-NBDCIMDevice {
         [Nullable[uint64]]$Rack,
 
         [Parameter(ParameterSetName = 'Single')]
-        [Nullable[uint16]]$Position,
+        # [double] not [uint16]: NetBox rack position is a float (half-U
+        # devices at 1.5/2.5/...). No [ValidateRange] here -- it fires before
+        # [Nullable[T]] binding, so -Position $null (clear) would throw
+        # ValidationMetadataException (see #398). Server-side validation
+        # handles the 0.5..<1000 bound. Refs #412.
+        [Nullable[double]]$Position,
 
         [Parameter(ParameterSetName = 'Single')]
         [ValidateSet('front', 'rear', IgnoreCase = $true)]

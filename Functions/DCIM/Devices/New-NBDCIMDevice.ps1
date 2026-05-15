@@ -114,7 +114,8 @@ function New-NBDCIMDevice {
         [uint64]$Rack,
 
         [Parameter(ParameterSetName = 'Single')]
-        [uint16]$Position,
+        [ValidateRange(0.5, 999.99)]
+        [double]$Position,
 
         [Parameter(ParameterSetName = 'Single')]
         [ValidateSet('front', 'rear', IgnoreCase = $true)]

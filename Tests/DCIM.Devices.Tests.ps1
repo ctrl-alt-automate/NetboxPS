@@ -314,6 +314,25 @@ Describe "DCIM Devices Tests" -Tag 'DCIM', 'Devices' {
             $bodyObj.face | Should -Be 'front'
         }
 
+        Context "Fractional rack position (#412)" {
+            It "Should preserve a half-U position (1.5, not rounded to 2)" {
+                $Result = New-NBDCIMDevice -Name 'half-u' -Device_Role 4 -Device_Type 10 -Site 1 -Position 1.5
+                ($Result.Body | ConvertFrom-Json).position | Should -Be 1.5
+            }
+            It "Should accept a whole-number position as a double" {
+                $Result = New-NBDCIMDevice -Name 'whole-u' -Device_Role 4 -Device_Type 10 -Site 1 -Position 42
+                ($Result.Body | ConvertFrom-Json).position | Should -Be 42
+            }
+            It "Should reject a position below the 0.5 U floor" {
+                { New-NBDCIMDevice -Name 'bad' -Device_Role 4 -Device_Type 10 -Site 1 -Position 0.25 } |
+                    Should -Throw
+            }
+            It "Should type Position as double, not uint16" {
+                (Get-Command New-NBDCIMDevice).Parameters['Position'].ParameterType |
+                    Should -Be ([double])
+            }
+        }
+
         It "Should have ValidateSet for Status parameter" {
             # Status parameter now uses ValidateSet for type safety
             $cmd = Get-Command New-NBDCIMDevice
@@ -479,6 +498,16 @@ Describe "DCIM Devices Tests" -Tag 'DCIM', 'Devices' {
         It "Should still accept a numeric Position value (not broken by Nullable)" {
             $Result = Set-NBDCIMDevice -Id 1234 -Position 7 -Confirm:$false
             ($Result.Body | ConvertFrom-Json).position | Should -Be 7
+        }
+
+        It "Should preserve a fractional Position (2.5, not rounded) (#412)" {
+            $Result = Set-NBDCIMDevice -Id 1234 -Position 2.5 -Confirm:$false
+            ($Result.Body | ConvertFrom-Json).position | Should -Be 2.5
+        }
+
+        It "Should type Position as Nullable[double] (#412)" {
+            (Get-Command Set-NBDCIMDevice).Parameters['Position'].ParameterType |
+                Should -Be ([System.Nullable[double]])
         }
     }
 
