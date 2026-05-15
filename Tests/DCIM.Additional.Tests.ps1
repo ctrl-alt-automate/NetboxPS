@@ -1896,4 +1896,50 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
         }
     }
     #endregion
+
+    #region CableBundles (NetBox 4.6+, #395 Phase 2)
+    Context "Get-NBDCIMCableBundle" {
+        It "Should request the list endpoint" {
+            $Result = Get-NBDCIMCableBundle
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/dcim/cable-bundles/'
+        }
+        It "Should request a cable bundle by ID" {
+            $Result = Get-NBDCIMCableBundle -Id 7
+            $Result.Uri | Should -Match '/api/dcim/cable-bundles/7/'
+        }
+    }
+
+    Context "New-NBDCIMCableBundle" {
+        It "Should create a cable bundle" {
+            $Result = New-NBDCIMCableBundle -Name 'PP1-PP2 trunk' -Description '48x CAT6'
+            $Result.Method | Should -Be 'POST'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/dcim/cable-bundles/'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.name | Should -Be 'PP1-PP2 trunk'
+            $bodyObj.description | Should -Be '48x CAT6'
+        }
+    }
+
+    Context "Set-NBDCIMCableBundle" {
+        It "Should update a cable bundle" {
+            $Result = Set-NBDCIMCableBundle -Id 1 -Comments 'relabelled' -Confirm:$false
+            $Result.Method | Should -Be 'PATCH'
+            $Result.Uri | Should -Match '/api/dcim/cable-bundles/1/'
+            ($Result.Body | ConvertFrom-Json).comments | Should -Be 'relabelled'
+        }
+    }
+
+    Context "Remove-NBDCIMCableBundle" {
+        It "Should delete a cable bundle" {
+            $Result = Remove-NBDCIMCableBundle -Id 1 -Confirm:$false
+            $Result.Method | Should -Be 'DELETE'
+            $Result.Uri | Should -Match '/api/dcim/cable-bundles/1/'
+        }
+        It "Should accept pipeline input by property name" {
+            $Result = [pscustomobject]@{ Id = 4 } | Remove-NBDCIMCableBundle -Confirm:$false
+            $Result.Uri | Should -Match '/api/dcim/cable-bundles/4/'
+        }
+    }
+    #endregion
 }
