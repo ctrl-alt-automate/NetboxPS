@@ -93,7 +93,7 @@ jobs:
         # authenticity anchor — PowerNetbox is distributed unsigned on
         # PSGallery (SignPath Foundation declined the OSS application
         # 2026-04-24; see SECURITY.md Authenticity & provenance section).
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             ./PowerNetbox/PowerNetbox.psd1
