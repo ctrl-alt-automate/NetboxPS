@@ -341,11 +341,11 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
 
     Context "New-NBContactAssignment" {
         It "Should create a contact assignment" {
-            $Result = New-NBContactAssignment -Content_Type 'dcim.site' -Object_Id 1 -Contact 5 -Role 2
+            $Result = New-NBContactAssignment -Object_Type 'dcim.site' -Object_Id 1 -Contact 5 -Role 2
             $Result.Method | Should -Be 'POST'
             $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-assignments/'
             $bodyObj = $Result.Body | ConvertFrom-Json
-            $bodyObj.content_type | Should -Be 'dcim.site'
+            $bodyObj.object_type | Should -Be 'dcim.site'
             $bodyObj.object_id | Should -Be 1
             $bodyObj.contact | Should -Be 5
             $bodyObj.role | Should -Be 2
@@ -385,7 +385,7 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
     Context "WhatIf Support" {
         $whatIfTestCases = @(
             @{ Command = 'New-NBContact'; Parameters = @{ Name = 'whatif-test' } }
-            @{ Command = 'New-NBContactAssignment'; Parameters = @{ Content_Type = 'dcim.device'; Object_Id = 1; Contact = 1; Role = 1 } }
+            @{ Command = 'New-NBContactAssignment'; Parameters = @{ Object_Type = 'dcim.device'; Object_Id = 1; Contact = 1; Role = 1 } }
             @{ Command = 'New-NBContactRole'; Parameters = @{ Name = 'whatif-test'; Slug = 'whatif-test' } }
             @{ Command = 'New-NBTenant'; Parameters = @{ Name = 'whatif-test'; Slug = 'whatif-test' } }
             @{ Command = 'New-NBTenantGroup'; Parameters = @{ Name = 'whatif-test' } }

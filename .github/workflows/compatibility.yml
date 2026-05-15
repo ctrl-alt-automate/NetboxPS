@@ -59,15 +59,31 @@ jobs:
             netbox_short: "4.4.10"
             expected_failures: []
 
-          # Netbox 4.5.x - Latest stable (primary target)
+          # Netbox 4.5.x - Stable (final 4.5.x release)
           # Changes in 4.5:
           # - is_staff removed from User model (#101)
           # - Token v2 with Bearer auth (#102)
           # - New: cable-profiles, authentication-check (#103, #105)
           # - New fields: VM.interface_count, Token.allowed_ips (#106)
-          # Docker 4.0.1: Granian web server, PostgreSQL 18, Valkey 9
-          - netbox: "v4.5.8-4.0.2"
-            netbox_short: "4.5.8"
+          # Docker 4.0.1+: Granian web server, PostgreSQL 18, Valkey 9
+          - netbox: "v4.5.10-4.0.2"
+            netbox_short: "4.5.10"
+            is_beta: false
+            expected_failures: []
+
+          # Netbox 4.6.x - Latest stable (primary target)
+          # New in 4.6:
+          # - New endpoints: virtual-machine-types, cable-bundles, rack-groups
+          # - VirtualMachine.device field (cluster now optional)
+          # - ASN.role field
+          # - Rack.rack_group FK
+          # - DeviceBay/ModuleBay.enabled field
+          # - ETag support + If-Match header for optimistic concurrency
+          # - Cursor-based pagination (?start= alternative to ?offset=)
+          # - REST API partial tag assignment (add_tags/remove_tags)
+          # - Django 6.0 upgrade (server-side)
+          - netbox: "v4.6.0-5.0.1"
+            netbox_short: "4.6.0"
             is_beta: false
             expected_failures: []
 

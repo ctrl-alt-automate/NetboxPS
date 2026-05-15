@@ -21,6 +21,9 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    # PRs must land on dev, not the default branch (main). main is
+    # release-only; all changes flow dev -> main via the release merge.
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"

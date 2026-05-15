@@ -391,22 +391,25 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         # Track created resources for cleanup (order matters - delete dependents first)
         $script:CreatedResources = @{
             # Level 1: Most dependent resources (delete first)
-            Devices         = [System.Collections.ArrayList]::new()
-            VMs             = [System.Collections.ArrayList]::new()
-            Interfaces      = [System.Collections.ArrayList]::new()
+            Devices             = [System.Collections.ArrayList]::new()
+            ContactAssignments  = [System.Collections.ArrayList]::new()
+            VMs                 = [System.Collections.ArrayList]::new()
+            Interfaces          = [System.Collections.ArrayList]::new()
             # Level 2: Mid-level resources
-            Addresses       = [System.Collections.ArrayList]::new()
-            Prefixes        = [System.Collections.ArrayList]::new()
-            VLANs           = [System.Collections.ArrayList]::new()
+            Addresses           = [System.Collections.ArrayList]::new()
+            Prefixes            = [System.Collections.ArrayList]::new()
+            VLANs               = [System.Collections.ArrayList]::new()
             # Level 3: Reference data
-            DeviceTypes     = [System.Collections.ArrayList]::new()
-            DeviceRoles     = [System.Collections.ArrayList]::new()
-            Manufacturers   = [System.Collections.ArrayList]::new()
-            Clusters        = [System.Collections.ArrayList]::new()
-            ClusterTypes    = [System.Collections.ArrayList]::new()
-            Sites           = [System.Collections.ArrayList]::new()
-            Tenants         = [System.Collections.ArrayList]::new()
-            Tags            = [System.Collections.ArrayList]::new()
+            DeviceTypes         = [System.Collections.ArrayList]::new()
+            DeviceRoles         = [System.Collections.ArrayList]::new()
+            Manufacturers       = [System.Collections.ArrayList]::new()
+            Clusters            = [System.Collections.ArrayList]::new()
+            ClusterTypes        = [System.Collections.ArrayList]::new()
+            Sites               = [System.Collections.ArrayList]::new()
+            Tenants             = [System.Collections.ArrayList]::new()
+            Tags                = [System.Collections.ArrayList]::new()
+            Contacts            = [System.Collections.ArrayList]::new()
+            ContactRoles        = [System.Collections.ArrayList]::new()
         }
 
         Write-Host "Test Run ID: $script:TestRunId" -ForegroundColor Cyan
@@ -432,6 +435,11 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         # Cleanup in reverse dependency order (most dependent first)
 
         # Level 1: Most dependent resources
+        # ContactAssignments first — NetBox cascades them when their target (Device/VM/Site/…) is removed,
+        # so deleting the target before the assignment causes the explicit cleanup to 404.
+        foreach ($id in $script:CreatedResources.ContactAssignments) {
+            Remove-TestResource -ResourceType 'ContactAssignment' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBContactAssignment -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
+        }
         foreach ($id in $script:CreatedResources.Devices) {
             Remove-TestResource -ResourceType 'Device' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBDCIMDevice -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
         }
@@ -477,6 +485,12 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
         foreach ($id in $script:CreatedResources.Tags) {
             Remove-TestResource -ResourceType 'Tag' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBTag -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
+        }
+        foreach ($id in $script:CreatedResources.Contacts) {
+             Remove-TestResource -ResourceType 'Contact' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBContact -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
+        }
+        foreach ($id in $script:CreatedResources.ContactRoles) {
+            Remove-TestResource -ResourceType 'ContactRole' -Id $id -RemoveCommand { param($Id, $Confirm, $ErrorAction) Remove-NBContactRole -Id $Id -Confirm:$Confirm -ErrorAction $ErrorAction }
         }
 
         # Report any cleanup errors
@@ -1188,6 +1202,163 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             { Remove-NBTag -Id $script:TestTagId -Confirm:$false } | Should -Not -Throw
 
             $script:CreatedResources.Tags.Remove($script:TestTagId)
+        }
+    }
+
+    Context "Contact Role CRUD" {
+        BeforeAll {
+            $script:TestContactRoleName = "$($script:TestPrefix)-ContactRole"
+            $script:TestContactRoleSlug = $script:TestContactRoleName.ToLower() -replace '[^a-z0-9-]', '-'
+        }
+
+        It "Should create a contact role" {
+            $role = New-NBContactRole -Name $script:TestContactRoleName -Slug $script:TestContactRoleSlug
+
+            $role | Should -Not -BeNullOrEmpty
+            $role.name | Should -Be $script:TestContactRoleName
+
+            $script:TestContactRoleId = $role.id
+            [void]$script:CreatedResources.ContactRoles.Add($role.id)
+
+            Write-Host "  Created contact role: $($role.name) (ID: $($role.id))" -ForegroundColor Green
+        }
+
+        It "Should get contact role by ID" {
+            $role = Get-NBContactRole -Id $script:TestContactRoleId
+
+            $role | Should -Not -BeNullOrEmpty
+            $role.id | Should -Be $script:TestContactRoleId
+            $role.name | Should -Be $script:TestContactRoleName
+        }
+
+        It "Should update contact role" {
+            $role = Set-NBContactRole -Id $script:TestContactRoleId -Description "$script:TestPrefix - Updated Contact Role"
+
+            $role.description | Should -BeLike "*Updated*"
+        }
+    }
+
+    Context "Contact CRUD" {
+        BeforeAll {
+            $script:TestContactName = "$($script:TestPrefix)-Contact"
+            $script:TestContactSlug = $script:TestContactName.ToLower() -replace '[^a-z0-9-]', '-'
+        }
+
+        It "Should create a contact" {
+            $contact = New-NBContact -Name $script:TestContactName
+
+            $contact | Should -Not -BeNullOrEmpty
+            $contact.name | Should -Be $script:TestContactName
+
+            $script:TestContactId = $contact.id
+            [void]$script:CreatedResources.Contacts.Add($contact.id)
+
+            Write-Host "  Created contact: $($contact.name) (ID: $($contact.id))" -ForegroundColor Green
+        }
+
+        It "Should get contact by ID" {
+            $contact = Get-NBContact -Id $script:TestContactId
+
+            $contact | Should -Not -BeNullOrEmpty
+            $contact.id | Should -Be $script:TestContactId
+            $contact.name | Should -Be $script:TestContactName
+        }
+
+        It "Should update contact" {
+            $contact = Set-NBContact -Id $script:TestContactId -Description "$script:TestPrefix - Updated Contact"
+
+            $contact.description | Should -BeLike "*Updated*"
+        }
+    }
+
+    Context "Contact Assignment CRUD" {
+        BeforeAll {
+            # Create a dedicated site for assignment tests — the earlier "DCIM Sites CRUD"
+            # context deletes its site at the end, so $script:TestSiteId points at a
+            # now-deleted object once we get here.
+            $script:AssignmentSiteName = "$($script:TestPrefix)-AssignmentSite"
+            $script:AssignmentSiteSlug = $script:AssignmentSiteName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            $assignmentSite = New-NBDCIMSite -Name $script:AssignmentSiteName -Slug $script:AssignmentSiteSlug -Status 'active'
+            $script:AssignmentSiteId = $assignmentSite.id
+            [void]$script:CreatedResources.Sites.Add($assignmentSite.id)
+        }
+
+        It "Should create a contact assignment to a site" {
+            $assignment = New-NBContactAssignment -Object_Type 'dcim.site' -Object_Id $script:AssignmentSiteId -Contact $script:TestContactId -Role $script:TestContactRoleId
+
+            $assignment | Should -Not -BeNullOrEmpty
+            $assignment.contact.id | Should -Be $script:TestContactId
+            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.priority | Should -BeNullOrEmpty
+
+            $script:TestContactAssignmentId = $assignment.id
+            [void]$script:CreatedResources.ContactAssignments.Add($assignment.id)
+
+            Write-Host "  Created contact assignment (ID: $($assignment.id))" -ForegroundColor Green
+        }
+
+        It "Should get contact assignment by ID" {
+            $assignment = Get-NBContactAssignment -Id $script:TestContactAssignmentId
+
+            $assignment | Should -Not -BeNullOrEmpty
+            $assignment.id | Should -Be $script:TestContactAssignmentId
+            $assignment.contact.id | Should -Be $script:TestContactId
+            $assignment.role.id | Should -Be $script:TestContactRoleId
+        }
+
+        It "Should get contact assignment by Contact_ID" {
+            $assignment = Get-NBContactAssignment -Contact_Id $script:TestContactId
+
+            $assignment | Should -Not -BeNullOrEmpty
+            $assignment.id | Should -Be $script:TestContactAssignmentId
+            $assignment.contact.id | Should -Be $script:TestContactId
+            $assignment.role.id | Should -Be $script:TestContactRoleId
+        }
+
+        It "Should get contact assignment by Object_ID" {
+            $assignment = Get-NBContactAssignment -Object_Id $script:AssignmentSiteId
+
+            $assignment | Should -Not -BeNullOrEmpty
+            $assignment.id | Should -Be $script:TestContactAssignmentId
+            $assignment.contact.id | Should -Be $script:TestContactId
+            $assignment.role.id | Should -Be $script:TestContactRoleId
+        }
+
+        It "Should get contact assignment by Object_Type_ID" {
+            $objectType = Get-NBObjectType -App_Label 'dcim' -model 'site'
+            $assignment = Get-NBContactAssignment -Object_Type_Id $objectType.id
+
+            $assignment | Should -Not -BeNullOrEmpty
+            $assignment.id | Should -Be $script:TestContactAssignmentId
+            $assignment.contact.id | Should -Be $script:TestContactId
+            $assignment.role.id | Should -Be $script:TestContactRoleId
+        }
+
+        It "Should get contact assignment by Object_Type" {
+            $assignment = Get-NBContactAssignment -Object_Type 'dcim.site'
+
+            $assignment | Should -Not -BeNullOrEmpty
+            $assignment.id | Should -Be $script:TestContactAssignmentId
+            $assignment.contact.id | Should -Be $script:TestContactId
+            $assignment.role.id | Should -Be $script:TestContactRoleId
+        }
+
+        It "Should update contact assignment" {
+            $splat = @{
+                Id       = $script:TestContactAssignmentId
+                Priority = 'secondary'
+                Object_Type = 'dcim.site'
+            }
+            $assignment = Set-NBContactAssignment @splat
+
+            $assignment.priority.value | Should -Be 'secondary'
+        }
+
+        It "Should delete contact assignment" {
+            { Remove-NBContactAssignment -Id $script:TestContactAssignmentId -Confirm:$false } | Should -Not -Throw
+
+            $script:CreatedResources.ContactAssignments.Remove($script:TestContactAssignmentId)
         }
     }
 

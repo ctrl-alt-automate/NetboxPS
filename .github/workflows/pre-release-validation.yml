@@ -612,9 +612,11 @@ jobs:
           # Stable version
           - netbox: "v4.4.10-3.4.2"
             netbox_short: "4.4.10"
-          # Latest version (netbox-docker 4.0.2)
-          - netbox: "v4.5.8-4.0.2"
-            netbox_short: "4.5.8"
+          # Stable 4.5.x (final 4.5.x, netbox-docker 4.0.2)
+          - netbox: "v4.5.10-4.0.2"
+            netbox_short: "4.5.10"
+          - netbox: "v4.6.0-5.0.1"
+            netbox_short: "4.6.0"
 
     env:
       NETBOX_VERSION: ${{ matrix.netbox }}
