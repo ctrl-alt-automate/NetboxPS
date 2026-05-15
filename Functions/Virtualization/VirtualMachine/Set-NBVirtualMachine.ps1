@@ -21,6 +21,12 @@
 .PARAMETER Cluster
     The cluster ID.
 
+.PARAMETER Device
+    The device ID to attach this VM to (NetBox 4.6+). Pass $null to clear.
+
+.PARAMETER Virtual_Machine_Type
+    The virtual machine type ID (NetBox 4.6+). Pass $null to clear.
+
 .PARAMETER Status
     Status of the VM.
 
@@ -114,6 +120,12 @@ function Set-NBVirtualMachine {
 
         [Parameter(ParameterSetName = 'Single')]
         [uint64]$Cluster,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$Device,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$Virtual_Machine_Type,
 
         [Parameter(ParameterSetName = 'Single')]
         [ValidateSet('offline', 'active', 'planned', 'staged', 'failed', 'decommissioning', 'paused', IgnoreCase = $true)]

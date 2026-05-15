@@ -64,6 +64,20 @@ Describe "DCIM Racks Tests" -Tag 'DCIM', 'Racks' {
                 ($Result.Body | ConvertFrom-Json).status | Should -Be 'available'
             }
         }
+
+        Context "NetBox 4.6 airflow / form_factor (#395 Phase 1)" {
+            It "Should send airflow" {
+                $Result = New-NBDCIMRack -Name 'rack' -Site 1 -Airflow 'front-to-rear'
+                ($Result.Body | ConvertFrom-Json).airflow | Should -Be 'front-to-rear'
+            }
+            It "Should send form_factor" {
+                $Result = New-NBDCIMRack -Name 'rack' -Site 1 -Form_Factor '4-post-cabinet'
+                ($Result.Body | ConvertFrom-Json).form_factor | Should -Be '4-post-cabinet'
+            }
+            It "Should reject an invalid form_factor" {
+                { New-NBDCIMRack -Name 'rack' -Site 1 -Form_Factor 'bogus' } | Should -Throw
+            }
+        }
     }
 
     Context "Set-NBDCIMRack" {
@@ -77,6 +91,24 @@ Describe "DCIM Racks Tests" -Tag 'DCIM', 'Racks' {
             It "Should accept -Status 'available'" {
                 $Result = Set-NBDCIMRack -Id 1 -Status 'available' -Confirm:$false
                 ($Result.Body | ConvertFrom-Json).status | Should -Be 'available'
+            }
+        }
+
+        Context "NetBox 4.6 airflow / form_factor null-clearing (#395 Phase 1)" {
+            It "Should set airflow" {
+                $Result = Set-NBDCIMRack -Id 1 -Airflow 'rear-to-front' -Confirm:$false
+                ($Result.Body | ConvertFrom-Json).airflow | Should -Be 'rear-to-front'
+            }
+            It "Should clear airflow with '' sentinel (JSON null)" {
+                $Result = Set-NBDCIMRack -Id 1 -Airflow '' -Confirm:$false
+                $bodyObj = $Result.Body | ConvertFrom-Json
+                # property present and explicitly null
+                $bodyObj.PSObject.Properties.Name | Should -Contain 'airflow'
+                $bodyObj.airflow | Should -BeNullOrEmpty
+            }
+            It "Should clear form_factor with '' sentinel" {
+                $Result = Set-NBDCIMRack -Id 1 -Form_Factor '' -Confirm:$false
+                ($Result.Body | ConvertFrom-Json).form_factor | Should -BeNullOrEmpty
             }
         }
     }

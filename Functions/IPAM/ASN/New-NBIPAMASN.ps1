@@ -15,6 +15,9 @@ function New-NBIPAMASN {
     .PARAMETER Tenant
         The tenant ID
 
+    .PARAMETER Role
+        The role ID assigned to this ASN (NetBox 4.6+)
+
     .PARAMETER Description
         A description of the ASN
 
@@ -52,6 +55,8 @@ function New-NBIPAMASN {
         [uint64]$RIR,
 
         [uint64]$Tenant,
+
+        [uint64]$Role,
 
         [string]$Description,
 
