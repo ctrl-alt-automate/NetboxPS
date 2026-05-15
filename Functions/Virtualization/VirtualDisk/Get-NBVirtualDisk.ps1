@@ -15,6 +15,9 @@
 .PARAMETER Virtual_Machine_Id
     Filter by the parent virtual machine ID.
 
+.PARAMETER Query
+    Free-text search filter (NetBox ?q= parameter).
+
 .PARAMETER Brief
     Return the brief representation.
 
