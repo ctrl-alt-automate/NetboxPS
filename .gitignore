@@ -50,22 +50,11 @@ docs-build/.cache/
 site/
 __pycache__/
 # Generated reference docs (CI copies from docs-build/generated/reference/ before build)
-# Ignore the generated per-module subdirectories, but track the two handwritten files.
-# Note: a directory-level ignore prevents all negations inside it, so we ignore
-# per-module subdirs individually rather than the parent directory.
-docs/reference/DCIM/
-docs/reference/IPAM/
-docs/reference/Virtualization/
-docs/reference/Circuits/
-docs/reference/Tenancy/
-docs/reference/VPN/
-docs/reference/Wireless/
-docs/reference/Extras/
-docs/reference/Users/
-docs/reference/Core/
-docs/reference/Setup/
-docs/reference/Helpers/
-docs/reference/Plugins/
+# Ignore the generated per-module subdirectories, but track the handwritten
+# files (index.md, common-parameters.md) that live directly in docs/reference/.
+# The trailing-slash glob matches only directories one level deep, so the
+# handwritten files are unaffected and any future module dir auto-ignores.
+docs/reference/*/
 
 # Dev-only files (exclude from main branch merges)
 # These files exist on dev but should NOT be merged to main:
