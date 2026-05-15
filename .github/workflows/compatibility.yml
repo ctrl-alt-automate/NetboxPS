@@ -441,7 +441,7 @@ jobs:
           Invoke-Pester -Configuration $config
 
       - name: Upload compatibility results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: compatibility-${{ matrix.netbox_short }}
@@ -497,7 +497,7 @@ jobs:
           echo "See artifact files for detailed results."
 
       - name: Upload summary report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compatibility-summary
           path: compatibility-report.md

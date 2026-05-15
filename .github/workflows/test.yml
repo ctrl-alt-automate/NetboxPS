@@ -128,7 +128,7 @@ jobs:
           Invoke-Pester -Configuration $config
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.pwsh && 'pwsh' || 'ps51' }}
@@ -136,7 +136,7 @@ jobs:
           retention-days: 30
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always() && matrix.pwsh
         with:
           name: coverage-${{ matrix.os }}

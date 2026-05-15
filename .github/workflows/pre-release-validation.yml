@@ -126,7 +126,7 @@ jobs:
           Invoke-Pester -Configuration $config
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: unit-tests-${{ matrix.os }}-${{ matrix.pwsh && 'ps7' || 'ps51' }}
@@ -261,7 +261,7 @@ jobs:
           }
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: code-coverage
@@ -322,7 +322,7 @@ jobs:
           }
 
       - name: Upload PSSA results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: code-quality-pssa
@@ -446,7 +446,7 @@ jobs:
           } | ConvertTo-Json -Depth 5 | Out-File "documentation-report.json"
 
       - name: Upload documentation report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: documentation-validation
           path: documentation-report.json
@@ -587,7 +587,7 @@ jobs:
           } | ConvertTo-Json -Depth 5 | Out-File "breaking-changes-report.json"
 
       - name: Upload breaking changes report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: breaking-changes
           path: breaking-changes-report.json
@@ -740,7 +740,7 @@ jobs:
           Invoke-Pester -Configuration $config
 
       - name: Upload integration results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: integration-tests-${{ matrix.netbox_short }}
@@ -809,7 +809,7 @@ jobs:
           $publicCommands | Select-Object Name | ConvertTo-Json | Out-File "command-list.json"
 
       - name: Upload command list
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: module-verification
           path: command-list.json
@@ -1018,7 +1018,7 @@ jobs:
           }
 
       - name: Upload release report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: release-report
