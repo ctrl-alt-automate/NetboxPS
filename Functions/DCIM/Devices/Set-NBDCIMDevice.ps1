@@ -66,12 +66,44 @@
 .PARAMETER Owner
     The owner ID for object ownership (Netbox 4.5+ only).
 
+.PARAMETER Location
+    The location ID within the site. Pass $null to clear.
+
+.PARAMETER Airflow
+    Airflow direction. One of: front-to-rear, rear-to-front, left-to-right,
+    right-to-left, side-to-rear, rear-to-side, bottom-to-top, top-to-bottom,
+    passive, mixed. Pass an empty string ('') to clear (Airflow is
+    enum-nullable, same idiom as Set-NBDCIMInterface -Duplex '').
+
+.PARAMETER OOB_IP
+    Out-of-band IP address ID. Pass $null to clear.
+
+.PARAMETER Latitude
+    GPS latitude in decimal degrees (-90 to 90). Pass $null to clear.
+
+.PARAMETER Longitude
+    GPS longitude in decimal degrees (-180 to 180). Pass $null to clear.
+
+.PARAMETER Config_Template
+    Config template ID assigned to the device. Pass $null to clear.
+
+.PARAMETER Local_Context_Data
+    Local config context data (free-form JSON; hashtable or object). Takes
+    precedence over source contexts. Pass $null to clear.
+
 .EXAMPLE
     Set-NBDCIMDevice -Id 123 -Cluster $null
 
     Clears the Cluster assignment on device 123. Also works for Platform,
     Tenant, Rack, Position, Virtual_Chassis, VC_Position, VC_Priority,
-    Primary_IP4, Primary_IP6, and Owner.
+    Primary_IP4, Primary_IP6, Owner, Location, OOB_IP, Config_Template,
+    Latitude, Longitude, and Local_Context_Data. Clear Airflow with -Airflow ''.
+
+.EXAMPLE
+    Set-NBDCIMDevice -Id 123 -Airflow front-to-rear -Latitude 52.37 -Longitude 4.89
+
+    Sets airflow direction and GPS coordinates. Pass -Airflow '' to clear
+    airflow; pass -Latitude $null / -Longitude $null to clear coordinates.
 
 .EXAMPLE
     Set-NBDCIMDevice -Id 123 -Description "Replaces legacy gateway"
@@ -203,6 +235,38 @@ function Set-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Single')]
         [Nullable[uint64]]$Owner,
 
+        [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$Location,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [AllowEmptyString()]
+        [ValidateSet('front-to-rear', 'rear-to-front', 'left-to-right', 'right-to-left',
+            'side-to-rear', 'rear-to-side', 'bottom-to-top', 'top-to-bottom',
+            'passive', 'mixed', '', IgnoreCase = $true)]
+        [string]$Airflow,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$OOB_IP,
+
+        [Parameter(ParameterSetName = 'Single')]
+        # [Nullable[double]] with no [ValidateRange]: latitude is a nullable
+        # float and -Latitude $null clears it. [ValidateRange] fires before
+        # [Nullable[T]] binding, so the range check would throw on $null
+        # (see #398, #412). Server enforces the -90..90 bound; New- keeps
+        # [ValidateRange] since its Latitude is non-nullable. Refs #411.
+        [Nullable[double]]$Latitude,
+
+        [Parameter(ParameterSetName = 'Single')]
+        # See Latitude: nullable float, no [ValidateRange] (#398/#412).
+        # Server enforces -180..180. Refs #411.
+        [Nullable[double]]$Longitude,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [Nullable[uint64]]$Config_Template,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [object]$Local_Context_Data,
+
         # Bulk mode parameters
         [Parameter(ParameterSetName = 'Bulk', Mandatory = $true, ValueFromPipeline = $true)]
         [PSCustomObject]$InputObject,
@@ -232,6 +296,14 @@ function Set-NBDCIMDevice {
     }
 
     process {
+        # Translate the empty-string sentinel to $null so -Airflow '' clears
+        # the field server-side: BuildURIComponents + ConvertTo-Json emit
+        # "airflow": null on the wire, which NetBox PATCH accepts (airflow is
+        # enum-nullable). Same idiom as Set-NBDCIMInterface -Duplex '' (#401).
+        if ($PSBoundParameters.ContainsKey('Airflow') -and $PSBoundParameters['Airflow'] -eq '') {
+            $PSBoundParameters['Airflow'] = $null
+        }
+
         if ($PSCmdlet.ParameterSetName -eq 'Single') {
             # Use Id directly - no need to fetch device first (saves an API call per update)
             if ($Force -or $PSCmdlet.ShouldProcess("Device ID $Id", "Update device")) {

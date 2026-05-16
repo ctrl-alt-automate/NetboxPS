@@ -66,3 +66,7 @@ DCIM/Interfaces/Set-NBDCIMInterface.ps1::RF_Role
 # NetBox 4.6 Rack airflow/form_factor (#395 Phase 1) — same '' sentinel pattern.
 DCIM/Racks/Set-NBDCIMRack.ps1::Airflow
 DCIM/Racks/Set-NBDCIMRack.ps1::Form_Factor
+# NetBox 4.6 Device airflow (#411) - same '' sentinel pattern. NetBox's
+# airflow enum does include "" + null, but the parity matcher treats the
+# '' as a PowerNetbox-only null-clearing sentinel, not an enum value.
+DCIM/Devices/Set-NBDCIMDevice.ps1::Airflow

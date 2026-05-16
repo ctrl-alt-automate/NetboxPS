@@ -333,6 +333,50 @@ Describe "DCIM Devices Tests" -Tag 'DCIM', 'Devices' {
             }
         }
 
+        Context "Writable Device fields (#411)" {
+            It "Should send airflow on create" {
+                $Result = New-NBDCIMDevice -Name 'af' -Device_Role 4 -Device_Type 10 -Site 1 -Airflow 'front-to-rear'
+                ($Result.Body | ConvertFrom-Json).airflow | Should -Be 'front-to-rear'
+            }
+            It "Should accept all 10 airflow values" {
+                $vals = @('front-to-rear', 'rear-to-front', 'left-to-right', 'right-to-left',
+                    'side-to-rear', 'rear-to-side', 'bottom-to-top', 'top-to-bottom', 'passive', 'mixed')
+                foreach ($v in $vals) {
+                    { New-NBDCIMDevice -Name 'af' -Device_Role 4 -Device_Type 10 -Site 1 -Airflow $v } |
+                        Should -Not -Throw
+                }
+            }
+            It "Should reject an invalid airflow value" {
+                { New-NBDCIMDevice -Name 'af' -Device_Role 4 -Device_Type 10 -Site 1 -Airflow 'sideways' } |
+                    Should -Throw
+            }
+            It "Should send location, oob_ip and config_template as integers" {
+                $Result = New-NBDCIMDevice -Name 'fk' -Device_Role 4 -Device_Type 10 -Site 1 -Location 3 -OOB_IP 9 -Config_Template 2
+                $b = $Result.Body | ConvertFrom-Json
+                $b.location | Should -Be 3
+                $b.oob_ip | Should -Be 9
+                $b.config_template | Should -Be 2
+            }
+            It "Should send latitude and longitude as decimals" {
+                $Result = New-NBDCIMDevice -Name 'geo' -Device_Role 4 -Device_Type 10 -Site 1 -Latitude 52.37 -Longitude 4.89
+                $b = $Result.Body | ConvertFrom-Json
+                $b.latitude | Should -Be 52.37
+                $b.longitude | Should -Be 4.89
+            }
+            It "Should reject out-of-range latitude and longitude" {
+                { New-NBDCIMDevice -Name 'g' -Device_Role 4 -Device_Type 10 -Site 1 -Latitude 200 } | Should -Throw
+                { New-NBDCIMDevice -Name 'g' -Device_Role 4 -Device_Type 10 -Site 1 -Longitude -181 } | Should -Throw
+            }
+            It "Should send local_context_data as a JSON object" {
+                $Result = New-NBDCIMDevice -Name 'lcd' -Device_Role 4 -Device_Type 10 -Site 1 -Local_Context_Data @{ ntp = 'pool.ntp.org' }
+                ($Result.Body | ConvertFrom-Json).local_context_data.ntp | Should -Be 'pool.ntp.org'
+            }
+            It "Should type Latitude and Longitude as double on New-" {
+                (Get-Command New-NBDCIMDevice).Parameters['Latitude'].ParameterType | Should -Be ([double])
+                (Get-Command New-NBDCIMDevice).Parameters['Longitude'].ParameterType | Should -Be ([double])
+            }
+        }
+
         It "Should have ValidateSet for Status parameter" {
             # Status parameter now uses ValidateSet for type safety
             $cmd = Get-Command New-NBDCIMDevice
@@ -508,6 +552,75 @@ Describe "DCIM Devices Tests" -Tag 'DCIM', 'Devices' {
         It "Should type Position as Nullable[double] (#412)" {
             (Get-Command Set-NBDCIMDevice).Parameters['Position'].ParameterType |
                 Should -Be ([System.Nullable[double]])
+        }
+
+        It "Should send an airflow value on update (#411)" {
+            $Result = Set-NBDCIMDevice -Id 1234 -Airflow 'rear-to-front' -Confirm:$false
+            ($Result.Body | ConvertFrom-Json).airflow | Should -Be 'rear-to-front'
+        }
+
+        It "Should clear airflow with the empty-string sentinel (#411)" {
+            $Result = Set-NBDCIMDevice -Id 1234 -Airflow '' -Confirm:$false
+            $Result.Body | Should -Match '"airflow"\s*:\s*null'
+        }
+
+        It "Should send null when -Location is explicitly null (#411)" {
+            $Result = Set-NBDCIMDevice -Id 1234 -Location $null -Confirm:$false
+            $Result.Body | Should -Match '"location"\s*:\s*null'
+        }
+
+        It "Should send null when -OOB_IP is explicitly null (#411)" {
+            $Result = Set-NBDCIMDevice -Id 1234 -OOB_IP $null -Confirm:$false
+            $Result.Body | Should -Match '"oob_ip"\s*:\s*null'
+        }
+
+        It "Should send null when -Config_Template is explicitly null (#411)" {
+            $Result = Set-NBDCIMDevice -Id 1234 -Config_Template $null -Confirm:$false
+            $Result.Body | Should -Match '"config_template"\s*:\s*null'
+        }
+
+        It "Should clear latitude/longitude with explicit null WITHOUT throwing (#411, #398/#412 guard)" {
+            { Set-NBDCIMDevice -Id 1234 -Latitude $null -Confirm:$false } | Should -Not -Throw
+            (Set-NBDCIMDevice -Id 1234 -Latitude $null -Confirm:$false).Body | Should -Match '"latitude"\s*:\s*null'
+            (Set-NBDCIMDevice -Id 1234 -Longitude $null -Confirm:$false).Body | Should -Match '"longitude"\s*:\s*null'
+        }
+
+        It "Should still accept numeric latitude/longitude (not broken by Nullable) (#411)" {
+            $b = (Set-NBDCIMDevice -Id 1234 -Latitude 52.37 -Longitude 4.89 -Confirm:$false).Body | ConvertFrom-Json
+            $b.latitude | Should -Be 52.37
+            $b.longitude | Should -Be 4.89
+        }
+
+        It "Should clear local_context_data with explicit null (#411)" {
+            (Set-NBDCIMDevice -Id 1234 -Local_Context_Data $null -Confirm:$false).Body |
+                Should -Match '"local_context_data"\s*:\s*null'
+        }
+
+        It "Should type Latitude/Longitude as Nullable[double] on Set- (#411)" {
+            (Get-Command Set-NBDCIMDevice).Parameters['Latitude'].ParameterType | Should -Be ([System.Nullable[double]])
+            (Get-Command Set-NBDCIMDevice).Parameters['Longitude'].ParameterType | Should -Be ([System.Nullable[double]])
+        }
+
+        It "Should type Location/OOB_IP/Config_Template as Nullable[uint64] on Set- (#411)" {
+            (Get-Command Set-NBDCIMDevice).Parameters['Location'].ParameterType | Should -Be ([System.Nullable[uint64]])
+            (Get-Command Set-NBDCIMDevice).Parameters['OOB_IP'].ParameterType | Should -Be ([System.Nullable[uint64]])
+            (Get-Command Set-NBDCIMDevice).Parameters['Config_Template'].ParameterType | Should -Be ([System.Nullable[uint64]])
+        }
+
+        It "Should NOT have ValidateRange on Set- Latitude/Longitude (#398/#412 guard) (#411)" {
+            $lat = (Get-Command Set-NBDCIMDevice).Parameters['Latitude']
+            ($lat.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateRangeAttribute] }) |
+                Should -BeNullOrEmpty
+            $lon = (Get-Command Set-NBDCIMDevice).Parameters['Longitude']
+            ($lon.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateRangeAttribute] }) |
+                Should -BeNullOrEmpty
+        }
+
+        It "Should include '' in Set- Airflow ValidateSet (clear sentinel) (#411)" {
+            $af = (Get-Command Set-NBDCIMDevice).Parameters['Airflow']
+            $vs = $af.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+            $vs.ValidValues | Should -Contain ''
+            $vs.ValidValues | Should -Contain 'front-to-rear'
         }
     }
 

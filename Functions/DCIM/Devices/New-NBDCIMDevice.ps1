@@ -44,6 +44,30 @@
 .PARAMETER Owner
     The owner ID for object ownership (Netbox 4.5+ only).
 
+.PARAMETER Location
+    The location ID within the site.
+
+.PARAMETER Airflow
+    Airflow direction. One of: front-to-rear, rear-to-front, left-to-right,
+    right-to-left, side-to-rear, rear-to-side, bottom-to-top, top-to-bottom,
+    passive, mixed.
+
+.PARAMETER OOB_IP
+    Out-of-band IP address ID.
+
+.PARAMETER Latitude
+    GPS latitude in decimal degrees (-90 to 90).
+
+.PARAMETER Longitude
+    GPS longitude in decimal degrees (-180 to 180).
+
+.PARAMETER Config_Template
+    Config template ID assigned to the device.
+
+.PARAMETER Local_Context_Data
+    Local config context data (free-form JSON; hashtable or object). Takes
+    precedence over source contexts in the rendered config context.
+
 .EXAMPLE
     New-NBDCIMDevice -Name "server01" -Role 1 -Device_Type 1 -Site 1
 
@@ -153,6 +177,32 @@ function New-NBDCIMDevice {
 
         [Parameter(ParameterSetName = 'Single')]
         [uint64]$Owner,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [uint64]$Location,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [ValidateSet('front-to-rear', 'rear-to-front', 'left-to-right', 'right-to-left',
+            'side-to-rear', 'rear-to-side', 'bottom-to-top', 'top-to-bottom',
+            'passive', 'mixed', IgnoreCase = $true)]
+        [string]$Airflow,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [uint64]$OOB_IP,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [ValidateRange(-90, 90)]
+        [double]$Latitude,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [ValidateRange(-180, 180)]
+        [double]$Longitude,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [uint64]$Config_Template,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [object]$Local_Context_Data,
 
         # Bulk mode parameters
         [Parameter(ParameterSetName = 'Bulk', Mandatory = $true, ValueFromPipeline = $true)]
