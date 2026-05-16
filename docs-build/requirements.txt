@@ -1,15 +1,17 @@
 mkdocs-material[imaging]==9.5.30
 mkdocs-awesome-pages-plugin==2.9.3
 mkdocs-macros-plugin==1.0.5
-pymdown-extensions==10.9
+pymdown-extensions==10.16.1
 
 # Transitive deps pinned for reproducibility. They are NOT covered by the
 # constraints above (mkdocs-material allows pygments~=2.16, markdown~=3.2),
 # so a fresh CI resolve floats them to "latest". On 2026-05-15 that floated
-# Pygments to 2.20.0, which is incompatible with pymdown-extensions 10.9 and
-# made pymdownx.superfences silently stop processing every fenced code block
-# site-wide (fences rendered as literal "```" text, # lines became <h1>).
-# These two pins reproduce the known-good build. Bump deliberately together
-# with pymdown-extensions after verifying a local `mkdocs build`.
+# Pygments to 2.20.0, which broke pymdownx.superfences: it silently stopped
+# processing every fenced code block site-wide (fences rendered as literal
+# "```" text, # lines became <h1>). These pins reproduce a known-good build.
+# Re-verified 2026-05-16 with a local `mkdocs build`: pymdown-extensions
+# 10.16.1 + markdown 3.10.2 + pygments 2.19.2 renders every code block
+# correctly (528 highlight blocks, zero literal fences). Bump deliberately
+# together with pymdown-extensions and re-run the local render check.
 markdown==3.10.2
 pygments==2.19.2
