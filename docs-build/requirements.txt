@@ -1,7 +1,7 @@
 mkdocs-material[imaging]==9.5.30
 mkdocs-awesome-pages-plugin==2.9.3
 mkdocs-macros-plugin==1.0.5
-pymdown-extensions==10.16.1
+pymdown-extensions==10.21.3
 
 # Transitive deps pinned for reproducibility. They are NOT covered by the
 # constraints above (mkdocs-material allows pygments~=2.16, markdown~=3.2),
