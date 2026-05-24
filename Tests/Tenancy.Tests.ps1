@@ -325,6 +325,64 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
     }
     #endregion
 
+    #region ContactGroup Tests
+    Context "Get-NBContactGroup" {
+        It "Should request contact groups" {
+            $Result = Get-NBContactGroup
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/'
+        }
+        It "Should request a contact group by ID" {
+            $Result = Get-NBContactGroup -Id 6
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/6/'
+        }
+        It "Should request contact groups filtered by name" {
+            $Result = Get-NBContactGroup -Name 'Support Team'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/?name=Support%20Team'
+        }
+    }
+    Context "New-NBContactGroup" {
+        It "Should create a contact group" {
+            $Result = New-NBContactGroup -Name 'Support Team'
+            $Result.Method | Should -Be 'POST'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.name | Should -Be 'Support Team'
+        }
+        It "Should create a contact group with description and parent" {
+            $Result = New-NBContactGroup -Name 'Support Team' -Description 'Handles support requests' -Parent 2
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.description | Should -Be 'Handles support requests'
+            $bodyObj.parent | Should -Be 2
+        }
+    }
+    Context "Set-NBContactGroup" {
+        It "Should update a contact group" {
+            $Result = Set-NBContactGroup -Id 4 -Name 'Updated Group' -Confirm:$false
+            $Result.Method | Should -Be 'PATCH'
+            $Result.URI | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/4/'
+            $Result.Body | ConvertFrom-Json | Select-Object -ExpandProperty name | Should -Be 'Updated Group'
+        }
+
+    }
+    Context "Remove-NBContactGroup" {
+        BeforeAll {
+            Mock -CommandName "Get-NBContactGroup" -MockWith {
+                return [pscustomobject]@{ 'Id' = $Id; 'Name' = 'TestGroup' }
+            }
+        }
+        It "Should remove a contact group" {
+            $Result = Remove-NBContactGroup -Id 4 -Confirm:$false
+            $Result.Method | Should -Be 'DELETE'
+            $Result.URI | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/4/'
+        }
+        It "Should remove a contact group by pipeline input" {
+            $Result = Get-NBContactGroup -Id 5 | Remove-NBContactGroup -Confirm:$false
+            $Result.URI | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/5/'
+        }
+    }
+    #endregion
+
     #region ContactAssignment Tests
     Context "Get-NBContactAssignment" {
         It "Should request contact assignments" {
