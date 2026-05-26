@@ -1318,13 +1318,29 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         BeforeAll {
             $script:TestContactName = "$($script:TestPrefix)-Contact"
             $script:TestContactSlug = $script:TestContactName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            # Create an additional contact group to make context test independent from the "Contact Group CRUD"
+            $Script:TestContactGroup2Name = "$($script:TestPrefix)-ContactGroup2"
+            $Script:TestContactGroup2Slug = $Script:TestContactGroup2Name.ToLower() -replace '[^a-z0-9-]', '-'
+            $group2 = New-NBContactGroup -Name $Script:TestContactGroup2Name -Slug $Script:TestContactGroup2Slug
+            $Script:TestContactGroup2Id = $group2.id
+            [void]$script:CreatedResources.ContactGroups.Add($group2.id)
+        }
+        AfterAll {
+            # Cleanup the additional contact group created in BeforeAll
+            if ($Script:TestContactGroup2Id) {
+                { Remove-NBContactGroup -Id $Script:TestContactGroup2Id -Confirm:$false } | Should -Not -Throw
+                $script:CreatedResources.ContactGroups.Remove($Script:TestContactGroup2Id)
+                $Script:TestContactGroup2Id = $null
+            }
         }
 
         It "Should create a contact" {
-            $contact = New-NBContact -Name $script:TestContactName
+            $contact = New-NBContact -Name $script:TestContactName -Group_Id $Script:TestContactGroup2Id
 
             $contact | Should -Not -BeNullOrEmpty
             $contact.name | Should -Be $script:TestContactName
+            $contact.groups.Id | Should -Contain $Script:TestContactGroup2Id
 
             $script:TestContactId = $contact.id
             [void]$script:CreatedResources.Contacts.Add($contact.id)
@@ -1344,6 +1360,48 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             $contact = Set-NBContact -Id $script:TestContactId -Description "$script:TestPrefix - Updated Contact"
 
             $contact.description | Should -BeLike "*Updated*"
+        }
+
+        It "Should add contact to contact group" {
+            # create contact
+            $contact = New-NBContact -Name "$($script:TestPrefix)-GroupContact"
+            [void]$script:CreatedResources.Contacts.Add($contact.id)
+
+            $Result = Set-NBContact -Id $contact.id -Group_Id $Script:TestContactGroup2Id -Confirm:$false
+
+            $Result | Should -Not -BeNullOrEmpty
+            $Result.id | Should -Be $contact.id
+            $Result.groups.Id | Should -Contain $Script:TestContactGroup2Id
+
+            $group = Get-NBContactGroup -Id $Script:TestContactGroup2Id
+            $group.contact_count | Should -Be 2
+
+            # Cleanup: remove contact from group, then delete contact
+            # additionally, prove, that renaming parameter -Group to -Groups is not a breaking change
+            $contact = Set-NBContact -Id $contact.id -Group_Id @() -Confirm:$false
+            $contact.groups | Should -HaveCount 0
+            { Remove-NBContact -Id $contact.id -Confirm:$false  } | Should -Not -Throw
+            $script:CreatedResources.Contacts.Remove($contact.id)
+        }
+
+        It "Should find two contacts in the same group" {
+            # create contact
+            $contact2 = New-NBContact -Name "$($script:TestPrefix)-GroupContact2" -Group_Id $Script:TestContactGroup2Id
+            [void]$script:CreatedResources.Contacts.Add($contact2.id)
+
+            $group = Get-NBContactGroup -Id $Script:TestContactGroup2Id
+
+            $group.contact_count | Should -Be 2
+
+            # now search for contacts by group Id
+            $contacts = Get-NBContact -Group_Id $Script:TestContactGroup2Id
+
+            $contacts | Should -Not -BeNullOrEmpty
+            $contacts | Should -HaveCount 2
+
+            #Cleanup: delete contact
+            { Remove-NBContact -Id $contact2.id -Confirm:$false  } | Should -Not -Throw
+            $script:CreatedResources.Contacts.Remove($contact2.id)
         }
     }
 
