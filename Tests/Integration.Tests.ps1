@@ -1209,6 +1209,78 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
     }
 
+    Context "Contact Group CRUD" {
+        BeforeAll {
+            # This group will be used for tests of adding/removeing contacts as well, so it's not removed at the end
+            $script:TestContactGroupId = @(-1, -1, -1)      # paremt group, chil1, child2
+            $script:TestContactGroupName = @("$($script:TestPrefix)-ContactGroup", "$($script:TestPrefix)-ContactGroup-Child", "$($script:TestPrefix)-ContactGroup-Child2")
+            $script:TestContactGroupSlug = $script:TestContactGroupName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            $group = New-NBContactGroup -Name $script:TestContactGroupName[0] -Slug $script:TestContactGroupSlug[0]
+            $group | Should -Not -BeNullOrEmpty
+            $script:TestContactGroupId[0] = $group.id
+            [void]$script:CreatedResources.ContactGroups.Add($group.id)
+        }
+
+        It "Should create a contact group as child group" {
+            $childGroup = New-NBContactGroup -Name $script:TestContactGroupName[1] -Slug $script:TestContactGroupSlug[1] -Parent $script:TestContactGroupId[0]
+            $script:TestContactGroupId[1] = $childGroup.id
+            [void]$script:CreatedResources.ContactGroups.Add($childGroup.id)
+
+            $childGroup.parent.id | Should -Be $script:TestContactGroupId[0]
+        }
+
+        It "Should create child group (search parent by name)" {
+            $childGroup = New-NBContactGroup -Name $script:TestContactGroupName[2] -Slug $script:TestContactGroupSlug[2] -Parent $script:TestContactGroupName[0]
+            $script:TestContactGroupId[2] = $childGroup.id
+            [void]$script:CreatedResources.ContactGroups.Add($childGroup.id)
+
+            $childGroup.parent.id | Should -Be $script:TestContactGroupId[0]
+        }
+        It "Should get contact group by ID" {
+            $group = Get-NBContactGroup -Id $script:TestContactGroupId[0]
+
+            $group | Should -Not -BeNullOrEmpty
+            $group.id | Should -Be $script:TestContactGroupId[0]
+            $group.name | Should -Be $script:TestContactGroupName[0]
+        }
+
+        It "Should get multiple contact groups by id" {
+            $groups = Get-NBContactGroup -Id ($script:TestContactGroupId[0], $script:TestContactGroupId[1])
+
+            $groups | Should -Not -BeNullOrEmpty
+            $groups | Should -HaveCount 2
+            $groups[0].id | Should -Be $script:TestContactGroupId[0]
+            $groups[1].id | Should -Be $script:TestContactGroupId[1]
+        }
+
+        It "Should update contact group" {
+            $group = Set-NBContactGroup -Id $script:TestContactGroupId[0] -Description "$script:TestPrefix - Updated Contact Group"
+
+            $group.description | Should -BeLike "*Updated*"
+        }
+
+        It "Should update (rename) a contact group by pipeline Id" {
+            $Result = Get-NBContactGroup -Id $script:TestContactGroupId[0] | Set-NBContactGroup -Name "$($script:TestContactGroupName[0]) - Updated" -Confirm:$false
+
+            $Result.name | Should -Be "$($script:TestContactGroupName[0]) - Updated"   # renamed the group
+            $Result.slug | Should -Be $script:TestContactGroupSlug[0]  # slug should remain unchanged
+        }
+
+        It "Should delete child contact groups by Id" {
+            # Remove the child group first, otherwise the parent group deletion would do a cascading delete
+            { Remove-NBContactGroup -Id $script:TestContactGroupId[1] -Confirm:$false } | Should -Not -Throw
+            $script:CreatedResources.ContactGroups.Remove($script:TestContactGroupId[1])
+            $script:TestContactGroupId[1] = $null
+        }
+
+        It "Should delete contact group 2 by pipeline" {
+            { Get-NBContactGroup -Id $script:TestContactGroupId[2] | Remove-NBContactGroup -Confirm:$false } | Should -Not -Throw
+            $script:CreatedResources.ContactGroups.Remove($script:TestContactGroupId[2])
+            $script:TestContactGroupId[2] = $null
+        }
+    }
+
     Context "Contact Role CRUD" {
         BeforeAll {
             $script:TestContactRoleName = "$($script:TestPrefix)-ContactRole"
@@ -1363,89 +1435,6 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             { Remove-NBContactAssignment -Id $script:TestContactAssignmentId -Confirm:$false } | Should -Not -Throw
 
             $script:CreatedResources.ContactAssignments.Remove($script:TestContactAssignmentId)
-        }
-    }
-
-    Context "Contact Group CRUD" {
-        BeforeAll {
-            $script:TestContactGroupId = @(-1, -1, -1)      # paremt group, chil1, child2
-            $script:TestContactGroupName = @("$($script:TestPrefix)-ContactGroup", "$($script:TestPrefix)-ContactGroup-Child", "$($script:TestPrefix)-ContactGroup-Child2")
-            $script:TestContactGroupSlug = $script:TestContactGroupName.ToLower() -replace '[^a-z0-9-]', '-'
-        }
-
-        It "Should create a contact group" {
-            $group = New-NBContactGroup -Name $script:TestContactGroupName[0] -Slug $script:TestContactGroupSlug[0]
-
-            $group | Should -Not -BeNullOrEmpty
-            $group.name | Should -Be $script:TestContactGroupName[0]
-
-            $script:TestContactGroupId[0] = $group.id
-            [void]$script:CreatedResources.ContactGroups.Add($group.id)
-
-            Write-Host "  Created contact group: $($group.name) (ID: $($group.id))" -ForegroundColor Green
-        }
-
-        It "Should create a contact group as child group" {
-            $childGroup = New-NBContactGroup -Name $script:TestContactGroupName[1] -Slug $script:TestContactGroupSlug[1] -Parent $script:TestContactGroupId[0]
-            $script:TestContactGroupId[1] = $childGroup.id
-            [void]$script:CreatedResources.ContactGroups.Add($childGroup.id)
-
-            $childGroup.parent.id | Should -Be $script:TestContactGroupId[0]
-        }
-
-        It "Should create child group (search parent by name)" {
-            $childGroup = New-NBContactGroup -Name $script:TestContactGroupName[2] -Slug $script:TestContactGroupSlug[2] -Parent $script:TestContactGroupName[0]
-            $script:TestContactGroupId[2] = $childGroup.id
-            [void]$script:CreatedResources.ContactGroups.Add($childGroup.id)
-
-            $childGroup.parent.id | Should -Be $script:TestContactGroupId[0]
-        }
-
-        It "Should get contact group by ID" {
-            $group = Get-NBContactGroup -Id $script:TestContactGroupId[0]
-
-            $group | Should -Not -BeNullOrEmpty
-            $group.id | Should -Be $script:TestContactGroupId[0]
-            $group.name | Should -Be $script:TestContactGroupName[0]
-        }
-
-        It "Should get multiple contact groups by id" {
-            $groups = Get-NBContactGroup -Id ($script:TestContactGroupId[0], $script:TestContactGroupId[1])
-
-            $groups | Should -Not -BeNullOrEmpty
-            $groups | Should -HaveCount 2
-            $groups[0].id | Should -Be $script:TestContactGroupId[0]
-            $groups[1].id | Should -Be $script:TestContactGroupId[1]
-        }
-
-        It "Should update contact group" {
-            $group = Set-NBContactGroup -Id $script:TestContactGroupId[0] -Description "$script:TestPrefix - Updated Contact Group"
-
-            $group.description | Should -BeLike "*Updated*"
-        }
-
-        It "Should update (rename) a contact group by pipeline Id" {
-            $Result = Get-NBContactGroup -Id $script:TestContactGroupId[0] | Set-NBContactGroup -Name 'Updated Group by pipeline' -Confirm:$false
-
-            $Result.name | Should -Be 'Updated Group by pipeline'   # renamed the group
-            $Result.slug | Should -Be $script:TestContactGroupSlug[0]  # slug should remain unchanged
-        }
-
-        It "Should delete child contact groups by Id" {
-            # Remove the child group first, otherwise the parent group deletion would do a cascading delete
-            { Remove-NBContactGroup -Id $script:TestContactGroupId[1] -Confirm:$false } | Should -Not -Throw
-            $script:CreatedResources.ContactGroups.Remove($script:TestContactGroupId[1])
-            $script:TestContactGroupId[1] = $null
-
-            { Remove-NBContactGroup -Id $script:TestContactGroupId[2] -Confirm:$false } | Should -Not -Throw
-            $script:CreatedResources.ContactGroups.Remove($script:TestContactGroupId[2])
-            $script:TestContactGroupId[2] = $null
-        }
-
-        It "Should delete contact group by pipeline" {
-            { Get-NBContactGroup -Id $script:TestContactGroupId[0] | Remove-NBContactGroup -Confirm:$false } | Should -Not -Throw
-            $script:CreatedResources.ContactGroups.Remove($script:TestContactGroupId[0])
-            $script:TestContactGroupId[0] = $null
         }
     }
 
