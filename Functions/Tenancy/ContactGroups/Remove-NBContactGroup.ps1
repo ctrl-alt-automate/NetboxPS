@@ -41,8 +41,6 @@ function Remove-NBContactGroup {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)]
         [uint64[]]$Id,
 
-        [switch]$Force,
-
         [switch]$Raw
     )
 
@@ -54,7 +52,7 @@ function Remove-NBContactGroup {
 
             $URI = BuildNewURI -Segments $Segments
 
-            if ($Force -or $PSCmdlet.ShouldProcess("ID $ContactgroupId", 'Delete contact group')) {
+            if ($PSCmdlet.ShouldProcess("ID $ContactgroupId", 'Delete contact group')) {
                 InvokeNetboxRequest -URI $URI -Method DELETE -Raw:$Raw
             }
         }

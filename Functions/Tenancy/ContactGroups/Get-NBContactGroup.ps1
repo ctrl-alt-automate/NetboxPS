@@ -84,7 +84,7 @@ function Get-NBContactGroup {
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
 
-        [ValidateRange(0, [int]::MaxValue)]
+        [ValidateRange(0, [uint16]::MaxValue)]
         [uint16]$Offset,
 
         [switch]$Raw

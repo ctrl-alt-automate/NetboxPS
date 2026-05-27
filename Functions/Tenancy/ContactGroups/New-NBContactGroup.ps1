@@ -76,7 +76,10 @@ function New-NBContactGroup {
         $paramDict = $PSBoundParameters
         if ($PSBoundParameters.ContainsKey('Parent') -and $false -eq [System.UInt64]::TryParse($Parent, [ref]$null)) {
             # if it isn't a int, we assume it's a name which needs to be presented differently in the body
-            $paramDict = $PSBoundParameters | ConvertTo-Json | ConvertFrom-Json -AsHashtable
+            $paramDict = @{}
+            foreach ($key in $PSBoundParameters.Keys) {
+                $paramDict[$key] = $PSBoundParameters[$key]
+            }
             $paramDict['parent'] = @{ 'name' = $Parent }
         }
 
