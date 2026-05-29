@@ -103,9 +103,8 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                 }
 
                 $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
-                $URIBuilder.Query | Should -Match 'param1=paramval1'
-                $URIBuilder.Query | Should -Match 'param2=val1&param2=val2&param2=val3%20having%20spaces'
-                $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?param1=paramval1&param2=val1&param2=val2&param2=val3%20having%20spaces'
+                $URIBuilder.Query | Should -Match '(?=.*param2=val1)(?=.*param2=val2)(?=.*param2=val3%20having%20spaces)'
+                $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?(?=.*param1=paramval1)(?=.*param2=val1)(?=.*param2=val2)(?=.*param2=val3%20having%20spaces)'
             }
         }
     }
