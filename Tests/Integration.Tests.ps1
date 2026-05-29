@@ -1170,6 +1170,18 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         BeforeAll {
             $script:TestTagName = "$($script:TestPrefix)-Tag"
             $script:TestTagSlug = $script:TestTagName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            $script:TestTagName2 = "$($script:TestPrefix)-Tag2"
+            $script:TestTagSlug2 = $script:TestTagName2.ToLower() -replace '[^a-z0-9-]', '-'
+
+            $tag2 = New-NBTag -Name $script:TestTagName2 -Slug $script:TestTagSlug2 -Color 'ffff00'
+            $script:TestTag2Id = $tag2.id
+            [void]$script:CreatedResources.Tags.Add($tag2.id)
+        }
+        AfterAll {
+            { Remove-NBTag -Id $script:TestTag2Id -Confirm:$false } | Should -Not -Throw
+            $script:CreatedResources.Tags.Remove($script:TestTag2Id)
+            $script:TestTag2Id = $null
         }
 
         It "Should create a tag" {
@@ -1190,6 +1202,32 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             $tag | Should -Not -BeNullOrEmpty
             $tag.id | Should -Be $script:TestTagId
             $tag.name | Should -Be $script:TestTagName
+        }
+
+        It "Should get tag by name" {
+            $tag = Get-NBTag -Name $script:TestTagName
+
+            $tag | Should -Not -BeNullOrEmpty
+            $tag.id | Should -Be $script:TestTagId
+            $tag.name | Should -Be $script:TestTagName
+        }
+
+        It "Should get two tags by two name" {
+            $tags = Get-NBTag -Name $script:TestTagName, $script:TestTagName2
+
+            $tags | Should -Not -BeNullOrEmpty
+            $tags.Count | Should -Be  2
+            $tags.id | Should -Contain $script:TestTagId
+            $tags.id | Should -Contain $script:TestTag2Id
+        }
+
+        It "Should get two tags by two slugs" {
+            $tags = Get-NBTag -Slug $script:TestTagSlug, $script:TestTagSlug2
+
+            $tags | Should -Not -BeNullOrEmpty
+            $tags.Count | Should -Be  2
+            $tags.id | Should -Contain $script:TestTagId
+            $tags.id | Should -Contain $script:TestTag2Id
         }
 
         It "Should update tag" {
