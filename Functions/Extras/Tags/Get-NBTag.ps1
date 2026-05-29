@@ -57,10 +57,10 @@ function Get-NBTag {
         [uint64[]]$Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Slug,
+        [string[]]$Slug,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
