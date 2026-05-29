@@ -70,10 +70,10 @@ function BuildNewURI {
 
         foreach ($param in $Parameters.GetEnumerator()) {
             # Handle array values by repeating the key for each value (e.g., ?key=value1&key=value2)
+            $EncodedKey = [System.Uri]::EscapeDataString($param.Key)
             foreach ($thisValue in $param.Value) {
                 Write-Verbose " Adding URI parameter $($param.Key):$thisValue"
                 # URL encode key and value using .NET Uri class (available everywhere)
-                $EncodedKey = [System.Uri]::EscapeDataString($param.Key)
                 $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
                 $QueryParts.Add("$EncodedKey=$EncodedValue")
             }
