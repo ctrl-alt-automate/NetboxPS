@@ -216,6 +216,11 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $Result = Get-NBContact -Name 'John Doe'
             $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contacts/?name=John%20Doe'
         }
+
+        It "Should filter contacts by group ID" {
+            $Result = Get-NBContact -Group_Id 5
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contacts/?group_id=5'
+        }
     }
 
     Context "New-NBContact" {
@@ -233,6 +238,20 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.phone | Should -Be '+1-555-1234'
         }
+
+        It "Should map -Group_Id to the 'groups' body array" {
+            $Result = New-NBContact -Name 'Jane Doe' -Group_Id 1, 2
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups.Count | Should -Be 2
+            $bodyObj.groups | Should -Contain 1
+            $bodyObj.groups | Should -Contain 2
+        }
+
+        It "Should accept the -Group back-compat alias and map it to 'groups'" {
+            $Result = New-NBContact -Name 'Jane Doe' -Group 5
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups | Should -Contain 5
+        }
     }
 
     Context "Set-NBContact" {
@@ -246,6 +265,18 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $Result = Set-NBContact -Id 1 -Email 'new@example.com' -Confirm:$false
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.email | Should -Be 'new@example.com'
+        }
+
+        It "Should map -Group_Id to the 'groups' body array" {
+            $Result = Set-NBContact -Id 1 -Group_Id 3 -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups | Should -Contain 3
+        }
+
+        It "Should accept the -Group back-compat alias" {
+            $Result = Set-NBContact -Id 1 -Group 4 -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups | Should -Contain 4
         }
     }
 
@@ -355,6 +386,16 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $bodyObj.description | Should -Be 'Handles support requests'
             $bodyObj.parent | Should -Be 2
         }
+        It "Should auto-generate a slug from the name when -Slug is omitted" {
+            $Result = New-NBContactGroup -Name 'Support Team'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.slug | Should -Be 'support-team'
+        }
+        It "Should resolve a non-numeric -Parent to a name object in the body" {
+            $Result = New-NBContactGroup -Name 'Child' -Parent 'Admins'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.parent.name | Should -Be 'Admins'
+        }
     }
     Context "Set-NBContactGroup" {
         It "Should update a contact group" {
@@ -457,6 +498,9 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             @{ Command = 'Remove-NBContactRole'; Parameters = @{ Id = 1 } }
             @{ Command = 'Remove-NBTenant'; Parameters = @{ Id = 1 } }
             @{ Command = 'Remove-NBTenantGroup'; Parameters = @{ Id = 1 } }
+            @{ Command = 'New-NBContactGroup'; Parameters = @{ Name = 'whatif-test' } }
+            @{ Command = 'Set-NBContactGroup'; Parameters = @{ Id = 1 } }
+            @{ Command = 'Remove-NBContactGroup'; Parameters = @{ Id = 1 } }
         )
 
         It 'Should support -WhatIf for <Command>' -TestCases $whatIfTestCases {

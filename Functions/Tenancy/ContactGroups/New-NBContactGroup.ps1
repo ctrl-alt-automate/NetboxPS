@@ -14,7 +14,7 @@ function New-NBContactGroup {
         The contact group's slug, a URL-friendly unique identifier. Auto-generated from Name if not provided.
 
     .PARAMETER Description
-        Short description of the contact
+        Short description of the contact group
 
     .PARAMETER Comments
         Detailed comments. Markdown supported.
@@ -72,6 +72,13 @@ function New-NBContactGroup {
     process {
         Write-Verbose "Creating Contact Group"
         $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contact-groups'))
+
+        # Auto-generate slug from name if not provided. NetBox's REST API requires
+        # 'slug' on POST (it does not auto-slug server-side; only the web UI does),
+        # so derive it client-side to match New-NBTenantGroup and the documented examples.
+        if (-not $PSBoundParameters.ContainsKey('Slug')) {
+            $PSBoundParameters['Slug'] = ($Name -replace '\s+', '-').ToLower()
+        }
 
         $paramDict = $PSBoundParameters
         if ($PSBoundParameters.ContainsKey('Parent') -and $false -eq [System.UInt64]::TryParse($Parent, [ref]$null)) {

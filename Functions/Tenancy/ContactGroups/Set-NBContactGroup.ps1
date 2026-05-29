@@ -59,6 +59,8 @@ function Set-NBContactGroup {
 
         [object[]]$Tags,
 
+        [switch]$Force,
+
         [switch]$Raw
     )
 
@@ -75,7 +77,7 @@ function Set-NBContactGroup {
 
             $URI = BuildNewURI -Segments $URIComponents.Segments
 
-            if ($PSCmdlet.ShouldProcess("ID $ContactGroupId", 'Update contact group')) {
+            if ($Force -or $PSCmdlet.ShouldProcess("ID $ContactGroupId", 'Update contact group')) {
                 InvokeNetboxRequest -URI $URI -Method $Method -Body $URIComponents.Parameters -Raw:$Raw
             }
         }

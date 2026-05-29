@@ -84,6 +84,7 @@ function New-NBContact {
 
         [object[]]$Tags,
 
+        [Alias('Group')]
         [uint64[]]$Group_Id,
 
         [switch]$Raw

@@ -5,8 +5,8 @@ function Get-NBContactGroup {
         Get one or more contact groups from Netbox
 
     .DESCRIPTION
-        Retrieves contact groups from Netbox. contact groups link contacts
-        to objects (devices, sites, circuits, etc.) with a specific role.
+        Retrieves contact groups from Netbox. Contact groups are hierarchical
+        organizational containers for grouping related contacts.
 
     .PARAMETER Id
         The database ID of the contact group.
@@ -14,8 +14,11 @@ function Get-NBContactGroup {
     .PARAMETER Name
         The specific name of the contact group.
 
-    .PARAMETER Contact_Id
-        Filter by contact database ID.
+    .PARAMETER Slug
+        Filter by the contact group's slug.
+
+    .PARAMETER Parent_Id
+        Filter by parent contact group database ID (returns its direct children).
 
     .PARAMETER Offset
         Start the search at this index in results
@@ -68,7 +71,10 @@ function Get-NBContactGroup {
         [string]$Name,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Contact_Id,
+        [string]$Slug,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64]$Parent_Id,
 
         [switch]$All,
 

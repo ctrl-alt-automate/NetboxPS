@@ -17,7 +17,7 @@ function Set-NBContact {
         Email address of the contact
 
     .PARAMETER Group_Id
-        Database ID of assigned group. Alias: Groups for backwards compatibility.
+        Database ID(s) of assigned contact group(s). Alias: -Group (the previous parameter name) for backwards compatibility.
 
     .PARAMETER Title
         Job title or other title related to the contact
