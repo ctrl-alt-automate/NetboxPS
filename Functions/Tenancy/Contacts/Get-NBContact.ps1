@@ -31,8 +31,8 @@ function Get-NBContact {
     .PARAMETER Group
         The specific group as defined in Netbox.
 
-    .PARAMETER GroupID
-        The database ID of the group in Netbox
+    .PARAMETER Group_ID
+        A database ID of the group in Netbox which contacts should be filtered by. Alias: -GroupId for backwards compatibility.
 
     .PARAMETER Limit
         Limit the number of results to this number
@@ -109,10 +109,12 @@ function Get-NBContact {
         [string]$Address,
 
         [Parameter(ParameterSetName = 'Query')]
+        [Alias('Groups','GroupNames')]
         [string]$Group,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$GroupID,
+        [Alias('GroupId')]
+        [uint64]$Group_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
@@ -127,30 +129,31 @@ function Get-NBContact {
         AssertNBMutualExclusiveParam `
             -BoundParameters $PSBoundParameters `
             -Parameters 'Brief', 'Fields', 'Omit'
+
         Write-Verbose "Retrieving Contact"
         switch ($PSCmdlet.ParameterSetName) {
-        'ById' {
-            foreach ($Contact_ID in $Id) {
-                $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contacts', $Contact_ID))
+            'ById' {
+                foreach ($Contact_ID in $Id) {
+                    $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contacts', $Contact_ID))
 
-                $URIComponents = BuildURIComponents -URISegments $Segments -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id', 'Raw', 'All', 'PageSize'
+                    $URIComponents = BuildURIComponents -URISegments $Segments -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id', 'Raw', 'All', 'PageSize'
+
+                    $uri = BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters
+
+                    InvokeNetboxRequest -URI $uri -Raw:$Raw -All:$All -PageSize $PageSize
+                }
+                return
+            }
+
+            default {
+                $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contacts'))
+
+                $URIComponents = BuildURIComponents -URISegments $Segments -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
 
                 $uri = BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters
 
                 InvokeNetboxRequest -URI $uri -Raw:$Raw -All:$All -PageSize $PageSize
             }
-            return
         }
-
-        default {
-            $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contacts'))
-
-            $URIComponents = BuildURIComponents -URISegments $Segments -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
-
-            $uri = BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters
-
-            InvokeNetboxRequest -URI $uri -Raw:$Raw -All:$All -PageSize $PageSize
-        }
-    }
     }
 }

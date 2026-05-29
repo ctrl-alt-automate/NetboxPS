@@ -93,6 +93,20 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                 $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?param1=paramval1'
             }
         }
+
+        It "Should generate a URI with 2 parameters; 2nd is an array that gets joined" {
+            InModuleScope -ModuleName 'PowerNetbox' {
+                # Using ordered hashtable to ensure consistent parameter order in the generated URI for testing; not necessary in production code
+                $URIParameters = [ordered]@{
+                    'param1' = 'paramval1'
+                    'param2' = @('val1', 'val2', 'val3 having spaces')
+                }
+
+                $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                $URIBuilder.Query | Should -Match '(?=.*param2=val1)(?=.*param2=val2)(?=.*param2=val3%20having%20spaces)'
+                $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?(?=.*param1=paramval1)(?=.*param2=val1)(?=.*param2=val2)(?=.*param2=val3%20having%20spaces)'
+            }
+        }
     }
 
     Context "Building URI components" {

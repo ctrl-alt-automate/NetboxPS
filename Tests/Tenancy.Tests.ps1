@@ -216,6 +216,11 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $Result = Get-NBContact -Name 'John Doe'
             $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contacts/?name=John%20Doe'
         }
+
+        It "Should filter contacts by group ID" {
+            $Result = Get-NBContact -Group_Id 5
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contacts/?group_id=5'
+        }
     }
 
     Context "New-NBContact" {
@@ -233,6 +238,20 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.phone | Should -Be '+1-555-1234'
         }
+
+        It "Should map -Group_Id to the 'groups' body array" {
+            $Result = New-NBContact -Name 'Jane Doe' -Group_Id 1, 2
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups.Count | Should -Be 2
+            $bodyObj.groups | Should -Contain 1
+            $bodyObj.groups | Should -Contain 2
+        }
+
+        It "Should accept the -Group back-compat alias and map it to 'groups'" {
+            $Result = New-NBContact -Name 'Jane Doe' -Group 5
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups | Should -Contain 5
+        }
     }
 
     Context "Set-NBContact" {
@@ -246,6 +265,18 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             $Result = Set-NBContact -Id 1 -Email 'new@example.com' -Confirm:$false
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.email | Should -Be 'new@example.com'
+        }
+
+        It "Should map -Group_Id to the 'groups' body array" {
+            $Result = Set-NBContact -Id 1 -Group_Id 3 -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups | Should -Contain 3
+        }
+
+        It "Should accept the -Group back-compat alias" {
+            $Result = Set-NBContact -Id 1 -Group 4 -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.groups | Should -Contain 4
         }
     }
 
@@ -325,6 +356,74 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
     }
     #endregion
 
+    #region ContactGroup Tests
+    Context "Get-NBContactGroup" {
+        It "Should request contact groups" {
+            $Result = Get-NBContactGroup
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/'
+        }
+        It "Should request a contact group by ID" {
+            $Result = Get-NBContactGroup -Id 6
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/6/'
+        }
+        It "Should request contact groups filtered by name" {
+            $Result = Get-NBContactGroup -Name 'Support Team'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/?name=Support%20Team'
+        }
+    }
+    Context "New-NBContactGroup" {
+        It "Should create a contact group" {
+            $Result = New-NBContactGroup -Name 'Support Team'
+            $Result.Method | Should -Be 'POST'
+            $Result.Uri | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.name | Should -Be 'Support Team'
+        }
+        It "Should create a contact group with description and parent" {
+            $Result = New-NBContactGroup -Name 'Support Team' -Description 'Handles support requests' -Parent 2
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.description | Should -Be 'Handles support requests'
+            $bodyObj.parent | Should -Be 2
+        }
+        It "Should auto-generate a slug from the name when -Slug is omitted" {
+            $Result = New-NBContactGroup -Name 'Support Team'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.slug | Should -Be 'support-team'
+        }
+        It "Should resolve a non-numeric -Parent to a name object in the body" {
+            $Result = New-NBContactGroup -Name 'Child' -Parent 'Admins'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.parent.name | Should -Be 'Admins'
+        }
+    }
+    Context "Set-NBContactGroup" {
+        It "Should update a contact group" {
+            $Result = Set-NBContactGroup -Id 4 -Name 'Updated Group' -Confirm:$false
+            $Result.Method | Should -Be 'PATCH'
+            $Result.URI | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/4/'
+            $Result.Body | ConvertFrom-Json | Select-Object -ExpandProperty name | Should -Be 'Updated Group'
+        }
+
+    }
+    Context "Remove-NBContactGroup" {
+        BeforeAll {
+            Mock -CommandName "Get-NBContactGroup" -MockWith {
+                return [pscustomobject]@{ 'Id' = $Id; 'Name' = 'TestGroup' }
+            }
+        }
+        It "Should remove a contact group" {
+            $Result = Remove-NBContactGroup -Id 4 -Confirm:$false
+            $Result.Method | Should -Be 'DELETE'
+            $Result.URI | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/4/'
+        }
+        It "Should remove a contact group by pipeline input" {
+            $Result = Get-NBContactGroup -Id 5 | Remove-NBContactGroup -Confirm:$false
+            $Result.URI | Should -Be 'https://netbox.domain.com/api/tenancy/contact-groups/5/'
+        }
+    }
+    #endregion
+
     #region ContactAssignment Tests
     Context "Get-NBContactAssignment" {
         It "Should request contact assignments" {
@@ -399,6 +498,9 @@ Describe "Tenancy Module Tests" -Tag 'Tenancy' {
             @{ Command = 'Remove-NBContactRole'; Parameters = @{ Id = 1 } }
             @{ Command = 'Remove-NBTenant'; Parameters = @{ Id = 1 } }
             @{ Command = 'Remove-NBTenantGroup'; Parameters = @{ Id = 1 } }
+            @{ Command = 'New-NBContactGroup'; Parameters = @{ Name = 'whatif-test' } }
+            @{ Command = 'Set-NBContactGroup'; Parameters = @{ Id = 1 } }
+            @{ Command = 'Remove-NBContactGroup'; Parameters = @{ Id = 1 } }
         )
 
         It 'Should support -WhatIf for <Command>' -TestCases $whatIfTestCases {

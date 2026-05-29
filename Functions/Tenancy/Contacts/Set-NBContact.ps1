@@ -16,8 +16,8 @@ function Set-NBContact {
     .PARAMETER Email
         Email address of the contact
 
-    .PARAMETER Group
-        Database ID of assigned group
+    .PARAMETER Group_Id
+        Database ID(s) of assigned contact group(s). Alias: -Group (the previous parameter name) for backwards compatibility.
 
     .PARAMETER Title
         Job title or other title related to the contact
@@ -61,15 +61,13 @@ function Set-NBContact {
     (
         [Parameter(Mandatory = $true,
                    ValueFromPipelineByPropertyName = $true)]
-        [uint64]$Id,
+        [uint64[]]$Id,
 
         [ValidateLength(1, 100)]
         [string]$Name,
 
         [ValidateLength(0, 254)]
         [string]$Email,
-
-        [uint64]$Group,
 
         [ValidateLength(0, 100)]
         [string]$Title,
@@ -90,10 +88,12 @@ function Set-NBContact {
 
         [hashtable]$Custom_Fields,
 
-        [switch]$Force,
-
-
         [object[]]$Tags,
+
+        [Alias('Group')]
+        [uint64[]]$Group_Id,
+
+        [switch]$Force,
 
         [switch]$Raw
     )
@@ -103,6 +103,10 @@ function Set-NBContact {
     }
 
     process {
+        if ($PSBoundParameters.ContainsKey('Group_Id')) {
+            $PSBoundParameters['Groups'] = [System.Collections.ArrayList]::new(@($PSBoundParameters['Group_Id']))
+            $PSBoundParameters.Remove('Group_Id') | Out-Null
+        }
         Write-Verbose "Updating Contact"
         foreach ($ContactId in $Id) {
             $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contacts', $ContactId))

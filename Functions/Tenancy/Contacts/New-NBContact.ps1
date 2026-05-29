@@ -34,6 +34,12 @@ function New-NBContact {
     .PARAMETER Custom_Fields
         Hashtable of custom field values.
 
+    .PARAMETER Tags
+        Array of tag names or IDs to assign to the contact.
+
+    .PARAMETER Group_Id
+        Array of contact group IDs to associate with the contact.
+
     .PARAMETER Raw
         Return the raw API response instead of the created object.
 
@@ -76,13 +82,20 @@ function New-NBContact {
 
         [hashtable]$Custom_Fields,
 
-
         [object[]]$Tags,
+
+        [Alias('Group')]
+        [uint64[]]$Group_Id,
 
         [switch]$Raw
     )
 
     process {
+        # For parametername consistency group_id -> groups: PUT api expects "groups": [1,2,3]
+        if ($PSBoundParameters.ContainsKey('Group_Id')) {
+            $PSBoundParameters.Groups = $PSBoundParameters.Group_Id
+            $PSBoundParameters.Remove('Group_Id') | Out-Null
+        }
         Write-Verbose "Creating Contact"
         $Segments = [System.Collections.ArrayList]::new(@('tenancy', 'contacts'))
 

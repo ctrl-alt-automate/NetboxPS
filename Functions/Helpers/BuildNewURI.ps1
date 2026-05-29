@@ -69,11 +69,14 @@ function BuildNewURI {
         $QueryParts = [System.Collections.Generic.List[string]]::new()
 
         foreach ($param in $Parameters.GetEnumerator()) {
-            Write-Verbose " Adding URI parameter $($param.Key):$($param.Value)"
-            # URL encode key and value using .NET Uri class (available everywhere)
+            # Handle array values by repeating the key for each value (e.g., ?key=value1&key=value2)
             $EncodedKey = [System.Uri]::EscapeDataString($param.Key)
-            $EncodedValue = [System.Uri]::EscapeDataString([string]$param.Value)
-            $QueryParts.Add("$EncodedKey=$EncodedValue")
+            foreach ($thisValue in $param.Value) {
+                Write-Verbose " Adding URI parameter $($param.Key):$thisValue"
+                # URL encode key and value using .NET Uri class (available everywhere)
+                $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
+                $QueryParts.Add("$EncodedKey=$EncodedValue")
+            }
         }
 
         $uriBuilder.Query = $QueryParts -join '&'
