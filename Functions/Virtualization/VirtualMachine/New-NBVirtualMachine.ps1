@@ -26,11 +26,17 @@
 .PARAMETER Virtual_Machine_Type
     The virtual machine type ID (NetBox 4.6+).
 
+.PARAMETER Serial
+    Serial number of the VM.
+
 .PARAMETER Tenant
     The tenant ID.
 
 .PARAMETER Status
     Status of the VM. Defaults to 'Active'.
+
+.PARAMETER Description
+    Description of the VM.
 
 .PARAMETER Role
     The role ID for the VM.
@@ -128,11 +134,17 @@ function New-NBVirtualMachine {
         [uint64]$Virtual_Machine_Type,
 
         [Parameter(ParameterSetName = 'Single')]
+        [string]$Serial,
+
+        [Parameter(ParameterSetName = 'Single')]
         [uint64]$Tenant,
 
         [Parameter(ParameterSetName = 'Single')]
         [ValidateSet('offline', 'active', 'planned', 'staged', 'failed', 'decommissioning', 'paused', IgnoreCase = $true)]
         [string]$Status = 'active',
+
+        [Parameter(ParameterSetName = 'Single')]
+        [string]$Description,
 
         [Parameter(ParameterSetName = 'Single')]
         [uint64]$Role,

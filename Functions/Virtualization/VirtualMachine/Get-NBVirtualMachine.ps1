@@ -79,6 +79,14 @@ function Get-NBVirtualMachine {
     .PARAMETER Cluster_Id
         Database ID of the cluster.
 
+    .PARAMETER Device
+        The string value of the device VMs may be attached to. (NetBox 4.6+). Allows a clusterless,
+        device-bound VMs.
+
+    .PARAMETER Device_Id
+        The device ID to attach this VM to (NetBox 4.6+). Allows a clusterless,
+        device-bound VM.
+
     .PARAMETER Site
         String value of the site.
 
@@ -91,6 +99,14 @@ function Get-NBVirtualMachine {
     .PARAMETER Role_Id
         Database ID of the role.
 
+    .PARAMETER Serial
+        Serial number of the VM.
+
+    .PARAMETER Virtual_Machine_Type
+        String value of the virtual machine type (Slug). (Netbox 4.6+)
+
+    .PARAMETER Virtual_Machine_Type_ID
+        Database ID of the virtual machine type. (Netbox 4.6+)
     .PARAMETER Raw
         Return the raw API response instead of extracting the results array.
 
@@ -177,6 +193,12 @@ function Get-NBVirtualMachine {
         [uint64]$Cluster_Id,
 
         [Parameter(ParameterSetName = 'Query')]
+        [string]$Device,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64]$Device_Id,
+
+        [Parameter(ParameterSetName = 'Query')]
         [string]$Site,
 
         [Parameter(ParameterSetName = 'Query')]
@@ -187,6 +209,15 @@ function Get-NBVirtualMachine {
 
         [Parameter(ParameterSetName = 'Query')]
         [uint64]$Role_Id,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [string]$Virtual_Machine_Type,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64]$Virtual_Machine_Type_ID,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [string]$Serial,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

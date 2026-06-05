@@ -27,8 +27,14 @@
 .PARAMETER Virtual_Machine_Type
     The virtual machine type ID (NetBox 4.6+). Pass $null to clear.
 
+.PARAMETER Serial
+    Serial number of the VM.
+
 .PARAMETER Status
     Status of the VM.
+
+.PARAMETER Description
+    Description of the VM.
 
 .PARAMETER Platform
     The platform ID.
@@ -128,8 +134,14 @@ function Set-NBVirtualMachine {
         [Nullable[uint64]]$Virtual_Machine_Type,
 
         [Parameter(ParameterSetName = 'Single')]
+        [string]$Serial,
+
+        [Parameter(ParameterSetName = 'Single')]
         [ValidateSet('offline', 'active', 'planned', 'staged', 'failed', 'decommissioning', 'paused', IgnoreCase = $true)]
         [string]$Status,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [string]$Description,
 
         [Parameter(ParameterSetName = 'Single')]
         [uint64]$Platform,
