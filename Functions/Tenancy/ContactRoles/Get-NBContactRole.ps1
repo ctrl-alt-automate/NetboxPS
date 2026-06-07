@@ -46,6 +46,12 @@ function Get-NBContactRole {
         Specify which fields to exclude from the response.
         Requires Netbox 4.5.0 or later.
 
+    .PARAMETER Slug
+        Filter by URL slug.
+
+    .PARAMETER Description
+        Filter by description.
+
     .EXAMPLE
         PS C:\> Get-NBContactRole
 

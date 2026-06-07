@@ -8,6 +8,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Format
+    Filter by format.
+
 .EXAMPLE
     Get-NBAPIDefinition
 

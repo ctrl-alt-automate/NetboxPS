@@ -9,6 +9,54 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Device
+    Device assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Parent
+    Parent object assigned to this object (database ID).
+
+.PARAMETER Label
+    Physical label.
+
+.PARAMETER Role
+    Role assigned to this object (database ID).
+
+.PARAMETER Manufacturer
+    Manufacturer assigned to this object (database ID).
+
+.PARAMETER Part_Id
+    Database ID of the part.
+
+.PARAMETER Serial
+    Serial number assigned by the manufacturer.
+
+.PARAMETER Asset_Tag
+    Unique asset tag.
+
+.PARAMETER Discovered
+    This item was automatically discovered
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Component_Type
+    Component Type.
+
+.PARAMETER Component_Id
+    Database ID of the component.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     Set-NBDCIMInventoryItem
 

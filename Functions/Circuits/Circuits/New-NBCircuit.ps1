@@ -9,6 +9,48 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER CID
+    Unique circuit ID
+
+.PARAMETER Provider
+    Provider assigned to this object (database ID).
+
+.PARAMETER Type
+    Type of the object.
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Termination_A
+    Termination A.
+
+.PARAMETER Install_Date
+    Install Date.
+
+.PARAMETER Termination_Z
+    Termination Z.
+
+.PARAMETER Commit_Rate
+    Committed rate
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Force
+    Skip the confirmation prompt.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBCircuit
 

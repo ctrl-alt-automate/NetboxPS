@@ -41,6 +41,96 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Manufacturer_Id
+    Filter by manufacturer database ID.
+
+.PARAMETER Manufacturer
+    Filter by manufacturer (name or slug).
+
+.PARAMETER Device_Type_Id
+    Filter by device type database ID.
+
+.PARAMETER Role_Id
+    Filter by role database ID.
+
+.PARAMETER Role
+    Filter by role (name or slug).
+
+.PARAMETER Tenant_Id
+    Filter by tenant database ID.
+
+.PARAMETER Tenant
+    Filter by tenant (name or slug).
+
+.PARAMETER Platform_Id
+    Filter by platform database ID.
+
+.PARAMETER Platform
+    Filter by platform (name or slug).
+
+.PARAMETER Asset_Tag
+    Filter by asset tag.
+
+.PARAMETER Site_Id
+    Filter by site database ID.
+
+.PARAMETER Site
+    Filter by site (name or slug).
+
+.PARAMETER Rack_Group_Id
+    Filter by rack group database ID.
+
+.PARAMETER Rack_Id
+    Filter by rack database ID.
+
+.PARAMETER Cluster_Id
+    Filter by cluster database ID.
+
+.PARAMETER Model
+    Filter by model.
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Is_Full_Depth
+    Device consumes both front and rear rack faces.
+
+.PARAMETER Is_Console_Server
+    Filter by is console server.
+
+.PARAMETER Is_PDU
+    Filter by is pdu.
+
+.PARAMETER Is_Network_Device
+    Filter by is network device.
+
+.PARAMETER MAC_Address
+    Filter by MAC address.
+
+.PARAMETER Has_Primary_IP
+    Filter by has primary ip.
+
+.PARAMETER Virtual_Chassis_Id
+    Filter by virtual chassis database ID.
+
+.PARAMETER Position
+    Filter by position.
+
+.PARAMETER Serial
+    Filter by serial number.
+
 .EXAMPLE
     Get-NBDCIMDevice
     Returns the first page of devices (config_context excluded by default).

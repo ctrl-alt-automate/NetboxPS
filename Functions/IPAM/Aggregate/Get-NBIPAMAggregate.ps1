@@ -28,6 +28,33 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Prefix
+    Filter by prefix (name or slug).
+
+.PARAMETER Family
+    Filter by family.
+
+.PARAMETER RIR_Id
+    Filter by rir database ID.
+
+.PARAMETER RIR
+    Filter by rir.
+
+.PARAMETER Date_Added
+    Filter by date added.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBIPAMAggregate
 

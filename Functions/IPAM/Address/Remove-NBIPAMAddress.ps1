@@ -22,6 +22,9 @@
 .PARAMETER Force
     Skip confirmation prompts.
 
+.PARAMETER Raw
+    Return the raw API response object instead of the .results collection.
+
 .EXAMPLE
     Remove-NBIPAMAddress -Id 123 -Force
 

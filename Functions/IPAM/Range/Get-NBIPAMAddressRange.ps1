@@ -28,6 +28,51 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Range
+    Filter by range.
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Family
+    Filter by family.
+
+.PARAMETER VRF
+    Filter by VRF (name or slug).
+
+.PARAMETER VRF_Id
+    Filter by vrf database ID.
+
+.PARAMETER Tenant
+    Filter by tenant (name or slug).
+
+.PARAMETER Tenant_Id
+    Filter by tenant database ID.
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Role
+    Filter by role (name or slug).
+
+.PARAMETER Parent
+    Filter by parent object (name or slug).
+
+.PARAMETER Mark_Utilized
+    Filter by mark utilized.
+
+.PARAMETER Mark_Populated
+    Prevent the creation of IP addresses within this range
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBIPAMAddressRange
 

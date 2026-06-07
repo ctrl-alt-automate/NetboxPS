@@ -52,6 +52,9 @@
 .PARAMETER Tags
     Array of tag IDs to assign to this rear port.
 
+.PARAMETER Raw
+    Return the raw API response object instead of the .results collection.
+
 .EXAMPLE
     New-NBDCIMRearPort -Device 42 -Name "Rear 1" -Type "8p8c"
 

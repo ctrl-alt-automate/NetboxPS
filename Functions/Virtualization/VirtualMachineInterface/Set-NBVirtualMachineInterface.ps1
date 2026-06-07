@@ -9,6 +9,33 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER MAC_Address
+    MAC address.
+
+.PARAMETER MTU
+    MTU.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Enabled
+    Whether the object is enabled.
+
+.PARAMETER Virtual_Machine
+    Virtual machine assigned to this object (database ID).
+
+.PARAMETER Force
+    Skip the confirmation prompt.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBVirtualMachineInterface
 

@@ -118,6 +118,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Force
+    Skip the confirmation prompt.
+
 .EXAMPLE
     Set-NBDCIMInterface -Id 42 -Name "eth0-renamed"
 

@@ -9,6 +9,33 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Device_Type
+    Device type assigned to this object (database ID).
+
+.PARAMETER Module_Type
+    Module type assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Label
+    Physical label.
+
+.PARAMETER Type
+    Type of the object.
+
+.PARAMETER Maximum_Draw
+    Maximum power draw (watts)
+
+.PARAMETER Allocated_Draw
+    Allocated power draw (watts)
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBDCIMPowerPortTemplate
 

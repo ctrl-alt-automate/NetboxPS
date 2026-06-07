@@ -28,6 +28,63 @@
     Specify which fields to include in the response.
     Supports nested field selection (e.g., 'site.name', 'device_type.model').
 
+.PARAMETER Address
+    Filter by address.
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Family
+    Filter by family.
+
+.PARAMETER Parent
+    Filter by parent object (name or slug).
+
+.PARAMETER Mask_Length
+    Filter by mask length.
+
+.PARAMETER VRF
+    Filter by VRF (name or slug).
+
+.PARAMETER VRF_Id
+    Filter by vrf database ID.
+
+.PARAMETER Tenant
+    Filter by tenant (name or slug).
+
+.PARAMETER Tenant_Id
+    Filter by tenant database ID.
+
+.PARAMETER Device
+    Filter by device (name or slug).
+
+.PARAMETER Device_ID
+    Filter by device database ID.
+
+.PARAMETER Virtual_Machine
+    Filter by virtual machine (name or slug).
+
+.PARAMETER Virtual_Machine_Id
+    Filter by virtual machine database ID.
+
+.PARAMETER Interface_Id
+    Filter by interface database ID.
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Role
+    Filter by role (name or slug).
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBIPAMAddress
 

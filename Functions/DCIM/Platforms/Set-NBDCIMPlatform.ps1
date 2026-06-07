@@ -9,6 +9,30 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Slug
+    URL-friendly unique identifier (slug).
+
+.PARAMETER Manufacturer
+    Manufacturer assigned to this object (database ID).
+
+.PARAMETER Config_Template
+    Config template assigned to this object (database ID).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     Set-NBDCIMPlatform
 

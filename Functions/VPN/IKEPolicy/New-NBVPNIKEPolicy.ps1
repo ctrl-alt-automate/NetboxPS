@@ -32,6 +32,12 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVPNIKEPolicy -Name "Corporate IKE" -Version 2
 

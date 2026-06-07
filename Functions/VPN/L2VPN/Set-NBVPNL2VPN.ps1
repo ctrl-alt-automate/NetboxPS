@@ -9,6 +9,45 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Slug
+    URL-friendly unique identifier (slug).
+
+.PARAMETER Identifier
+    Identifier.
+
+.PARAMETER Type
+    Type of the object.
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Import_Targets
+    Import Targets.
+
+.PARAMETER Export_Targets
+    Export Targets.
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBVPNL2VPN
 

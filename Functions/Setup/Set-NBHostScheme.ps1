@@ -5,6 +5,9 @@
 .DESCRIPTION
     Sets the HTTP scheme (http/https) for Netbox API connections.
 
+.PARAMETER Scheme
+    Scheme.
+
 .EXAMPLE
     Set-NBHostScheme -Scheme 'https'
 

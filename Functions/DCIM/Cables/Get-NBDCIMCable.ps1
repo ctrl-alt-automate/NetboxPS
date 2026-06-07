@@ -69,6 +69,18 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Termination_A_Type
+    Filter by termination a type.
+
+.PARAMETER Termination_A_ID
+    Filter by termination a database ID.
+
+.PARAMETER Termination_B_Type
+    Filter by termination b type.
+
+.PARAMETER Termination_B_ID
+    Filter by termination b database ID.
+
 .EXAMPLE
     Get-NBDCIMCable
 

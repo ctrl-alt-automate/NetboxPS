@@ -5,6 +5,9 @@
 .DESCRIPTION
     Sets the port for Netbox API connections.
 
+.PARAMETER Port
+    Port.
+
 .EXAMPLE
     Set-NBHostPort -Port 443
 

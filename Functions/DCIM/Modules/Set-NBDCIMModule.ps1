@@ -9,6 +9,39 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Device
+    Device assigned to this object (database ID).
+
+.PARAMETER Module_Bay
+    Module Bay.
+
+.PARAMETER Module_Type
+    Module type assigned to this object (database ID).
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Serial
+    Serial number assigned by the manufacturer.
+
+.PARAMETER Asset_Tag
+    Unique asset tag.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     Set-NBDCIMModule
 

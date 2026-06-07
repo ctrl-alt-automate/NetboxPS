@@ -9,6 +9,39 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Device_Type
+    Device type assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Parent
+    Parent object assigned to this object (database ID).
+
+.PARAMETER Label
+    Physical label.
+
+.PARAMETER Role
+    Role assigned to this object (database ID).
+
+.PARAMETER Manufacturer
+    Manufacturer assigned to this object (database ID).
+
+.PARAMETER Part_Id
+    Database ID of the part.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Component_Type
+    Component Type.
+
+.PARAMETER Component_Name
+    Component Name.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBDCIMInventoryItemTemplate
 

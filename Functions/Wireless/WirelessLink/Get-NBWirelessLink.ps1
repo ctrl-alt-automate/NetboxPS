@@ -28,6 +28,21 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER SSID
+    Filter by ssid.
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBWirelessLink
 
