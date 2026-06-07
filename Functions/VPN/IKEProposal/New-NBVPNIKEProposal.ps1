@@ -35,6 +35,9 @@
 .PARAMETER Raw
     Return the raw API response
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVPNIKEProposal -Name "IKE-Proposal-1" -Authentication_Method "preshared-keys" -Encryption_Algorithm "aes-256-cbc" -Authentication_Algorithm "hmac-sha256" -Group 14
 

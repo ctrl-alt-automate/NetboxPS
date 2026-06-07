@@ -14,6 +14,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBBookmark -Object_Type "dcim.device" -Object_Id 1
 

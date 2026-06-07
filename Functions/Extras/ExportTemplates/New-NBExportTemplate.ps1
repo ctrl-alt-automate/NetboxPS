@@ -35,6 +35,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBExportTemplate -Name "CSV Export" -Object_Types @("dcim.device") -Template_Code "{% for d in queryset %}{{ d.name }}{% endfor %}"
 

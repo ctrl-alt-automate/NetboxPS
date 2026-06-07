@@ -39,6 +39,9 @@ function Set-NBIPAMVRF {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         Set-NBIPAMVRF -Id 1 -Name "Production-VRF"
 

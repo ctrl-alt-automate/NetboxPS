@@ -26,6 +26,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVPNIPSecPolicy -Name "IPSec-Policy-1"
 

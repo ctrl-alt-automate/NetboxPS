@@ -25,6 +25,9 @@ function New-NBContactAssignment {
     .PARAMETER Raw
         Return the unparsed data from the HTTP request
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         PS C:\> New-NBContactAssignment -Object_Type 'dcim.location' -Object_Id 10 -Contact 15 -Role 10 -Priority 'Primary'
 

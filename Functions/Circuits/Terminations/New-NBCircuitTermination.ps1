@@ -41,6 +41,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBCircuitTermination -Circuit 1 -Term_Side "A" -Site 1
 

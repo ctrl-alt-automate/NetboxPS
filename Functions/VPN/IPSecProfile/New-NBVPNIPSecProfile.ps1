@@ -29,6 +29,9 @@
 .PARAMETER Raw
     Return the raw API response
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVPNIPSecProfile -Name "IPSec-Profile-1" -Mode "esp" -IKE_Policy 1 -IPSec_Policy 1
 

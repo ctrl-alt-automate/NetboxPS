@@ -77,6 +77,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVirtualMachine -Name "webserver01" -Cluster 1 -vCPUs 4 -Memory 8192
 
