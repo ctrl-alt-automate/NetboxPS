@@ -34,20 +34,15 @@ $header = @'
 #   Orphan  = a .PARAMETER help entry names a parameter that does not exist
 # Lines starting with # and blank lines are ignored. Matching is case-insensitive.
 #
-# This file is a BASELINE of pre-existing gaps, snapshotted so the CI gate in
-# CodeQuality.Tests.ps1 (Context "Comment-based help parameter parity") only
-# fails on NEW gaps. It is NOT a target to grow -- chip it down over time.
+# This file is the allow-list of KNOWN parity gaps. The CI gate in
+# CodeQuality.Tests.ps1 (Context "Comment-based help parameter parity") fails on
+# any gap NOT listed here. It is currently EMPTY -- every public function
+# parameter has matching .PARAMETER help -- so the gate is fully enforced.
 #
-# DO NOT add a NEW entry here to silence the gate. The correct fix for a new
-# finding is to add the .PARAMETER help (or fix the param name), then DELETE the
-# matching line below.
-#
-# Regenerate (only after reducing the backlog):
+# Keep it empty: the fix for a new finding is to add the .PARAMETER help (or fix
+# the param name), NOT to add a line here. Only regenerate after a deliberate,
+# reviewed change to the known set:
 #   pwsh -NoProfile -File ./Tests/Update-ParamHelpParityBaseline.ps1
-#
-# Quick win: ~90 entries are functions missing only ".PARAMETER Tags" (the
-# [object[]]$Tags rollout in #371) -- a single bulk doc PR clears those. Most of
-# the remainder are Get-* filter params whose text can come from the OpenAPI schema.
 # ---------------------------------------------------------------------------
 '@
 

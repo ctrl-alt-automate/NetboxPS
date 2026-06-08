@@ -14,9 +14,6 @@
 .PARAMETER Description
     Description of the tunnel group.
 
-.PARAMETER CustomFields
-    Hashtable of custom field values.
-
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 

@@ -26,9 +26,6 @@
 .PARAMETER Comments
     Additional comments.
 
-.PARAMETER CustomFields
-    Hashtable of custom field values.
-
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
