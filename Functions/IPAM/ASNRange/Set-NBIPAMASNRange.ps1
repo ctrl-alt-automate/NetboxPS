@@ -36,6 +36,9 @@ function Set-NBIPAMASNRange {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         Set-NBIPAMASNRange -Id 1 -Description "Updated description"
 

@@ -5,6 +5,9 @@
 .DESCRIPTION
     Clears the stored Netbox API credential from the module configuration.
 
+.PARAMETER Force
+    Skip the confirmation prompt.
+
 .EXAMPLE
     Clear-NBCredential
 

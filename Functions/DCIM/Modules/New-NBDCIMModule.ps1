@@ -9,6 +9,42 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Device
+    Device assigned to this object (database ID).
+
+.PARAMETER Module_Bay
+    Module Bay.
+
+.PARAMETER Module_Type
+    Module type assigned to this object (database ID).
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Serial
+    Serial number assigned by the manufacturer.
+
+.PARAMETER Asset_Tag
+    Unique asset tag.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Replicate_Components
+    Automatically populate components associated with this module type (default: true)
+
+.PARAMETER Adopt_Components
+    Adopt already existing components
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     New-NBDCIMModule
 

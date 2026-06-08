@@ -28,6 +28,30 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Group_Id
+    Filter by group database ID.
+
+.PARAMETER Encapsulation
+    Filter by encapsulation.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBVPNTunnel
 

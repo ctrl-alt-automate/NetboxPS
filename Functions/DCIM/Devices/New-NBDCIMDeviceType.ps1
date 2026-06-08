@@ -9,6 +9,48 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Manufacturer
+    Manufacturer assigned to this object (database ID).
+
+.PARAMETER Model
+    Model name.
+
+.PARAMETER Slug
+    URL-friendly unique identifier (slug).
+
+.PARAMETER Part_Number
+    Discrete part number (optional)
+
+.PARAMETER U_Height
+    Height in rack units
+
+.PARAMETER Is_Full_Depth
+    Device consumes both front and rear rack faces.
+
+.PARAMETER Subdevice_Role
+    Subdevice Role.
+
+.PARAMETER Airflow
+    Airflow.
+
+.PARAMETER Weight
+    Numeric weight value.
+
+.PARAMETER Weight_Unit
+    Unit of measurement for the weight.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     New-NBDCIMDeviceType
 

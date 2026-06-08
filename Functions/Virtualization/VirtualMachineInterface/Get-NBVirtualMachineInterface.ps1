@@ -57,6 +57,9 @@ function Get-NBVirtualMachineInterface {
         Specify which fields to exclude from the response.
         Requires Netbox 4.5.0 or later.
 
+    .PARAMETER Query
+        Free-text search across the object (NetBox 'q' parameter).
+
     .EXAMPLE
         PS C:\> Get-NBVirtualMachineInterface
 .NOTES

@@ -28,6 +28,60 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER VID
+    Numeric VLAN ID (1-4094)
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Tenant
+    Filter by tenant (name or slug).
+
+.PARAMETER Tenant_Id
+    Filter by tenant database ID.
+
+.PARAMETER TenantGroup
+    Filter by tenantgroup.
+
+.PARAMETER TenantGroup_Id
+    Filter by tenantgroup database ID.
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Region
+    Filter by region (name or slug).
+
+.PARAMETER Site
+    Filter by site (name or slug).
+
+.PARAMETER Site_Id
+    Filter by site database ID.
+
+.PARAMETER Group
+    Filter by group (name or slug).
+
+.PARAMETER Group_Id
+    Filter by group database ID.
+
+.PARAMETER Role
+    Filter by role (name or slug).
+
+.PARAMETER Role_Id
+    Filter by role database ID.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBIPAMVLAN
 

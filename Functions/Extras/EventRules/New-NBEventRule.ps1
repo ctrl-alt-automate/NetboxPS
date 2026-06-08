@@ -50,6 +50,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBEventRule -Name "Notify on device create" -Object_Types @("dcim.device") -Type_Create $true -Action_Type "webhook" -Action_Object_Id 1
 

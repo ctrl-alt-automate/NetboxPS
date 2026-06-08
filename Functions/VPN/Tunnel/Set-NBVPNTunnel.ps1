@@ -9,6 +9,39 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Encapsulation
+    Encapsulation.
+
+.PARAMETER Group
+    Group assigned to this object (database ID).
+
+.PARAMETER IPSec_Profile
+    IPSec Profile.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBVPNTunnel
 

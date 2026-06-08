@@ -9,6 +9,36 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Device_Type
+    Device type assigned to this object (database ID).
+
+.PARAMETER Module_Type
+    Module type assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Label
+    Physical label.
+
+.PARAMETER Type
+    Type of the object.
+
+.PARAMETER Power_Port
+    Power port assigned to this object (database ID).
+
+.PARAMETER Feed_Leg
+    Feed Leg.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Color
+    Color as a 6-digit hex code (RRGGBB).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBDCIMPowerOutletTemplate
 

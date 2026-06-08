@@ -28,6 +28,33 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Mac_Address
+    Filter by MAC address.
+
+.PARAMETER Assigned_Object_Id
+    Filter by assigned object database ID.
+
+.PARAMETER Assigned_Object_Type
+    Filter by assigned object type.
+
+.PARAMETER Device_Id
+    Filter by device database ID.
+
+.PARAMETER Virtual_Machine_Id
+    Filter by virtual machine database ID.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBDCIMMACAddress
 

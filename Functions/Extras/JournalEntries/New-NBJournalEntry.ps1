@@ -23,6 +23,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBJournalEntry -Assigned_Object_Type "dcim.device" -Assigned_Object_Id 1 -Comments "Device maintenance completed"
 

@@ -9,6 +9,36 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Protocol
+    Protocol.
+
+.PARAMETER Group_Id
+    Database ID of the group.
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Auth_Type
+    Auth Type.
+
+.PARAMETER Auth_Key
+    Auth Key.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     Set-NBIPAMFHRPGroup
 

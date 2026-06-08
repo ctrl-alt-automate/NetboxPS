@@ -9,6 +9,27 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Site
+    Site assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Location
+    Location assigned to this object (database ID).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     New-NBDCIMPowerPanel
 

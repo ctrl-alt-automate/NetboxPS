@@ -40,6 +40,9 @@ function New-NBDCIMLocation {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         New-NBDCIMLocation -Name "Server Room" -Slug "server-room" -Site 1
 

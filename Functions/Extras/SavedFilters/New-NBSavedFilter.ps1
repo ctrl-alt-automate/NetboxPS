@@ -32,6 +32,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBSavedFilter -Name "Active Devices" -Slug "active-devices" -Object_Types @("dcim.device") -Parameters @{status = "active"}
 

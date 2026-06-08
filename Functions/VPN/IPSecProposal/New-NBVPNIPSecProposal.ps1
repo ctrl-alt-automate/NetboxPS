@@ -32,6 +32,9 @@
 .PARAMETER Raw
     Return the raw API response
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVPNIPSecProposal -Name "IPSec-Proposal-1" -Encryption_Algorithm "aes-256-cbc" -Authentication_Algorithm "hmac-sha256"
 

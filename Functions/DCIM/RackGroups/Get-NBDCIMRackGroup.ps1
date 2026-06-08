@@ -30,6 +30,18 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER All
+    Retrieve all matching results, following pagination automatically.
+
+.PARAMETER PageSize
+    Page size to request while -All follows pagination.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBDCIMRackGroup -Name 'Row A'
 

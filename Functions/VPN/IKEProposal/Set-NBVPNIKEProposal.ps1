@@ -9,6 +9,39 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Authentication_Method
+    Authentication Method.
+
+.PARAMETER Encryption_Algorithm
+    Encryption Algorithm.
+
+.PARAMETER Authentication_Algorithm
+    Authentication Algorithm.
+
+.PARAMETER Group
+    Group assigned to this object (database ID).
+
+.PARAMETER SA_Lifetime
+    Security association lifetime (in seconds)
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBVPNIKEProposal
 

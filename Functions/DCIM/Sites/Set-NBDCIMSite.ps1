@@ -60,6 +60,12 @@ function Set-NBDCIMSite {
     .PARAMETER Force
         Skip confirmation prompts
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
+    .PARAMETER Raw
+        Return the raw API response object instead of the .results collection.
+
     .EXAMPLE
         Set-NBDCIMSite -Id 1 -Description "Updated description"
 

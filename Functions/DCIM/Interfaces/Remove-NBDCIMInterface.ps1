@@ -12,6 +12,9 @@ function Remove-NBDCIMInterface {
     .PARAMETER Force
         Skip confirmation prompts.
 
+    .PARAMETER Raw
+        Return the raw API response object instead of the .results collection.
+
     .EXAMPLE
         PS C:\> Remove-NBDCIMInterface -Id 123
 .NOTES

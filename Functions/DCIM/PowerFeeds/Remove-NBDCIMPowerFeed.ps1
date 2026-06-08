@@ -9,6 +9,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to delete.
+
 .EXAMPLE
     Remove-NBDCIMPowerFeed
 

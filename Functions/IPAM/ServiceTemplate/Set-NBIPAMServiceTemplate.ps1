@@ -30,6 +30,9 @@ function Set-NBIPAMServiceTemplate {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         Set-NBIPAMServiceTemplate -Id 1 -Ports @(80, 443, 8080)
 

@@ -63,6 +63,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBIPAMAddress -Address "192.168.1.1/24"
 

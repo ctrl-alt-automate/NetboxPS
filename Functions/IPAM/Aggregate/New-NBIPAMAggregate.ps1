@@ -9,6 +9,30 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Prefix
+    Prefix assigned to this object (database ID).
+
+.PARAMETER RIR
+    RIR.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Date_Added
+    Date Added.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     New-NBIPAMAggregate
 

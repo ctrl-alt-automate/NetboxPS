@@ -9,6 +9,30 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Device
+    Device assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Label
+    Physical label.
+
+.PARAMETER Installed_Device
+    Installed Device.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     Set-NBDCIMDeviceBay
 

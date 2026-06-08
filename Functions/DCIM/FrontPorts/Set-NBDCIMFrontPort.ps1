@@ -58,6 +58,9 @@
 .PARAMETER Force
     Skip confirmation prompt.
 
+.PARAMETER Raw
+    Return the raw API response object instead of the .results collection.
+
 .EXAMPLE
     Set-NBDCIMFrontPort -Id 1 -Name "Port 1 Updated"
 
