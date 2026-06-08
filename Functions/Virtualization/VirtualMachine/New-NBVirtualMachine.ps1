@@ -134,6 +134,7 @@ function New-NBVirtualMachine {
         [uint64]$Virtual_Machine_Type,
 
         [Parameter(ParameterSetName = 'Single')]
+        [validatelength(0, 50)]
         [string]$Serial,
 
         [Parameter(ParameterSetName = 'Single')]
@@ -144,6 +145,7 @@ function New-NBVirtualMachine {
         [string]$Status = 'active',
 
         [Parameter(ParameterSetName = 'Single')]
+        [validatelength(0, 200)]
         [string]$Description,
 
         [Parameter(ParameterSetName = 'Single')]

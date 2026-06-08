@@ -80,10 +80,10 @@ function Get-NBVirtualMachine {
         Database ID of the cluster.
 
     .PARAMETER Device
-        The string value of the device the VMs are are attached to. (NetBox 4.6+).
+        The string value of the device the VMs are are attached to. (Netbox 4.6+).
 
     .PARAMETER Device_Id
-        The device Id of the device the VMs are are attached to. (NetBox 4.6+).
+        The device Id of the device the VMs are attached to. (Netbox 4.6+).
 
     .PARAMETER Site
         String value of the site.
@@ -98,7 +98,7 @@ function Get-NBVirtualMachine {
         Database ID of the role.
 
     .PARAMETER Serial
-        Serial number of the VM.
+        Serial number of the VM. You can query multiple serial numbers by separating them with commas (e.g., "12345","67890").
 
     .PARAMETER Virtual_Machine_Type
         String value of the virtual machine type (Slug). (Netbox 4.6+)
@@ -154,68 +154,68 @@ function Get-NBVirtualMachine {
         [string]$Query,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter(ParameterSetName = 'ByID', ValueFromPipelineByPropertyName = $true)]
         [uint64[]]$Id,
 
         [Parameter(ParameterSetName = 'Query')]
         [ValidateSet('offline', 'active', 'planned', 'staged', 'failed', 'decommissioning', 'paused', IgnoreCase = $true)]
-        [string]$Status,
+        [string[]]$Status,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Tenant,
+        [string[]]$Tenant,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Tenant_ID,
+        [uint64[]]$Tenant_ID,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Platform,
+        [string[]]$Platform,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Platform_ID,
+        [uint64[]]$Platform_ID,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Cluster_Group,
+        [string[]]$Cluster_Group,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Cluster_Group_Id,
+        [uint64[]]$Cluster_Group_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Cluster_Type,
+        [string[]]$Cluster_Type,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Cluster_Type_Id,
+        [uint64[]]$Cluster_Type_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Cluster_Id,
+        [uint64[]]$Cluster_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Device,
+        [string[]]$Device,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Device_Id,
+        [uint64[]]$Device_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Site,
+        [string[]]$Site,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Site_Id,
+        [uint64[]]$Site_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Role,
+        [string[]]$Role,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Role_Id,
+        [uint64[]]$Role_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Virtual_Machine_Type,
+        [string[]]$Virtual_Machine_Type,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Virtual_Machine_Type_Id,
+        [uint64[]]$Virtual_Machine_Type_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Serial,
+        [string[]]$Serial,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

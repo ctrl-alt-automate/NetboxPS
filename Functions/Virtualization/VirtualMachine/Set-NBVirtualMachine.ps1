@@ -134,6 +134,7 @@ function Set-NBVirtualMachine {
         [Nullable[uint64]]$Virtual_Machine_Type,
 
         [Parameter(ParameterSetName = 'Single')]
+        [validatelength(0, 50)]
         [string]$Serial,
 
         [Parameter(ParameterSetName = 'Single')]
@@ -141,6 +142,7 @@ function Set-NBVirtualMachine {
         [string]$Status,
 
         [Parameter(ParameterSetName = 'Single')]
+        [validatelength(0, 200)]
         [string]$Description,
 
         [Parameter(ParameterSetName = 'Single')]
