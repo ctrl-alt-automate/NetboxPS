@@ -123,6 +123,36 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $Result.Uri | Should -Match 'fields=id(%2C|,)name(%2C|,)status(%2C|,)site.name'
         }
 
+        It "Should request a Serial Number" {
+            $Result = Get-NBVirtualMachine -Serial 'SN123456'
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Match 'serial=SN123456'
+        }
+
+        It "Should request a VM by Virtual_Machine_Type (Netbox 4.6+)" {
+            $Result = Get-NBVirtualMachine -Virtual_Machine_Type 't3-medium'
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Match 'virtual_machine_type=t3-medium'
+        }
+
+        It "Should request a VM by Virtual_Machine_Type_id (Netbox 4.6+)" {
+            $Result = Get-NBVirtualMachine -Virtual_Machine_Type_Id 3
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Match 'virtual_machine_type=3'
+        }
+
+        It "Should request with a Device (Netbox 4.6+)" {
+            $Result = Get-NBVirtualMachine -Device 'newtestname'
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Match 'device=newtestname'
+        }
+
+        It "Should request with a Device ID (Netbox 4.6+)" {
+            $Result = Get-NBVirtualMachine -Device_Id '1234'
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Match 'device=1234'
+        }
+
         Context "Status drift fix (#392 item 4)" {
             It "Should accept -Status 'paused'" {
                 $Result = Get-NBVirtualMachine -Status 'paused'
@@ -348,6 +378,36 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.start_on_boot | Should -Be 'laststate'
         }
+
+        It "Should create a VM with a Serial number" {
+            $Result = New-NBVirtualMachine -Name 'testvm' -Cluster 1 -Serial 'SN123456'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.serial | Should -Be 'SN123456'
+        }
+
+        It "Should have a Serial parameter with ValidateLength(0, 50)" {
+            $cmd = Get-Command New-NBVirtualMachine
+            $serialParam = $cmd.Parameters['Serial']
+            $validateLength = $serialParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateLengthAttribute] }
+            $validateLength | Should -Not -BeNullOrEmpty
+            $validateLength[0].MinimumLength | Should -Be 0
+            $validateLength[0].MaximumLength | Should -Be 50
+        }
+
+        It "Should create a VM with a Description" {
+            $Result = New-NBVirtualMachine -Name 'testvm' -Cluster 1 -Description 'This is a test VM.'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.description | Should -Be 'This is a test VM.'
+        }
+
+        It "Should have a Description parameter with ValidateLength(0, 200)" {
+            $cmd = Get-Command New-NBVirtualMachine
+            $descParam = $cmd.Parameters['Description']
+            $validateLength = $descParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateLengthAttribute] }
+            $validateLength | Should -Not -BeNullOrEmpty
+            $validateLength[0].MinimumLength | Should -Be 0
+            $validateLength[0].MaximumLength | Should -Be 200
+        }
     }
 
     Context "New-NBVirtualMachineInterface" {
@@ -440,6 +500,36 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $Result = Set-NBVirtualMachine -Id 1234 -Start_On_Boot 'off' -Confirm:$false
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.start_on_boot | Should -Be 'off'
+        }
+
+        It "Should update a VM with a new Serial number" {
+            $Result = Set-NBVirtualMachine -Id 1234 -Serial 'SN654321' -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.serial | Should -Be 'SN654321'
+        }
+
+        It "Should have a Serial parameter with ValidateLength(0, 50)" {
+            $cmd = Get-Command Set-NBVirtualMachine
+            $serialParam = $cmd.Parameters['Serial']
+            $validateLength = $serialParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateLengthAttribute] }
+            $validateLength | Should -Not -BeNullOrEmpty
+            $validateLength.MinLength | Should -Be 0
+            $validateLength.MaxLength | Should -Be 50
+        }
+
+        It "Should update a VM with a new Description" {
+            $Result = Set-NBVirtualMachine -Id 1234 -Description 'Updated description.' -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.description | Should -Be 'Updated description.'
+        }
+
+        It "Should have a Description parameter with ValidateLength(0, 200)" {
+            $cmd = Get-Command Set-NBVirtualMachine
+            $descParam = $cmd.Parameters['Description']
+            $validateLength = $descParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateLengthAttribute] }
+            $validateLength | Should -Not -BeNullOrEmpty
+            $validateLength.MinLength | Should -Be 0
+            $validateLength.MaxLength | Should -Be 200
         }
 
         Context "Status drift fix (#392 item 4)" {
