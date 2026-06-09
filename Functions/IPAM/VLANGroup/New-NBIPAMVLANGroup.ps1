@@ -6,11 +6,32 @@
     Creates a new IPAM VLANGroup in Netbox IPAM module.
     Supports pipeline input for Id parameter where applicable.
 
+.PARAMETER Name
+    The name of the VLAN group. (Mandatory)
+
+.PARAMETER Slug
+    The slug of the VLAN group. (Mandatory)
+
+.PARAMETER Scope_Type
+    The type of the scope to which this VLAN group belongs.
+
+.PARAMETER Scope_Id
+    The database Id of the site, rack, cluster, etc. to which this VLAN group belongs.
+
+.PARAMETER Min_Vid
+    The minimum VLAN ID in this group. Valid values are 1-4094.
+
+.PARAMETER Max_Vid
+    The maximum VLAN ID in this group. Valid values are 1-4094.
+
+.PARAMETER Description
+    The description of the VLAN group.
+
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
 .EXAMPLE
-    New-NBIPAMVLANGroup
+    New-NBIPAMVLANGroup -Name 'TestGroup' -Slug 'test-group'
 
     Creates a new IPAM VLAN Group object.
 
@@ -25,8 +46,9 @@ function New-NBIPAMVLANGroup {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)][string]$Name,
-        [string]$Slug,
-        [uint64]$Scope_Type,
+        [Parameter(Mandatory = $true)][string]$Slug,
+        [ValidateSet('dcim.rack','dcim.rackgroup','dcim.location','dcim.region','dcim.sitegroup','dcim.sitegroup','dcim.site','virtualization.clustergroup','virtualization.cluster')]
+        [string]$Scope_Type,
         [uint64]$Scope_Id,
         [ValidateRange(1, 4094)][uint16]$Min_Vid,
         [ValidateRange(1, 4094)][uint16]$Max_Vid,

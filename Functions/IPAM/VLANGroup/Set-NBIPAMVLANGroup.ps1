@@ -6,11 +6,35 @@
     Updates an existing IPAM VLANGroup in Netbox IPAM module.
     Supports pipeline input for Id parameter where applicable.
 
+.PARAMETER Id
+    The database Id of the VLAN group to update. (Mandatory)
+
+.PARAMETER Name
+    The name of the VLAN group.
+
+.PARAMETER Slug
+    The slug of the VLAN group.
+
+.PARAMETER Scope_Type
+    The type of the scope to which this VLAN group belongs.
+
+.PARAMETER Scope_Id
+    The database Id of the site, rack, cluster, etc. to which this VLAN group belongs.
+
+.PARAMETER Min_Vid
+    The minimum VLAN ID in this group. Valid values are 1-4094.
+
+.PARAMETER Max_Vid
+    The maximum VLAN ID in this group. Valid values are 1-4094.
+
+.PARAMETER Description
+    The description of the VLAN group.
+
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
 .EXAMPLE
-    Set-NBIPAMVLANGroup
+    Set-NBIPAMVLANGroup -Id 1 -Name 'UpdatedGroup'
 
     Updates an existing IPAM VLAN Group object.
 
@@ -27,7 +51,8 @@ function Set-NBIPAMVLANGroup {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)][uint64]$Id,
         [string]$Name,
         [string]$Slug,
-        [uint64]$Scope_Type,
+        [ValidateSet('dcim.rack','dcim.rackgroup','dcim.location','dcim.region','dcim.sitegroup','dcim.sitegroup','dcim.site','virtualization.clustergroup','virtualization.cluster')]
+        [string]$Scope_Type,
         [uint64]$Scope_Id,
         [ValidateRange(1, 4094)][uint16]$Min_Vid,
         [ValidateRange(1, 4094)][uint16]$Max_Vid,
