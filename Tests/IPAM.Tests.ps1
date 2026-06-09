@@ -475,14 +475,14 @@ Describe "IPAM tests" -Tag 'Ipam' {
             $Result.Uri | Should -Match '/api/ipam/vlan.groups/1/'
         }
         It "Should have ValidateSet for Scope_Type" {
-            $cmd = Get-Command New-NBIPAMVLANGroup
+            $cmd = Get-Command Set-NBIPAMVLANGroup
             $statusParam = $cmd.Parameters['Scope_Type']
             $validateSet = $statusParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
             $validateSet | Should -Not -BeNullOrEmpty
             $validateSet.ValidValues | Should -Contain 'dcim.site'
         }
         It "Should create a VLAN group with scope_type" {
-            $Result = New-NBIPAMVLANGroup -Name 'TestGroup' -Slug 'test-group' -Scope_Type 'dcim.site'
+            $Result = Set-NBIPAMVLANGroup -Id 1 -Name 'TestGroup' -Slug 'test-group' -Scope_Type 'dcim.site'
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.scope_type | Should -Be 'dcim.site'
         }
