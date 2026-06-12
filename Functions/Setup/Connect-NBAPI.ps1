@@ -89,7 +89,9 @@ function Connect-NBAPI {
 
         [ValidateNotNullOrEmpty()]
         [ValidateRange(1, 65535)]
-        [uint16]$TimeoutSeconds = 30
+        [uint16]$TimeoutSeconds = 30,
+
+        [switch]$IgnoreCase
     )
 
     if (-not $Credential) {
