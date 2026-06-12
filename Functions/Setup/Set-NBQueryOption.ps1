@@ -5,6 +5,9 @@
 .DESCRIPTION
     Sets the behaviour of query parameters.
 
+.PARAMETER IgnoreCase
+    If set, query parameters of type string will be case-insensitive (Netbox's `__ie`)
+
 .EXAMPLE
     Set-NBQueryOption -IgnoreCase
     Sets the Netbox API query parameters to be case-insensitive.
