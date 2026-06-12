@@ -35,6 +35,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVirtualCircuit -Cid "VC-001" -Provider_Network 1 -Type 1
 

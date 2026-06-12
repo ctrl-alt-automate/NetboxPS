@@ -5,6 +5,9 @@
 .DESCRIPTION
     Sets the hostname for Netbox API connections.
 
+.PARAMETER Hostname
+    Hostname.
+
 .EXAMPLE
     Set-NBHostName -Hostname 'netbox.example.com'
 

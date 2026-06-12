@@ -9,6 +9,39 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Device
+    Device assigned to this object (database ID).
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Identifier
+    Identifier.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Primary_Ip4
+    Primary IPv4 address assigned to this object (database ID).
+
+.PARAMETER Primary_Ip6
+    Primary IPv6 address assigned to this object (database ID).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     New-NBDCIMVirtualDeviceContext
 

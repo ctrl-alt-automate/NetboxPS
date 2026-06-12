@@ -1,0 +1,18 @@
+# param() <-> .PARAMETER comment-based-help parity baseline
+# =========================================================
+# Format: <FunctionName>::<ParameterName>::<Missing|Orphan>
+#   Missing = a declared parameter has no .PARAMETER help entry
+#   Orphan  = a .PARAMETER help entry names a parameter that does not exist
+# Lines starting with # and blank lines are ignored. Matching is case-insensitive.
+#
+# This file is the allow-list of KNOWN parity gaps. The CI gate in
+# CodeQuality.Tests.ps1 (Context "Comment-based help parameter parity") fails on
+# any gap NOT listed here. It is currently EMPTY -- every public function
+# parameter has matching .PARAMETER help -- so the gate is fully enforced.
+#
+# Keep it empty: the fix for a new finding is to add the .PARAMETER help (or fix
+# the param name), NOT to add a line here. Only regenerate after a deliberate,
+# reviewed change to the known set:
+#   pwsh -NoProfile -File ./Tests/Update-ParamHelpParityBaseline.ps1
+# ---------------------------------------------------------------------------
+

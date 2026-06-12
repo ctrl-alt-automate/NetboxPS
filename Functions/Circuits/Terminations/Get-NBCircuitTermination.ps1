@@ -28,6 +28,36 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Circuit_ID
+    Filter by circuit database ID.
+
+.PARAMETER Term_Side
+    Filter by term side.
+
+.PARAMETER Port_Speed
+    Physical circuit speed
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Site_ID
+    Filter by site database ID.
+
+.PARAMETER Site
+    Filter by site (name or slug).
+
+.PARAMETER XConnect_ID
+    Filter by xconnect database ID.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBCircuitTermination
 

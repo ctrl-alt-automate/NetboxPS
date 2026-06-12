@@ -46,6 +46,9 @@ function Set-NBContact {
     .PARAMETER Raw
         Return the raw API response instead of the updated object.
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         PS C:\> Set-NBContact -Id 10 -Name 'Leroy Jenkins' -Email 'leroy.jenkins@example.com'
 .NOTES

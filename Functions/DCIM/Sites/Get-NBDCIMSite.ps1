@@ -28,6 +28,66 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Slug
+    Filter by URL slug.
+
+.PARAMETER Facility
+    Local facility ID or description
+
+.PARAMETER ASN
+    16- or 32-bit autonomous system number
+
+.PARAMETER Latitude
+    GPS coordinate in decimal format (xx.yyyyyy)
+
+.PARAMETER Longitude
+    GPS coordinate in decimal format (xx.yyyyyy)
+
+.PARAMETER Contact_Name
+    Filter by contact name.
+
+.PARAMETER Contact_Phone
+    Filter by contact phone.
+
+.PARAMETER Contact_Email
+    Filter by contact email.
+
+.PARAMETER Tenant_Group_ID
+    Filter by tenant group database ID.
+
+.PARAMETER Tenant_Group
+    Filter by tenant group (name or slug).
+
+.PARAMETER Tenant_ID
+    Filter by tenant database ID.
+
+.PARAMETER Tenant
+    Filter by tenant (name or slug).
+
+.PARAMETER Status
+    Filter by operational status.
+
+.PARAMETER Region_ID
+    Filter by region database ID.
+
+.PARAMETER Region
+    Filter by region (name or slug).
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBDCIMSite
 

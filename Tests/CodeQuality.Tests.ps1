@@ -123,4 +123,24 @@ Describe "Code Quality Tests" -Tag 'Quality' {
             $duplicates | Should -BeNullOrEmpty -Because "Each function should only be defined once"
         }
     }
+
+    Context "Comment-based help parameter parity" {
+
+        BeforeAll {
+            . "$PSScriptRoot/ParamHelpParity.Helper.ps1"
+            $baseline = Get-NBParamHelpExemption -Path (Join-Path $PSScriptRoot 'param-help-parity-baseline.txt')
+            $newViolations = @(Get-NBParamHelpParityViolation | Where-Object {
+                -not $baseline.ContainsKey((ConvertTo-NBParamHelpKey -Violation $_))
+            })
+            # Pre-format readable "Function -Param [Kind]" lines so a failure names the offenders.
+            $script:NewParityStrings = @($newViolations | ForEach-Object {
+                ('{0}  -{1}  [{2}]' -f $_.Function, $_.Param, $_.Kind)
+            })
+        }
+
+        It "No NEW param() to .PARAMETER help gaps are introduced" {
+            $script:NewParityStrings |
+                Should -BeNullOrEmpty -Because 'every public function parameter needs a matching .PARAMETER help entry (and vice versa); add the help (Missing) or fix the .PARAMETER name (Orphan). Do NOT re-baseline a new finding. Regenerate the baseline only after reducing the backlog: pwsh -File ./Tests/Update-ParamHelpParityBaseline.ps1'
+        }
+    }
 }

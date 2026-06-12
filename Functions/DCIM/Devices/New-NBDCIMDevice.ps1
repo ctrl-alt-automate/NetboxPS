@@ -68,6 +68,57 @@
     Local config context data (free-form JSON; hashtable or object). Takes
     precedence over source contexts in the rendered config context.
 
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Platform
+    Platform assigned to this object (database ID).
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Cluster
+    Cluster assigned to this object (database ID).
+
+.PARAMETER Rack
+    Rack assigned to this object (database ID).
+
+.PARAMETER Position
+    Position (e.g. rack unit or bay identifier).
+
+.PARAMETER Face
+    Face.
+
+.PARAMETER Serial
+    Serial number assigned by the manufacturer.
+
+.PARAMETER Asset_Tag
+    Unique asset tag.
+
+.PARAMETER Virtual_Chassis
+    Virtual Chassis.
+
+.PARAMETER VC_Priority
+    Virtual chassis master election priority
+
+.PARAMETER VC_Position
+    VC Position.
+
+.PARAMETER Primary_IP4
+    Primary IPv4 address assigned to this object (database ID).
+
+.PARAMETER Primary_IP6
+    Primary IPv6 address assigned to this object (database ID).
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBDCIMDevice -Name "server01" -Role 1 -Device_Type 1 -Site 1
 

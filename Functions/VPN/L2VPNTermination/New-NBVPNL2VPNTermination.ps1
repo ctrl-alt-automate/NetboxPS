@@ -9,6 +9,21 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER L2VPN
+    L2VPN.
+
+.PARAMETER Assigned_Object_Type
+    Assigned Object Type.
+
+.PARAMETER Assigned_Object_Id
+    Database ID of the assigned object.
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVPNL2VPNTermination
 

@@ -42,6 +42,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     # Create a webhook that sends notifications to a Slack channel
     $secret = ConvertTo-SecureString "your-webhook-secret" -AsPlainText -Force

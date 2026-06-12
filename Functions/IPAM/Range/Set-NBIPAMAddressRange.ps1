@@ -9,6 +9,48 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Start_Address
+    Start Address.
+
+.PARAMETER End_Address
+    End Address.
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER VRF
+    VRF assigned to this object (database ID).
+
+.PARAMETER Role
+    Role assigned to this object (database ID).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Mark_Utilized
+    Mark Utilized.
+
+.PARAMETER Mark_Populated
+    Prevent the creation of IP addresses within this range
+
+.PARAMETER Force
+    Skip the confirmation prompt.
+
 .EXAMPLE
     Set-NBIPAMAddressRange
 

@@ -28,6 +28,27 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Cable
+    Filter by cable.
+
+.PARAMETER Cable_End
+    Filter by cable end.
+
+.PARAMETER Termination_Type
+    Filter by termination type.
+
+.PARAMETER Termination_ID
+    Filter by termination database ID.
+
 .EXAMPLE
     Get-NBDCIMCableTermination
 

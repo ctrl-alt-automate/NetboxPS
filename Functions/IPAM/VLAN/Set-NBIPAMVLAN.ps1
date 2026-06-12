@@ -9,6 +9,45 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER VID
+    Numeric VLAN ID (1-4094)
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Site
+    Site assigned to this object (database ID).
+
+.PARAMETER Group
+    Group assigned to this object (database ID).
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Role
+    Role assigned to this object (database ID).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Owner
+    Owner assigned to this object (database ID).
+
 .EXAMPLE
     Set-NBIPAMVLAN
 

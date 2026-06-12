@@ -94,6 +94,9 @@ function Get-NBIPAMPrefix {
         Specify which fields to include in the response.
         Supports nested field selection (e.g., 'site.name', 'device_type.model').
 
+    .PARAMETER Prefix
+        Filter by prefix (name or slug).
+
     .EXAMPLE
         PS C:\> Get-NBIPAMPrefix
 

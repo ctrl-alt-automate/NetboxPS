@@ -61,6 +61,14 @@ numeric IDs as `[uint64]`, booleans as `[bool]` (never `[switch]`), arrays
 as `[string[]]` or `[uint64[]]` depending on whether the API filter
 expects names or IDs.
 
+> **Before widening a filter to an array (`[T[]]`), confirm the server filter is
+> actually multi-value.** In the OpenAPI schema (`/api/schema/?format=json`) the
+> list-endpoint parameter shows `schema.type: array` for multi-value filters and a
+> scalar type otherwise. The #447 repeat-key mechanism sends `?k=a&k=b`, but NetBox
+> honors only the FIRST value on a scalar filter — so array-typing it is silently
+> misleading. Counter-example: contact-assignments `object_type_id` is scalar even
+> though its sibling `object_type` is multi-value (PR #456). When unsure, keep scalar.
+
 ```powershell
 function Get-NB[Module][Resource] {
     [CmdletBinding(DefaultParameterSetName = 'Query')]
@@ -320,6 +328,10 @@ meta-values like `'Both'` for rack elevation), add an exemption to
 | `-Tags` parameter accepts only names or only IDs, not both | Older cmdlets type `Tags` as `[string[]]` (names) or `[uint64[]]` (IDs) — mutually exclusive | New cmdlets: `[object[]]$Tags` so callers can pass a mix. Legacy cmdlets left as-is for back-compat; add `[object[]]` only on new code |
 | Bulk operations pipeline runs unboundedly | No client throttle by default | `Send-NBBulkRequest` has `MaxItems = 10000` cap; pass `-BatchSize` to size each POST |
 | Pagination `.next` follow to wrong host | Server-controlled URL could be attacker-controlled | `InvokeNetboxRequest` validates origin against original URI via `GetLeftPart(Authority)` (PR #404) |
+| Array-widened filter silently returns only one match | NetBox honors only the FIRST value of a repeated query key when the underlying filter is scalar, even though #447 sends all values | Verify the filter is `schema.type: array` in the OpenAPI schema before changing `[T]` → `[T[]]`. Scalar example: contact-assignments `object_type_id` (PR #456) |
+| Case-insensitive (`__ie`) filter returns the FULL unfiltered list | NetBox SILENTLY ignores an unknown lookup (HTTP 200, everything) — it does not 400; and `__ie` (iexact) support is per-endpoint (e.g. no `role__ie` on `/dcim/devices/`) | Only rewrite a key to `__ie` if that field exposes `*__ie` for THAT endpoint in the schema; never for numeric/datetime/relational/CIDR/choice fields. Intersect against the live schema, don't hand-curate (PR #454) |
+| Param/switch referenced in body or help but missing from `param()` | Author added `.PARAMETER` help + a body reference but forgot the `[switch]$X` declaration → unbound `$null` (and hard-throws under `Set-StrictMode`) | Every `.PARAMETER` and every `$Var` read in the body needs a matching `param()` entry. The `CodeQuality.Tests.ps1` parity gate catches the help side (PR #454 `-IgnoreCase`) |
+| `Get-NB*Option`/config getter throws on a fresh import | A new `$script:NetboxConfig` key read by the getter was never seeded in `SetupNetboxConfigVariable.ps1` | When adding a Set-/Get- pair backed by `$script:NetboxConfig`, seed the key (e.g. `$false`) in `SetupNetboxConfigVariable.ps1`; getters return the value, don't throw (match `Get-NBTimeout`) (PR #454) |
 
 ## Parameter naming conventions
 
@@ -337,6 +349,8 @@ meta-values like `'Both'` for rack elevation), add an exemption to
 
 - [ ] `./deploy.ps1 -Environment dev -SkipVersion` — build succeeds, no duplicate function names
 - [ ] `Invoke-Pester ./Tests/<Module>.Tests.ps1` — all green
+- [ ] Every NEW or type-changed parameter has a `.PARAMETER` help entry AND a Pester assertion (URI or body). `Invoke-Pester ./Tests/CodeQuality.Tests.ps1` — the "parameter parity" gate fails on a new `.PARAMETER` gap; fix the help, do NOT silence it by re-baselining
+- [ ] For any filter widened to an array type, the server filter is confirmed `schema.type: array` in the OpenAPI schema (scalar filters honor only the first repeated value)
 - [ ] `Invoke-ScriptAnalyzer -Path ./Functions/<Module>/<new file>.ps1` — clean
 - [ ] `./scripts/Verify-ValidateSetParity.ps1` — no new drift findings
 - [ ] `./scripts/Verify-FilterExclusion.ps1` — if you touched any `Get-NB*.ps1`, see `docs/guides/` if unfamiliar
@@ -353,6 +367,8 @@ meta-values like `'Both'` for rack elevation), add an exemption to
 | Auth header construction (v1 vs v2) | `Functions/Helpers/Get-NBRequestHeaders.ps1` |
 | Mutex helper for Brief / Fields / Omit | `Functions/Helpers/AssertNBMutualExclusiveParam.ps1` |
 | Bulk operations | `Functions/Helpers/Send-NBBulkRequest.ps1` |
+| Param↔.PARAMETER parity gate | `Tests/CodeQuality.Tests.ps1` (Context "Comment-based help parameter parity") |
+| Parity baseline + regenerator | `Tests/param-help-parity-baseline.txt`, `Tests/Update-ParamHelpParityBaseline.ps1` |
 | ValidateSet parity script | `scripts/Verify-ValidateSetParity.ps1` |
 | ValidateSet parity exceptions | `scripts/validateset-parity-exclusions.txt` |
 | Filter exclusion auditor | `scripts/Verify-FilterExclusion.ps1` |

@@ -21,6 +21,9 @@ function New-NBDCIMManufacturer {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         New-NBDCIMManufacturer -Name "Cisco" -Slug "cisco"
 
