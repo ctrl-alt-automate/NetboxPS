@@ -68,13 +68,13 @@ function Get-NBContactGroup {
 
         [Parameter(ParameterSetName = 'Query',
                    Position = 0)]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Slug,
+        [string[]]$Slug,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Parent_Id,
+        [uint64[]]$Parent_Id,
 
         [switch]$All,
 

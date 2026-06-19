@@ -27,6 +27,7 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                 $script:NetboxConfig.Hostname = 'netbox.domain.com'
                 $script:NetboxConfig.HostScheme = 'https'
                 $script:NetboxConfig.HostPort = 443
+                $script:NetboxConfig.IgnoreCaseInQueries = $false
             }
         }
 
@@ -105,6 +106,78 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                 $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
                 $URIBuilder.Query | Should -Match '(?=.*param2=val1)(?=.*param2=val2)(?=.*param2=val3%20having%20spaces)'
                 $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?(?=.*param1=paramval1)(?=.*param2=val1)(?=.*param2=val2)(?=.*param2=val3%20having%20spaces)'
+            }
+        }
+
+        Context 'Build case insensitive query parameters' {
+            BeforeAll {
+                $stateBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'IgnoreCase' }
+                # We need to set the parsed version to a value for testing, but we will restore it after the tests
+                $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion
+                    $script:NetboxConfig.ParsedVersion = '4.6.1'
+                }
+
+                # We must be connected to check the API version
+                Mock -CommandName 'CheckNetboxIsConnected' -ModuleName 'PowerNetbox' -MockWith {}
+                $null = Set-NBQueryOption -IgnoreCase
+            }
+            AfterAll {
+                $null = Set-NBQueryOption -IgnoreCase:$stateBefore.Value
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = $parsedVersionBefore
+                }
+            }
+            It "Should not use __ie if parameter is not in the list" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $Script:IgnoreCaseParameterHash=@{}  # simulate parameter not in the list
+                    $URIParameters = @{
+                        'name' = 'NameValue'
+                    }
+
+                    $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                    $URIBuilder.Query | Should -Match 'name=NameValue'
+                    $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?name=NameValue'
+                }
+            }
+            It "Should  not use __ie if parameter is in the list but endpoint is in the ignore list" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $Script:IgnoreCaseParameterHash['name'] = @('api/seg1/seg2/','api/otherexcludedendpoint/')  # simulate endpoint in ignore list
+                    $URIParameters = @{
+                        'name' = 'NameValue'
+                    }
+
+                    $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                    $URIBuilder.Query | Should -Match 'name=NameValue'
+                    $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?name=NameValue'
+                }
+            }
+            It "Should use __ie if parameter is in the list and endpoint list is empty" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
+                    $Script:IgnoreCaseParameterHash['name'] = @()  # simulate endpoint list is empty
+                    $URIParameters = @{
+                        'name' = 'NameValue'
+                    }
+
+                    $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                    $URIBuilder.Query | Should -Match 'name__ie=NameValue'
+                    $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?name__ie=NameValue'
+                }
+            }
+            It "Should use __ie if parameter is in the list and endpoint is not in the ignore list; it should also work with array values" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
+                    $Script:IgnoreCaseParameterHash['name'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
+                    $URIParameters = @{
+                        'name' = @('NameValue', 'AnotherNameValue')  # test that array values are also supported with __ie
+                        'casesensitiveparam' = 'value2'
+                    }
+
+                    $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                    $URIBuilder.Query | Should -Match '(?=.*name__ie=NameValue)(?=.*name__ie=AnotherNameValue)(?=.*casesensitiveparam=value2)'
+                    $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?(?=.*name__ie=NameValue)(?=.*name__ie=AnotherNameValue)(?=.*casesensitiveparam=value2)'
+                }
             }
         }
     }
