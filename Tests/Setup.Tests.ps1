@@ -286,24 +286,91 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
     }
 
     Context "Query options" {
-        It "Should set and get query option IgnoreCase" {
-            Set-NBQueryOption -IgnoreCase:$true | Should -Be $true
-            $options = Get-NBQueryOption
-            $options.Name | Should -Be "IgnoreCase"
-            $options.Value | Should -Be $true
-            $optionsInternal = InModuleScope -ModuleName 'PowerNetbox' {
-                $script:NetboxConfig.IgnoreCaseInQueries
+        Context "While not connected" {
+            It "Should return the current query option" {
+                $result = Get-NbQueryOption
+                $result.Name | Should -Contain 'IgnoreCase'
             }
-            $optionsInternal | Should -Be $true
+            It "Should throw if try to set query options, because we need a parsed API version" {
+                { Set-NBQueryOption -IgnoreCase:$true } | Should -Throw "Not connected*"
+            }
+        }
+        Context "When connected" {
+            BeforeAll {
+                $stateBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'IgnoreCase' }
+                # We need to set the parsed version to a value for testing, but we will restore it after the tests
+                $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion
+                    $script:NetboxConfig.ParsedVersion = '4.6.1'
+                }
 
-            Set-NBQueryOption -IgnoreCase:$false | Should -Be $false
-            $options = Get-NBQueryOption
-            $options.Name | Should -Be "IgnoreCase"
-            $options.Value | Should -Be $false
-            $optionsInternal = InModuleScope -ModuleName 'PowerNetbox' {
-                $script:NetboxConfig.IgnoreCaseInQueries
+                # We must be connected to check the API version
+                Mock -CommandName 'CheckNetboxIsConnected' -ModuleName 'PowerNetbox' -MockWith {}
             }
-            $optionsInternal | Should -Be $false
+            AfterAll {
+                # Reset the query option to its previous state
+                Set-NBQueryOption -IgnoreCase:$stateBefore.Value | Out-Null
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = $parsedVersionBefore
+                }
+            }
+            It "Should set and get query option IgnoreCase" {
+                Set-NBQueryOption -IgnoreCase:$true | Should -Be $true
+                $options = Get-NBQueryOption
+                $options.Name | Should -Be "IgnoreCase"
+                $options.Value | Should -Be $true
+                $optionsInternal = InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.IgnoreCaseInQueries
+                }
+                $optionsInternal | Should -Be $true
+
+                Set-NBQueryOption -IgnoreCase:$false | Should -Be $false
+                $options = Get-NBQueryOption
+                $options.Name | Should -Be "IgnoreCase"
+                $options.Value | Should -Be $false
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    # Check internal state is also reset
+                    $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
+                    ($Script:IgnoreCaseParameterHash.Keys).Count | Should -Be 0
+                }
+            }
+            It "For API v3.0.0 should not use any case-insensitive parameters" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = '3.0.0'
+                    $ret = Set-NBQueryOption -IgnoreCase -WarningAction SilentlyContinue -WarningVariable warn
+                    $warn | Should -BeLike '*less than the minimum supported version*'
+                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -Be 0
+                }
+            }
+            It "For API version < 4.5.0 should use the baseline + v4.4.9 list" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = '4.4.8'          # 4.4.9 is the first baseline version, 4.4.8 is less than that, but we only use <major>.<minor> => 4.4. is defined
+                    $ret = Set-NBQueryOption -IgnoreCase
+                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV449.Count)
+                }
+            }
+            It "For API version >= 4.5.0 and < 4.6.0 should use the baseline + v4.5.0 list" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = '4.5.0'
+                    $ret = Set-NBQueryOption -IgnoreCase
+                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV450.Count)
+                }
+            }
+            It "For API version >= 4.6.0 should use the baseline + v4.6.1 list" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = '4.6.0'
+                    $ret = Set-NBQueryOption -IgnoreCase
+                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
+                }
+            }
+            It "For API versions newer than our last known version, it should use the latest known version" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = '99.99.99'
+                    $ret = Set-NBQueryOption -IgnoreCase -WarningAction SilentlyContinue -WarningVariable warn
+                    $warn | Should -BeLike '*taking the latest known version*'
+                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
+                }
+            }
         }
     }
 
