@@ -9,13 +9,19 @@ function Get-NBContactRole {
         type between a contact and an object (e.g., Owner, Technical, Billing).
 
     .PARAMETER Name
-        The specific name of the contact role. Must match exactly as is defined in Netbox
+        The specific name of the contact role.
 
     .PARAMETER Id
         The database ID of the contact role
 
     .PARAMETER Query
         A standard search query that will match one or more contact roles.
+
+    .PARAMETER Slug
+        Filter by slug field (URL-friendly unique identifier)
+
+    .PARAMETER Description
+        Filter by description field (supports partial matches)
 
     .PARAMETER Limit
         Limit the number of results to this number
@@ -46,18 +52,14 @@ function Get-NBContactRole {
         Specify which fields to exclude from the response.
         Requires Netbox 4.5.0 or later.
 
-    .PARAMETER Slug
-        Filter by URL slug.
-
-    .PARAMETER Description
-        Filter by description.
-
     .EXAMPLE
         PS C:\> Get-NBContactRole
 
 .NOTES
     AddedInVersion: v1.0.4
     The -Brief, -Fields, and -Omit parameters are mutually exclusive.
+    When supplying multiple values to an array parameter (e.g. -Name a,b), results are OR-ed per NetBox filtering rules.
+    See https://netboxlabs.com/docs/netbox/reference/filtering/
 #>
 
     [CmdletBinding(DefaultParameterSetName = 'Query')]
@@ -77,7 +79,7 @@ function Get-NBContactRole {
 
         [Parameter(ParameterSetName = 'Query',
                    Position = 0)]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter(ParameterSetName = 'ByID', ValueFromPipelineByPropertyName = $true)]
         [uint64[]]$Id,
@@ -86,10 +88,10 @@ function Get-NBContactRole {
         [string]$Query,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Slug,
+        [string[]]$Slug,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Description,
+        [string[]]$Description,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
