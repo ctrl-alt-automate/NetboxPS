@@ -296,7 +296,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 "hostname": "1934a65908c1",
                 "installed_apps": {},
                 "netbox-version": "4.6.1",
-                "netbox-full-version": "4.6.1-Docker-4.0.2",
+                "netbox-full-version": "4.6.1-Docker-4.0.2"
                 }
 '@ | ConvertFrom-Json
             }
