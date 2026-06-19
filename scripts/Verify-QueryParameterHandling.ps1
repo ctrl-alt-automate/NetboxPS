@@ -23,8 +23,8 @@
         The parameter/exception list is based on the API v4.4.9 list of fully supported case-insensitive parameters, which is the minimum version
         supported by this module. The list is based on the API schema of NetBox.
 
-        # Ziel 1: Schönere Implementierung von C:\Users\wagnerw\Lokal\TFS\IsaSDDBNetbox\Scripts\Validate-PowerNetboxParameters.ps1
-        # Ziel 2: Validieren, ob Array-Parameter der Funktionen im API supported sind bzw. wo sie eine mögliche Erweiterung sein könnten
+        # Goal 1: Cleaner reimplementation of an internal parameter-validation script.
+        # Goal 2: Validate whether the functions' array parameters are supported by the API, and where they could be a possible extension.
 #>
 [CmdletBinding()]
 param (

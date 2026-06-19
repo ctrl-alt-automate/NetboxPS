@@ -80,7 +80,7 @@ function BuildNewURI {
                         $paramKey = "$($param.Key)__ie"
                     }
                 } catch {
-                    $x=$x
+                    Write-Verbose " IgnoreCase lookup skipped for $($param.Key): $_"
                 }
             }
             $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
