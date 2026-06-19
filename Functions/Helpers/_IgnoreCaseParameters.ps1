@@ -1,3 +1,30 @@
+<#
+    List of API parameters of type string, that could be requested as case-insensitive
+    The list is based on the swagger spec of NetBox, slightly modified to remove parameters that are not relevant for the API client
+    e.g. parameters that are only used in the UI, or parameters that might be misleading
+
+    The solution is based on a baseline list of parameters taken from v4.4.9.
+    Depending on the currently connect APIs version, additional parameters are added.
+    Each hastable does have two flavours of definition
+    'parameter' = @()  # parameter is case-insensitive supported for all endpoints
+    'parameter' = @('api/endpoint1', 'api/endpoint2')  # parameter case insitive is not supported for the endpoints in this list
+
+    Remark for maintenance:
+
+    If the minimum supported API version of this module should change, the baseline list must be updated to reflect the new minimum version.
+    - Move any entry "<parameter> = @()" from the new minimum version to the baseline list, if it is not already present there.
+      After that, let's say the new minimum version is v4.5.0, then IgnoreCaseParameterV450 must only contain the parameters that do have an exception list
+    - At the end of the file
+      - Remove $Script:IgnoreCaseParameterDictonary['4.4'] =...
+    If a new API version is released
+      - a new $Script:IgnoreCaseParameterV4nn entry must be added
+      - At the end of the file, add a new entry to $Script:IgnoreCaseParameterDictonary['4.nn'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV4nn
+
+    As the minimum supported API will rise beyond 4.6, in 'Setup.Tests.ps1' Context 'Query Options' the mocked data must be updated.
+
+    There should be no maintenance required in 'Set-NBQueryOption'.
+#>
+
 # Current baseline is the API v4.4.9 list of fully supported case-insensitive parameters, which is the minimum version supported by this module
 $Script:IgnoreCaseParameterBaseline = @{
     'account'                  = @()
