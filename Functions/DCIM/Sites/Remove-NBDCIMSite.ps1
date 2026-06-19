@@ -6,6 +6,12 @@
     Removes a DCIM Site from Netbox.
     Supports pipeline input for Id parameter.
 
+.PARAMETER Id
+    Database ID of the object to delete.
+
+.PARAMETER Raw
+    Return the raw API response object instead of the .results collection.
+
 .EXAMPLE
     Remove-NBDCIMSite -Id 1
 

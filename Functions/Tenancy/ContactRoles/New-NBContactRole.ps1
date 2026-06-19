@@ -22,6 +22,9 @@ function New-NBContactRole {
     .PARAMETER Raw
         Return the raw API response instead of the created object.
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         PS C:\> New-NBContactRole -Name 'Network Support' -Slug 'network-support'
 .NOTES

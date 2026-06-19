@@ -9,6 +9,45 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Interface_A
+    Interface A.
+
+.PARAMETER Interface_B
+    Interface B.
+
+.PARAMETER SSID
+    SSID.
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Auth_Type
+    Auth Type.
+
+.PARAMETER Auth_Cipher
+    Auth Cipher.
+
+.PARAMETER Auth_PSK
+    Auth PSK.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBWirelessLink
 

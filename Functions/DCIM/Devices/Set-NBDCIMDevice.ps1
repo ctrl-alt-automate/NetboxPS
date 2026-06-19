@@ -91,6 +91,24 @@
     Local config context data (free-form JSON; hashtable or object). Takes
     precedence over source contexts. Pass $null to clear.
 
+.PARAMETER Virtual_Chassis
+    Virtual Chassis.
+
+.PARAMETER VC_Priority
+    Virtual chassis master election priority
+
+.PARAMETER VC_Position
+    VC Position.
+
+.PARAMETER Primary_IP4
+    Primary IPv4 address assigned to this object (database ID).
+
+.PARAMETER Primary_IP6
+    Primary IPv6 address assigned to this object (database ID).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBDCIMDevice -Id 123 -Cluster $null
 

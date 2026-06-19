@@ -23,6 +23,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBVirtualCircuitTermination -Virtual_Circuit 1 -Interface 1 -Role "peer"
 

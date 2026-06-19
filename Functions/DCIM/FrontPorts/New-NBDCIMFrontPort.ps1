@@ -59,6 +59,9 @@
 .PARAMETER Tags
     Array of tag IDs to assign to this front port.
 
+.PARAMETER Raw
+    Return the raw API response object instead of the .results collection.
+
 .EXAMPLE
     New-NBDCIMFrontPort -Device 42 -Name "Port 1" -Type "8p8c" -Rear_Port 100
 

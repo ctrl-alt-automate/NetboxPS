@@ -28,6 +28,27 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Model
+    Filter by model.
+
+.PARAMETER Manufacturer_Id
+    Filter by manufacturer database ID.
+
+.PARAMETER Part_Number
+    Discrete part number (optional)
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBDCIMModuleType
 

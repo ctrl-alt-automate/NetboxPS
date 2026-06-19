@@ -22,6 +22,60 @@ function New-NBDCIMSite {
     .DESCRIPTION
         Create a new Site to Netbox
 
+    .PARAMETER Name
+        Name of the object.
+
+    .PARAMETER Slug
+        URL-friendly unique identifier (slug).
+
+    .PARAMETER Facility
+        Local facility ID or description
+
+    .PARAMETER ASN
+        16- or 32-bit autonomous system number
+
+    .PARAMETER Latitude
+        GPS coordinate in decimal format (xx.yyyyyy)
+
+    .PARAMETER Longitude
+        GPS coordinate in decimal format (xx.yyyyyy)
+
+    .PARAMETER Contact_Name
+        Contact Name.
+
+    .PARAMETER Contact_Phone
+        Contact Phone.
+
+    .PARAMETER Contact_Email
+        Contact Email.
+
+    .PARAMETER Tenant_Group
+        Tenant group assigned to this object (database ID).
+
+    .PARAMETER Tenant
+        Tenant assigned to this object (database ID).
+
+    .PARAMETER Status
+        Operational status.
+
+    .PARAMETER Region
+        Region assigned to this object (database ID).
+
+    .PARAMETER Description
+        Brief description.
+
+    .PARAMETER Comments
+        Detailed comments (Markdown is supported).
+
+    .PARAMETER Owner
+        Owner assigned to this object (database ID).
+
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
+    .PARAMETER Raw
+        Return the raw API response object instead of the .results collection.
+
     .EXAMPLE
         New-NBDCIMSite -name MySite
 

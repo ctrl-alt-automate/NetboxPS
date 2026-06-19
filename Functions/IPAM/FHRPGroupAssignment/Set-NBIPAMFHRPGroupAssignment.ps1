@@ -9,6 +9,24 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Group
+    Group assigned to this object (database ID).
+
+.PARAMETER Interface_Type
+    Interface Type.
+
+.PARAMETER Interface_Id
+    Database ID of the interface.
+
+.PARAMETER Priority
+    Priority.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBIPAMFHRPGroupAssignment
 

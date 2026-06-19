@@ -5,6 +5,9 @@
 .DESCRIPTION
     Sets the timeout for Netbox API requests.
 
+.PARAMETER TimeoutSeconds
+    TimeoutSeconds.
+
 .EXAMPLE
     Set-NBTimeout -TimeoutSeconds 60
 

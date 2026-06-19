@@ -9,6 +9,42 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Device_Type
+    Device type assigned to this object (database ID).
+
+.PARAMETER Module_Type
+    Module type assigned to this object (database ID).
+
+.PARAMETER Name
+    Name of the object.
+
+.PARAMETER Label
+    Physical label.
+
+.PARAMETER Type
+    Type of the object.
+
+.PARAMETER Enabled
+    Whether the object is enabled.
+
+.PARAMETER Mgmt_Only
+    This interface is used only for out-of-band management
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Poe_Mode
+    Poe Mode.
+
+.PARAMETER Poe_Type
+    Poe Type.
+
+.PARAMETER Rf_Role
+    Rf Role.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBDCIMInterfaceTemplate
 

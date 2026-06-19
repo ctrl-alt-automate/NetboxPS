@@ -13,6 +13,9 @@ function Remove-NBIPAMAddressRange {
     .PARAMETER Force
         Do not confirm.
 
+    .PARAMETER Raw
+        Return the raw API response object instead of the .results collection.
+
     .EXAMPLE
         PS C:\> Remove-NBIPAMAddressRange -Id 1234
 .NOTES

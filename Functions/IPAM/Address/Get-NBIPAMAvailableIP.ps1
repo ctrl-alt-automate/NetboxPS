@@ -17,9 +17,6 @@ function Get-NBIPAMAvailableIP {
     .PARAMETER Raw
         Return the raw API response.
 
-    .PARAMETER NumberOfIPs
-        Number of available IPs to return (alias for Limit).
-
     .EXAMPLE
         Get-NBIPAMAvailableIP -Prefix_ID (Get-NBIPAMPrefix -Prefix 192.0.2.0/24).id
 

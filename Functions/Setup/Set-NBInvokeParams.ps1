@@ -5,6 +5,9 @@
 .DESCRIPTION
     Sets additional parameters for Netbox API invocations.
 
+.PARAMETER InvokeParams
+    InvokeParams.
+
 .EXAMPLE
     Set-NBInvokeParams -InvokeParams @{ SkipCertificateCheck = $true }
 
