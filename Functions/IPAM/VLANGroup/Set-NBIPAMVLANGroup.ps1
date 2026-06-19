@@ -33,30 +33,6 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
-.PARAMETER Id
-    Database ID of the object to update.
-
-.PARAMETER Name
-    Name of the object.
-
-.PARAMETER Slug
-    URL-friendly unique identifier (slug).
-
-.PARAMETER Scope_Type
-    Scope Type.
-
-.PARAMETER Scope_Id
-    Database ID of the scope.
-
-.PARAMETER Min_Vid
-    Min Vid.
-
-.PARAMETER Max_Vid
-    Max Vid.
-
-.PARAMETER Description
-    Brief description.
-
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -81,7 +57,7 @@ function Set-NBIPAMVLANGroup {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)][uint64]$Id,
         [string]$Name,
         [string]$Slug,
-        [ValidateSet('dcim.rack','dcim.rackgroup','dcim.location','dcim.region','dcim.sitegroup','dcim.sitegroup','dcim.site','virtualization.clustergroup','virtualization.cluster')]
+        [ValidateSet('dcim.rack','dcim.rackgroup','dcim.location','dcim.region','dcim.sitegroup','dcim.site','virtualization.clustergroup','virtualization.cluster')]
         [string]$Scope_Type,
         [uint64]$Scope_Id,
         [ValidateRange(1, 4094)][uint16]$Min_Vid,
