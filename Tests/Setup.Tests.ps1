@@ -286,6 +286,30 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
     }
 
     Context "Query options" {
+        BeforeAll {
+            $stateBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'IgnoreCase' }
+            # We need to set the parsed version to a value for testing, so mocking the connect request
+            Mock -CommandName 'InvokeNetboxRequest' -ModuleName 'PowerNetbox' -MockWith {
+                @'
+                {
+                "django-version": "5.2.13",
+                "hostname": "1934a65908c1",
+                "installed_apps": {},
+                "netbox-version": "4.6.1",
+                "netbox-full-version": "4.6.1-Docker-4.0.2",
+                }
+'@ | ConvertFrom-Json
+            }
+            $fakeCredential = [PSCredential]::new('notapplicable', (ConvertTo-SecureString -String "faketoken" -AsPlainText -Force))
+            Set-NBCredential -Credential $fakeCredential | Out-Null
+        }
+        AfterAll {
+            # Reset the query option to its previous state
+            Set-NBQueryOption -IgnoreCase:$stateBefore.Value | Out-Null
+            InModuleScope -ModuleName 'PowerNetbox' {
+                $script:NetboxConfig.ParsedVersion = $parsedVersionBefore
+            }
+        }
         Context "While not connected" {
             It "Should return the current query option" {
                 $result = Get-NbQueryOption
@@ -294,40 +318,39 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
             It "Should throw if try to set query options, because we need a parsed API version" {
                 { Set-NBQueryOption -IgnoreCase:$true } | Should -Throw "Not connected*"
             }
+            It "Should call Set-NBQueryOption inside Connect-NBAPI" {
+                Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $IgnoreCase -eq $false } -Verifiable
+                Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { Throw "Should not be called" } -ParameterFilter { $IgnoreCase -eq $true }
+                Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443
+                Assert-MockCalled -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 1
+                $null = Get-NbQueryOption
+            }
+            It "Should call Set-NBQueryOption inside Connect-NBAPI" {
+                Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { Throw "Should not be called" } -ParameterFilter { $IgnoreCase -eq $false }
+                Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $IgnoreCase -eq $true } -Verifiable
+                Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443 -IgnoreCase
+                Assert-MockCalled -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 1
+                $null = Get-NbQueryOption
+            }
         }
         Context "When connected" {
             BeforeAll {
-                $stateBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'IgnoreCase' }
-                # We need to set the parsed version to a value for testing, but we will restore it after the tests
-                $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' {
-                    $script:NetboxConfig.ParsedVersion
-                    $script:NetboxConfig.ParsedVersion = '4.6.1'
-                }
+                # calling the real connect function here, but having mocked the internal request in the context of this Describe
+                Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443
+            }
 
-                # We must be connected to check the API version
-                Mock -CommandName 'CheckNetboxIsConnected' -ModuleName 'PowerNetbox' -MockWith {}
-            }
-            AfterAll {
-                # Reset the query option to its previous state
-                Set-NBQueryOption -IgnoreCase:$stateBefore.Value | Out-Null
-                InModuleScope -ModuleName 'PowerNetbox' {
-                    $script:NetboxConfig.ParsedVersion = $parsedVersionBefore
-                }
-            }
             It "Should set and get query option IgnoreCase" {
                 Set-NBQueryOption -IgnoreCase:$true | Should -Be $true
-                $options = Get-NBQueryOption
-                $options.Name | Should -Be "IgnoreCase"
-                $options.Value | Should -Be $true
+                $options = Get-NbQueryOption
+                $options | Where-Object Name -eq 'IgnoreCase' | Select-Object -ExpandProperty Value | Should -Be $true
                 $optionsInternal = InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.IgnoreCaseInQueries
                 }
                 $optionsInternal | Should -Be $true
 
                 Set-NBQueryOption -IgnoreCase:$false | Should -Be $false
-                $options = Get-NBQueryOption
-                $options.Name | Should -Be "IgnoreCase"
-                $options.Value | Should -Be $false
+                $options = Get-NbQueryOption
+                $options | Where-Object Name -eq 'IgnoreCase' | Select-Object -ExpandProperty Value | Should -Be $false
                 InModuleScope -ModuleName 'PowerNetbox' {
                     # Check internal state is also reset
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false

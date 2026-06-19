@@ -154,7 +154,6 @@ function Connect-NBAPI {
     $null = Set-NBHostPort -Port $uriBuilder.Port
     $null = Set-NBInvokeParams -invokeParams $invokeParams
     $null = Set-NBTimeout -TimeoutSeconds $TimeoutSeconds
-    $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
 
     try {
         Write-Verbose "Verifying API connectivity..."
@@ -185,6 +184,9 @@ function Connect-NBAPI {
     } else {
         Write-Verbose "Found compatible version [$versionString] (parsed: $($script:NetboxConfig.ParsedVersion))!"
     }
+
+    # This needs a valid ParsedVersion to work, so it must be called after the version check
+    $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
 
     $script:NetboxConfig.Connected = $true
     Write-Verbose "Successfully connected!"
