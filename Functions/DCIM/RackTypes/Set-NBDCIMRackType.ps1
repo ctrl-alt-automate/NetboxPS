@@ -9,6 +9,63 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Manufacturer
+    Manufacturer assigned to this object (database ID).
+
+.PARAMETER Model
+    Model name.
+
+.PARAMETER Slug
+    URL-friendly unique identifier (slug).
+
+.PARAMETER Form_Factor
+    Form Factor.
+
+.PARAMETER Width
+    Width.
+
+.PARAMETER U_Height
+    Height in rack units
+
+.PARAMETER Starting_Unit
+    Starting unit for rack
+
+.PARAMETER Outer_Width
+    Outer dimension of rack (width)
+
+.PARAMETER Outer_Depth
+    Outer dimension of rack (depth)
+
+.PARAMETER Outer_Unit
+    Outer Unit.
+
+.PARAMETER Weight
+    Numeric weight value.
+
+.PARAMETER Max_Weight
+    Maximum load capacity for the rack
+
+.PARAMETER Weight_Unit
+    Unit of measurement for the weight.
+
+.PARAMETER Mounting_Depth
+    Maximum depth of a mounted device, in millimeters. For four-post racks, this is the distance between the front and rear rails.
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Comments
+    Detailed comments (Markdown is supported).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
 .EXAMPLE
     Set-NBDCIMRackType
 

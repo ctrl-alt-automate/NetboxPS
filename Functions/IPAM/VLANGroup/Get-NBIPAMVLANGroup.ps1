@@ -28,6 +28,36 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Slug
+    Filter by URL slug.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Site_Id
+    Filter by site database ID.
+
+.PARAMETER Site
+    Filter by site (name or slug).
+
+.PARAMETER Location_Id
+    Filter by location database ID.
+
+.PARAMETER Rack_Id
+    Filter by rack database ID.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBIPAMVLANGroup
 

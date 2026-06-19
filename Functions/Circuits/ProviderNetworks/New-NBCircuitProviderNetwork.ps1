@@ -26,6 +26,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBCircuitProviderNetwork -Provider 1 -Name "MPLS Network"
 

@@ -28,6 +28,27 @@
     Number of items per page when using -All. Default: 100.
     Range: 1-1000.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Slug
+    Filter by URL slug.
+
+.PARAMETER Type
+    Filter by type.
+
+.PARAMETER Tenant_Id
+    Filter by tenant database ID.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBVPNL2VPN
 

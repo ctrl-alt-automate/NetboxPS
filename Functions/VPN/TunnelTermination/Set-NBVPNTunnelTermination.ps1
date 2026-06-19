@@ -9,6 +9,30 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Tunnel
+    Tunnel.
+
+.PARAMETER Role
+    Role assigned to this object (database ID).
+
+.PARAMETER Termination_Type
+    Termination Type.
+
+.PARAMETER Termination_Id
+    Database ID of the termination.
+
+.PARAMETER Outside_IP
+    Outside IP.
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBVPNTunnelTermination
 

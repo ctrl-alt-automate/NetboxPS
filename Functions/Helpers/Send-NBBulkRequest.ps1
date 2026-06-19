@@ -28,6 +28,9 @@
 .PARAMETER ActivityName
     Name to display in the progress bar.
 
+.PARAMETER MaxItems
+    MaxItems.
+
 .OUTPUTS
     [BulkOperationResult] Object containing succeeded and failed items.
 

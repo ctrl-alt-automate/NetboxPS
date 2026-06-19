@@ -9,6 +9,51 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Id
+    Database ID of the object to update.
+
+.PARAMETER Prefix
+    Prefix assigned to this object (database ID).
+
+.PARAMETER Status
+    Operational status.
+
+.PARAMETER Tenant
+    Tenant assigned to this object (database ID).
+
+.PARAMETER Scope_Type
+    Scope Type.
+
+.PARAMETER Scope_Id
+    Database ID of the scope.
+
+.PARAMETER VRF
+    VRF assigned to this object (database ID).
+
+.PARAMETER VLAN
+    VLAN assigned to this object (database ID).
+
+.PARAMETER Role
+    Role assigned to this object (database ID).
+
+.PARAMETER Custom_Fields
+    Hashtable of custom field values to set (cf_<name>).
+
+.PARAMETER Description
+    Brief description.
+
+.PARAMETER Is_Pool
+    All IP addresses within this prefix are considered usable
+
+.PARAMETER Owner
+    Owner assigned to this object (database ID).
+
+.PARAMETER Force
+    Skip the confirmation prompt.
+
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     Set-NBIPAMPrefix
 

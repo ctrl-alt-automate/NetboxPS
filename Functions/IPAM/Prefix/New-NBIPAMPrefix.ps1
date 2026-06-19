@@ -62,6 +62,9 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBIPAMPrefix -Prefix "10.0.0.0/24" -Status "active" -Scope_Type "dcim.site" -Scope_Id 1
 

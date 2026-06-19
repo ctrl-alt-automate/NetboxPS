@@ -30,6 +30,9 @@ function Set-NBDCIMRegion {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         Set-NBDCIMRegion -Id 1 -Name "Western Europe"
 

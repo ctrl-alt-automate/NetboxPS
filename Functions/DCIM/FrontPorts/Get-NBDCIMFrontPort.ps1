@@ -28,6 +28,27 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Device
+    Filter by device (name or slug).
+
+.PARAMETER Device_Id
+    Filter by device database ID.
+
+.PARAMETER Type
+    Filter by type.
+
 .EXAMPLE
     Get-NBDCIMFrontPort
 

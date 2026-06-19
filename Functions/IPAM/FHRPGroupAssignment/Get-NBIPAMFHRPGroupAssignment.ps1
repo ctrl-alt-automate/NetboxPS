@@ -28,6 +28,27 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Group_Id
+    Filter by group database ID.
+
+.PARAMETER Interface_Id
+    Filter by interface database ID.
+
+.PARAMETER Device_Id
+    Filter by device database ID.
+
+.PARAMETER Virtual_Machine_Id
+    Filter by virtual machine database ID.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBIPAMFHRPGroupAssignment
 

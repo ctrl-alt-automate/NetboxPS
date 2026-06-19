@@ -22,6 +22,9 @@ function New-NBTenant {
     .PARAMETER Raw
         Return the unparsed data from the HTTP request
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         PS C:\> New-NBTenant -Name 'Contoso Inc' -Slug 'contoso-inc'
 .NOTES

@@ -22,6 +22,12 @@ function Set-NBContactRole {
     .PARAMETER Raw
         Return the raw API response instead of the updated object.
 
+    .PARAMETER Id
+        Database ID of the object to update.
+
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         PS C:\> Set-NBContactRole -Id 1 -Name 'Updated Role Name'
 .NOTES

@@ -36,6 +36,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     $securePass = ConvertTo-SecureString "<YOUR_SECURE_PASSWORD>" -AsPlainText -Force
     New-NBUser -Username "newuser" -Password $securePass

@@ -87,6 +87,9 @@ function New-NBDCIMRack {
     .PARAMETER Raw
         Return the raw API response
 
+    .PARAMETER Tags
+        One or more tags to assign to this object (tag names or IDs).
+
     .EXAMPLE
         New-NBDCIMRack -Name "Rack-01" -Site 1
 

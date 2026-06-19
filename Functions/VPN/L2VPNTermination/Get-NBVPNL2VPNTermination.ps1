@@ -28,6 +28,18 @@
     Number of items per page when using -All. Default: 100.
     Range: 1-1000.
 
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER L2VPN_Id
+    Filter by l2vpn database ID.
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
 .EXAMPLE
     Get-NBVPNL2VPNTermination
 

@@ -5,6 +5,12 @@
 .DESCRIPTION
     Sets the credential for Netbox API authentication.
 
+.PARAMETER Credential
+    Credential.
+
+.PARAMETER Token
+    Token.
+
 .EXAMPLE
     Set-NBCredential
 

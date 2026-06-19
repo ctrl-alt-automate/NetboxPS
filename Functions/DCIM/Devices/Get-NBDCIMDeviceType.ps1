@@ -28,6 +28,51 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Query
+    Free-text search across the object (NetBox 'q' parameter).
+
+.PARAMETER Slug
+    Filter by URL slug.
+
+.PARAMETER Manufacturer
+    Filter by manufacturer (name or slug).
+
+.PARAMETER Manufacturer_Id
+    Filter by manufacturer database ID.
+
+.PARAMETER Model
+    Filter by model.
+
+.PARAMETER Part_Number
+    Discrete part number (optional)
+
+.PARAMETER U_Height
+    Height in rack units
+
+.PARAMETER Is_Full_Depth
+    Device consumes both front and rear rack faces.
+
+.PARAMETER Is_Console_Server
+    Filter by is console server.
+
+.PARAMETER Is_PDU
+    Filter by is pdu.
+
+.PARAMETER Is_Network_Device
+    Filter by is network device.
+
+.PARAMETER Subdevice_Role
+    Filter by subdevice role.
+
 .EXAMPLE
     Get-NBDCIMDeviceType
 

@@ -28,6 +28,27 @@
     Specify which fields to exclude from the response.
     Requires Netbox 4.5.0 or later.
 
+.PARAMETER Limit
+    Maximum number of results to return per request (1-1000).
+
+.PARAMETER Offset
+    Number of results to skip (pagination offset).
+
+.PARAMETER Id
+    One or more database IDs to retrieve.
+
+.PARAMETER Name
+    Filter by name.
+
+.PARAMETER Slug
+    Filter by URL slug.
+
+.PARAMETER Color
+    Filter by color.
+
+.PARAMETER VM_Role
+    Virtual machines may be assigned to this role
+
 .EXAMPLE
     Get-NBDCIMDeviceRole
 

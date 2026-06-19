@@ -35,6 +35,9 @@
 .PARAMETER Raw
     Return the raw API response.
 
+.PARAMETER Tags
+    One or more tags to assign to this object (tag names or IDs).
+
 .EXAMPLE
     New-NBCustomLink -Name "External Doc" -Object_Types @("dcim.device") -Link_Text "View Docs" -Link_Url "https://docs.example.com/{{ object.name }}"
 
