@@ -28,10 +28,16 @@
 #>
 [CmdletBinding()]
 param (
-    [string] $Url = 'http://localhost:8000/api/schema/?format=json',
+    [ValidateNotNullOrEmpty()]
+    [string]$Hostname = $env:NETBOX_HOST,
 
+    [ValidateSet('https', 'http', IgnoreCase = $true)]
+    [string]$Scheme = 'https',
+
+    [ValidateNotNullOrEmpty()]
     [string] $NetboxVersion = $env:NETBOX_VERSION,
 
+    [ValidateNotNullOrEmpty()]
     [string] $PathProjectRoot = (Join-Path -Path $PSScriptRoot -ChildPath '..'),
 
     [ValidateSet('ConsoleTable', 'ConsoleList', 'Json', 'Object')]
@@ -312,6 +318,7 @@ if (-not (Get-Module -Name PowerNetbox)) {
 #endregion
 
 #region Read API schema and extract functions and query parameters
+    $url = "$($Scheme)://$Hostname/api/schema/?format=json"
     $apiSchema = Invoke-RestMethod $url -ContentType 'application/json'
     Write-Host "API schema version: $($apiSchema.info.version)"
 
