@@ -52,19 +52,13 @@ function Get-NBContactRole {
         Specify which fields to exclude from the response.
         Requires Netbox 4.5.0 or later.
 
-    .PARAMETER Slug
-        Filter by URL slug.
-
-    .PARAMETER Description
-        Filter by description.
-
     .EXAMPLE
         PS C:\> Get-NBContactRole
 
 .NOTES
     AddedInVersion: v1.0.4
     The -Brief, -Fields, and -Omit parameters are mutually exclusive.
-    Using the array parameters e.g. name, slug), will follow the rules of the API's filtering rules.
+    When supplying multiple values to an array parameter (e.g. -Name a,b), results are OR-ed per NetBox filtering rules.
     See https://netboxlabs.com/docs/netbox/reference/filtering/
 #>
 
