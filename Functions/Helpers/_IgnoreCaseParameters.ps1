@@ -1,175 +1,164 @@
-# List of API parameters of type string, that could be requested as case-insensitive
-#   The list is based on the swagger spec of NetBox, slightly modified to remove parameters that are not relevant for the API client
-#   e.g. parameters that are only used in the UI, or parameters that might be misleading
-$Script:IgnoreCaseParameterList = @(
-    'account'
-    'action_object_type'
-    'action_type'
-    'additional_headers'
-    'address'
-    'airflow'
-    'app_label'
-    'app_name'
-    'asset_tag'
-    'assigned_object_type'
-    'auth_cipher'
-    'auth_key'
-    'auth_psk'
-    'auth_type'
-    'authentication_algorithm'
-    'authentication_method'
-    'base_choices'
-    'body_template'
-    'button_class'
-    'ca_file_path'
-    'cable_end'
-    'changed_object_type'
-    'cid'
-    'color'
-    'comments'
-    'completed'
-    'component_type'
-    'connected_endpoints_type'
-    'created'
-    'created_at'
-    'data_path'
-    'data_synced'
-    'data_type'
-    'date_added'
-    'date_joined'
-    'description'
-    'display'
-    'display_url'
-    'distance_unit'
-    'dns_name'
-    'domain'
-    'duplex'
-    'email'
-    'encapsulation'
-    'encryption_algorithm'
-    'end_address'
-    'ended_at'
-    'enqueued_at'
-    'error'
-    'event_type'
-    'expires'
-    'face'
-    'facility'
-    'facility_id'
-    'feed_leg'
-    'file_extension'
-    'file_name'
-    'filter_logic'
-    'first_name'
-    'form_factor'
-    'front_image'
-    'func_name'
-    'group_name'
-    'hash'
-    'http_content_type'
-    'http_method'
-    'id'
-    'ignore_rules'
-    'image'
-    'install_date'
-    'interface_type'
-    'job_id'
-    'key'
-    'kind'
-    'label'
-    'last_heartbeat'
-    'last_login'
-    'last_name'
-    'last_synced'
-    'last_updated'
-    'last_used'
-    'length_unit'
-    'link'
-    'link_peers_type'
-    'link_text'
-    'link_url'
-    'mac_address'
-    'member_type'
-    'message'
-    'mime_type'
-    'mode'
-    'model'
-    'model_name'
-    'model_name_plural'
-    'name'
-    'next'
-    'object_type'
-    'origin'
-    'outer_unit'
-    'parent_object_type'
-    'part_id'
-    'part_number'
-    'password'
-    'path'
-    'payload_url'
-    'phase'
-    'phone'
-    'physical_address'
-    'poe_mode'
-    'poe_type'
-    'position'
-    'pp_info'
-    'prefix'
-    'preshared_key'
-    'previous'
-    'priority'
-    'protocol'
-    'qinq_role'
-    'rd'
-    'read'
-    'rear_image'
-    'related_object_type'
-    'request_id'
-    'rest_api_endpoint'
-    'result'
-    'rf_channel'
-    'rf_role'
-    'role'
-    'schedule_at'
-    'scheduled'
-    'scope_type'
-    'secret'
-    'serial'
-    'service_id'
-    'shipping_address'
-    'slug'
-    'source_url'
-    'ssid'
-    'start_address'
-    'started'
-    'started_at'
-    'status'
-    'subdevice_role'
-    'supply'
-    'table'
-    'template_code'
-    'term_side'
-    'termination_date'
-    'termination_type'
-    'time'
-    'time_zone'
-    'title'
-    'type'
-    # 'ui_editable'
-    # 'ui_visible'
-    'url'
-    'user_name'
-    'username'
-    'utilization'
-    # 'validation_regex'
-    'weight_unit'
-    'worker_name'
-    'wwn'
-    'xconnect_id'
-)
-
-# Build hashtable for faster lookup
-$Script:IgnoreCaseParameterHash = @{}
-foreach ($param in $Script:IgnoreCaseParameterList) {
-    $Script:IgnoreCaseParameterHash[$param] = $true
+# Current baseline is the API v4.4.9 list of fully supported case-insensitive parameters, which is the minimum version supported by this module
+$Script:IgnoreCaseParameterBaseline = @{
+    'account'                  = @()
+    'action_type'              = @()
+    'app_label'                = @()
+    'asset_tag'                = @()
+    'auth_cipher'              = @()
+    'auth_key'                 = @()
+    'auth_psk'                 = @()
+    'auth_type'                = @()
+    'authentication_algorithm' = @()
+    'authentication_method'    = @()    # 1
+    'ca_file_path'             = @()
+    'cid'                      = @()
+    'color'                    = @()
+    'description'              = @()
+    'device_status'            = @()
+    'dns_name'                 = @()
+    'domain'                   = @()
+    'duplex'                   = @()
+    'email'                    = @()
+    'encapsulation'            = @()    # 2
+    'encryption_algorithm'     = @()
+    'facility'                 = @()
+    'facility_id'              = @()
+    'feed_leg'                 = @()
+    'file_extension'           = @()
+    'file_name'                = @()
+    'first_name'               = @()
+    'form_factor'              = @()
+    'group_name'               = @()
+    'hash'                     = @()    # 3
+    'http_content_type'        = @()
+    'http_method'              = @()
+    'key'                      = @()
+    'label'                    = @()
+    'last_name'                = @()
+    'link'                     = @()
+    'link_text'                = @()
+    'link_url'                 = @()
+    'mac_address'              = @()
+    'mime_type'                = @()    # 4
+    'mode'                     = @()
+    'name'                     = @()
+    'object_repr'              = @()
+    'part_id'                  = @()
+    'part_number'              = @()
+    'path'                     = @()
+    'phone'                    = @()
+    'poe_mode'                 = @()
+    'poe_type'                 = @()
+    'pp_info'                  = @()    # 5
+    'preshared_key'            = @()
+    'qinq_role'                = @()
+    'rd'                       = @()
+    'rf_channel'               = @()
+    'rf_role'                  = @()
+    'secret'                   = @()
+    'serial'                   = @()
+    'slug'                     = @()
+    'source_url'               = @()
+    'ssid'                     = @()    # 6
+    'status'                   = @()
+    'table'                    = @()
+    'time_zone'                = @()
+    'title'                    = @()
+    'user_name'                = @()
+    'username'                 = @()
+    'validation_regex'         = @()
+    'wwn'                      = @()
+    'xconnect_id'              = @()    # 69
 }
+
+$Script:IgnoreCaseParameterV449 = @{
+    # v4.4.9 existing parameters that are case-insensitive, exceptions for endpoints are listed in the arrays
+    'address'     = @('api/ipam/ip-addresses/')
+    'kind'        = @('api/dcim/interfaces/')
+    'model'       = @('api/dcim/devices/')
+    'object_type' = @('api/core/jobs/', 'api/extras/bookmarks/', 'api/extras/image-attachments/', 'api/extras/table-configs/', 'api/extras/tagged-objects/', 'api/tenancy/contact-assignments/')
+    'position'    = @('api/dcim/devices/')
+    'protocol'    = @('api/ipam/service-templates/', 'api/ipam/services/')
+    'role'        = @('api/dcim/devices/', 'api/dcim/inventory-item-templates/', 'api/dcim/inventory-items/', 'api/dcim/racks/', 'api/ipam/ip-ranges/', 'api/ipam/prefixes/', 'api/ipam/vlans/', 'api/tenancy/contact-assignments/', 'api/virtualization/virtual-machines/')
+    'service_id'  = @('api/ipam/ip-addresses/')
+    'type'        = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/dcim/console-port-templates/', 'api/dcim/console-server-port-templates/', 'api/dcim/power-feeds/', 'api/dcim/power-outlet-templates/', 'api/dcim/power-port-templates/', 'api/virtualization/clusters/')
+}
+$Script:IgnoreCaseParameterV450 = @{
+    # v4.4.9 -> v4.5.0, these parameters are case-insensitive for all endpoints
+    'action'         = @()      # 70
+    'airflow'        = @()
+    'base_choices'   = @()
+    'button_class'   = @()
+    'cable_end'      = @()
+    'distance_unit'  = @()
+    'face'           = @()
+    'filter_logic'   = @()
+    'length_unit'    = @()
+    'outer_unit'     = @()
+    'phase'          = @()      # 80
+    'protocol'       = @()
+    'queue_name'     = @()
+    'start_on_boot'  = @()
+    'subdevice_role' = @()
+    'supply'         = @()
+    'term_side'      = @()
+    'ui_editable'    = @()
+    'ui_visible'     = @()
+    'weight_unit'    = @()      # 89
+    # existing parameters that are case-insensitive, exceptions for endpoints are listed in the arrays
+    'address'        = @('api/ipam/ip-addresses/')
+    'kind'           = @('api/dcim/interfaces/')
+    'model'          = @('api/dcim/devices/')
+    'object_type'    = @('api/core/jobs/', 'api/extras/bookmarks/', 'api/extras/image-attachments/', 'api/extras/table-configs/', 'api/extras/tagged-objects/', 'api/tenancy/contact-assignments/')
+    'position'       = @('api/dcim/devices/')
+    'priority'       = @('api/ipam/fhrp-group-assignments/')
+    'profile'        = @('api/dcim/module-types/', 'api/dcim/modules/', 'api/extras/config-contexts/')
+    'role'           = @('api/dcim/devices/', 'api/dcim/inventory-item-templates/', 'api/dcim/inventory-items/', 'api/dcim/racks/', 'api/ipam/ip-ranges/', 'api/ipam/prefixes/', 'api/ipam/vlans/', 'api/tenancy/contact-assignments/', 'api/virtualization/virtual-machines/')
+    'service_id'     = @('api/ipam/ip-addresses/')
+    'type'           = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/virtualization/clusters/')
+}
+$Script:IgnoreCaseParameterV461 = @{
+    # v4.4.9 -> v4.6.1, these parameters are case-insensitive for all endpoints
+    'action'         = @()
+    'airflow'        = @()
+    'base_choices'   = @()
+    'button_class'   = @()
+    'cable_end'      = @()
+    'distance_unit'  = @()
+    'face'           = @()
+    'filter_logic'   = @()
+    'length_unit'    = @()
+    'notifications'  = @()      # new in 4.6.1, not present in 4.5.0
+    'outer_unit'     = @()
+    'phase'          = @()
+    'protocol'       = @()
+    'queue_name'     = @()
+    'start_on_boot'  = @()
+    'subdevice_role' = @()
+    'supply'         = @()
+    'term_side'      = @()
+    'ui_editable'    = @()
+    'ui_visible'     = @()
+    'weight_unit'    = @()
+    # existing parameters that are case-insensitive, exceptions for endpoints are listed in the arrays
+    'address'        = @('api/ipam/ip-addresses/')
+    'kind'           = @('api/dcim/interfaces/')
+    'model'          = @('api/dcim/devices/')
+    'object_type'    = @('api/core/jobs/', 'api/extras/bookmarks/', 'api/extras/image-attachments/', 'api/extras/table-configs/', 'api/extras/tagged-objects/', 'api/tenancy/contact-assignments/')
+    'position'       = @('api/dcim/devices/')
+    'priority'       = @('api/ipam/fhrp-group-assignments/')
+    'profile'        = @('api/dcim/module-types/', 'api/dcim/modules/', 'api/extras/config-contexts/')
+    'role'           = @('api/dcim/devices/', 'api/dcim/inventory-item-templates/', 'api/dcim/inventory-items/', 'api/dcim/racks/', 'api/ipam/asns/', 'api/ipam/ip-ranges/', 'api/ipam/prefixes/', 'api/ipam/vlans/', 'api/tenancy/contact-assignments/', 'api/virtualization/virtual-machines/')
+    'service_id'     = @('api/ipam/ip-addresses/')
+    'type'           = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/virtualization/clusters/')
+}
+
+# Set-NBQueryOption will set this to whatever is appropriate for the API version
+# default is to start with case insensitive
+$Script:IgnoreCaseParameterHash = @{}
+# This will contain the collection of all case-insensitive parameters per known API version, including any exceptions for specific endpoints
+# Keep it orderd so that we can easily find the first and last known versions
+$Script:IgnoreCaseParameterDictonary  = [ordered]@{}
+$Script:IgnoreCaseParameterDictonary['4.4'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV449
+$Script:IgnoreCaseParameterDictonary['4.5'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV450
+$Script:IgnoreCaseParameterDictonary['4.6'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV461
