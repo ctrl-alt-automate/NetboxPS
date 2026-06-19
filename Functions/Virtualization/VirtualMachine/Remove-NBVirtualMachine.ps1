@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Deletes one or more virtual machines from Netbox.
+    Deletes one or more virtual machines from NetBox.
 
 .DESCRIPTION
-    Deletes virtual machines from Netbox Virtualization module. Supports both
+    Deletes virtual machines from NetBox Virtualization module. Supports both
     single VM deletion with the Id parameter and bulk deletion via pipeline input.
 
     For bulk operations, use the -BatchSize parameter to control how many

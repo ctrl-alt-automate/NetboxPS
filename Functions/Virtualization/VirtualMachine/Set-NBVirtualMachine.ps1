@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Updates one or more virtual machines in Netbox Virtualization module.
+    Updates one or more virtual machines in NetBox Virtualization module.
 
 .DESCRIPTION
-    Updates existing virtual machines in Netbox Virtualization module. Supports both
+    Updates existing virtual machines in NetBox Virtualization module. Supports both
     single VM updates with individual parameters and bulk updates via pipeline input.
 
     For bulk operations, use the -BatchSize parameter to control how many
@@ -64,7 +64,7 @@
     Hashtable of custom field values.
 
 .PARAMETER Start_On_Boot
-    Boot behavior for the VM (Netbox 4.5+ only).
+    Boot behavior for the VM (NetBox 4.5+ only).
     Values: 'on', 'off', 'laststate'
 
 .PARAMETER InputObject

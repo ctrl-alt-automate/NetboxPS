@@ -129,28 +129,34 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $Result.Uri | Should -Match 'serial=SN123456'
         }
 
-        It "Should request a VM by Virtual_Machine_Type (Netbox 4.6+)" {
+        It "Should request multiple Serial Numbers" {
+            $Result = Get-NBVirtualMachine -Serial 'SN123456','SN789012'
+            $Result.Method | Should -Be 'GET'
+            $Result.Uri | Should -Match '(?=.*serial=SN123456)(?=.*serial=SN789012)'
+        }
+
+        It "Should request a VM by Virtual_Machine_Type (NetBox 4.6+)" {
             $Result = Get-NBVirtualMachine -Virtual_Machine_Type 't3-medium'
             $Result.Method | Should -Be 'GET'
             $Result.Uri | Should -Match 'virtual_machine_type=t3-medium'
         }
 
-        It "Should request a VM by Virtual_Machine_Type_id (Netbox 4.6+)" {
+        It "Should request a VM by Virtual_Machine_Type_id (NetBox 4.6+)" {
             $Result = Get-NBVirtualMachine -Virtual_Machine_Type_Id 3
             $Result.Method | Should -Be 'GET'
-            $Result.Uri | Should -Match 'virtual_machine_type=3'
+            $Result.Uri | Should -Match 'virtual_machine_type_id=3'
         }
 
-        It "Should request with a Device (Netbox 4.6+)" {
+        It "Should request with a Device (NetBox 4.6+)" {
             $Result = Get-NBVirtualMachine -Device 'newtestname'
             $Result.Method | Should -Be 'GET'
             $Result.Uri | Should -Match 'device=newtestname'
         }
 
-        It "Should request with a Device ID (Netbox 4.6+)" {
+        It "Should request with a Device ID (NetBox 4.6+)" {
             $Result = Get-NBVirtualMachine -Device_Id '1234'
             $Result.Method | Should -Be 'GET'
-            $Result.Uri | Should -Match 'device=1234'
+            $Result.Uri | Should -Match 'device_id=1234'
         }
 
         Context "Status drift fix (#392 item 4)" {
@@ -367,7 +373,7 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $validateSet.ValidValues | Should -Contain 'active'
         }
 
-        It "Should create a VM with Start_On_Boot (Netbox 4.5+)" {
+        It "Should create a VM with Start_On_Boot (NetBox 4.5+)" {
             $Result = New-NBVirtualMachine -Name 'testvm' -Cluster 1 -Start_On_Boot 'on'
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.start_on_boot | Should -Be 'on'
@@ -390,8 +396,8 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $serialParam = $cmd.Parameters['Serial']
             $validateLength = $serialParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateLengthAttribute] }
             $validateLength | Should -Not -BeNullOrEmpty
-            $validateLength[0].MinimumLength | Should -Be 0
-            $validateLength[0].MaximumLength | Should -Be 50
+            $validateLength.MinLength | Should -Be 0
+            $validateLength.MaxLength | Should -Be 50
         }
 
         It "Should create a VM with a Description" {
@@ -405,8 +411,8 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $descParam = $cmd.Parameters['Description']
             $validateLength = $descParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateLengthAttribute] }
             $validateLength | Should -Not -BeNullOrEmpty
-            $validateLength[0].MinimumLength | Should -Be 0
-            $validateLength[0].MaximumLength | Should -Be 200
+            $validateLength.MinLength | Should -Be 0
+            $validateLength.MaxLength | Should -Be 200
         }
     }
 
@@ -496,7 +502,7 @@ Describe "Virtualization tests" -Tag 'Virtualization' {
             $validateSet.ValidValues | Should -Contain 'active'
         }
 
-        It "Should update a VM with Start_On_Boot (Netbox 4.5+)" {
+        It "Should update a VM with Start_On_Boot (NetBox 4.5+)" {
             $Result = Set-NBVirtualMachine -Id 1234 -Start_On_Boot 'off' -Confirm:$false
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.start_on_boot | Should -Be 'off'

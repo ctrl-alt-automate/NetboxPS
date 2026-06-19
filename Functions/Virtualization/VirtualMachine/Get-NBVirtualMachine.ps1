@@ -2,7 +2,7 @@
 function Get-NBVirtualMachine {
     <#
     .SYNOPSIS
-        Obtains virtual machines from Netbox.
+        Obtains virtual machines from NetBox.
 
     .DESCRIPTION
         Obtains one or more virtual machines based on provided filters.
@@ -26,7 +26,7 @@ function Get-NBVirtualMachine {
 
     .PARAMETER Omit
         Specify which fields to exclude from the response.
-        Requires Netbox 4.5.0 or later.
+        Requires NetBox 4.5.0 or later.
 
     .PARAMETER IncludeConfigContext
         Include config_context in the response. By default, config_context is
@@ -40,7 +40,7 @@ function Get-NBVirtualMachine {
 
     .PARAMETER Query
         Search query (maps to the 'q' API filter). Matches against VM name
-        and primary IP address. Note: in Netbox 4.5.3+, this only matches the
+        and primary IP address. Note: in NetBox 4.5.3+, this only matches the
         primary IP, not all assigned IPs.
 
     .PARAMETER Name
@@ -80,10 +80,10 @@ function Get-NBVirtualMachine {
         Database ID of the cluster.
 
     .PARAMETER Device
-        The string value of the device the VMs are are attached to. (Netbox 4.6+).
+        The string value of the device the VMs are attached to. (NetBox 4.6+).
 
     .PARAMETER Device_Id
-        The device Id of the device the VMs are attached to. (Netbox 4.6+).
+        The device Id of the device the VMs are attached to. (NetBox 4.6+).
 
     .PARAMETER Site
         String value of the site.
@@ -101,10 +101,11 @@ function Get-NBVirtualMachine {
         Serial number of the VM. You can query multiple serial numbers by separating them with commas (e.g., "12345","67890").
 
     .PARAMETER Virtual_Machine_Type
-        String value of the virtual machine type (Slug). (Netbox 4.6+)
+        String value of the virtual machine type (Slug). (NetBox 4.6+)
 
     .PARAMETER Virtual_Machine_Type_Id
-        Database ID of the virtual machine type. (Netbox 4.6+)
+        Database ID of the virtual machine type. (NetBox 4.6+)
+
     .PARAMETER Raw
         Return the raw API response instead of extracting the results array.
 
@@ -126,7 +127,7 @@ function Get-NBVirtualMachine {
 
     .EXAMPLE
         Get-NBVirtualMachine -Omit 'comments','description'
-        Returns VMs without comments and description fields (Netbox 4.5+).
+        Returns VMs without comments and description fields (NetBox 4.5+).
 .NOTES
     AddedInVersion: v1.0.4
 
