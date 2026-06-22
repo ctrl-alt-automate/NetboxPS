@@ -454,6 +454,18 @@ Describe "IPAM tests" -Tag 'Ipam' {
             $bodyObj = $Result.Body | ConvertFrom-Json
             $bodyObj.name | Should -Be 'TestGroup'
         }
+        It "Should have ValidateSet for Scope_Type" {
+            $cmd = Get-Command New-NBIPAMVLANGroup
+            $statusParam = $cmd.Parameters['Scope_Type']
+            $validateSet = $statusParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+            $validateSet | Should -Not -BeNullOrEmpty
+            $validateSet.ValidValues | Should -Contain 'dcim.site'
+        }
+        It "Should create a VLAN group with scope_type" {
+            $Result = New-NBIPAMVLANGroup -Name 'TestGroup' -Slug 'test-group' -Scope_Type 'dcim.site'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.scope_type | Should -Be 'dcim.site'
+        }
     }
 
     Context "Set-NBIPAMVLANGroup" {
@@ -461,6 +473,18 @@ Describe "IPAM tests" -Tag 'Ipam' {
             $Result = Set-NBIPAMVLANGroup -Id 1 -Name 'Updated' -Confirm:$false
             $Result.Method | Should -Be 'PATCH'
             $Result.Uri | Should -Match '/api/ipam/vlan.groups/1/'
+        }
+        It "Should have ValidateSet for Scope_Type" {
+            $cmd = Get-Command Set-NBIPAMVLANGroup
+            $statusParam = $cmd.Parameters['Scope_Type']
+            $validateSet = $statusParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+            $validateSet | Should -Not -BeNullOrEmpty
+            $validateSet.ValidValues | Should -Contain 'dcim.site'
+        }
+        It "Should update a VLAN group with scope_type" {
+            $Result = Set-NBIPAMVLANGroup -Id 1 -Name 'TestGroup' -Slug 'test-group' -Scope_Type 'dcim.site'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.scope_type | Should -Be 'dcim.site'
         }
     }
 
@@ -1264,7 +1288,7 @@ Describe "IPAM tests" -Tag 'Ipam' {
             @{ Command = 'New-NBIPAMService'; Parameters = @{ Name = 'whatif-test'; Ports = 1 } }
             @{ Command = 'New-NBIPAMServiceTemplate'; Parameters = @{ Name = 'whatif-test'; Ports = 1 } }
             @{ Command = 'New-NBIPAMVLAN'; Parameters = @{ VID = 1; Name = 'whatif-test' } }
-            @{ Command = 'New-NBIPAMVLANGroup'; Parameters = @{ Name = 'whatif-test' } }
+            @{ Command = 'New-NBIPAMVLANGroup'; Parameters = @{ Name = 'whatif-test'; Slug = 'whatif-test' } }
             @{ Command = 'New-NBIPAMVLANTranslationPolicy'; Parameters = @{ Name = 'whatif-test' } }
             @{ Command = 'New-NBIPAMVLANTranslationRule'; Parameters = @{ Policy = 1; Local_Vid = 1; Remote_Vid = 1 } }
             @{ Command = 'New-NBIPAMVRF'; Parameters = @{ Name = 'whatif-test' } }

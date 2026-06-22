@@ -88,7 +88,7 @@ function Get-NBContact {
 
         [Parameter(ParameterSetName = 'Query',
                    Position = 0)]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter(ParameterSetName = 'ByID', ValueFromPipelineByPropertyName = $true)]
         [uint64[]]$Id,
@@ -97,24 +97,24 @@ function Get-NBContact {
         [string]$Query,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Email,
+        [string[]]$Email,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Title,
+        [string[]]$Title,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Phone,
+        [string[]]$Phone,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$Address,
+        [string[]]$Address,
 
         [Parameter(ParameterSetName = 'Query')]
         [Alias('Groups','GroupNames')]
-        [string]$Group,
+        [string[]]$Group,
 
         [Parameter(ParameterSetName = 'Query')]
         [Alias('GroupId')]
-        [uint64]$Group_Id,
+        [uint64[]]$Group_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

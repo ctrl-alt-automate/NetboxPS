@@ -1323,6 +1323,23 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         BeforeAll {
             $script:TestContactRoleName = "$($script:TestPrefix)-ContactRole"
             $script:TestContactRoleSlug = $script:TestContactRoleName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            # create three contact roles to test array parameters
+            $script:TestContactRoleArray = @()
+            for ($i = 1; $i -le 3; $i++) {
+                $name = "$($script:TestPrefix)-ContactRoleArray$i"
+                $slug = $name.ToLower() -replace '[^a-z0-9-]', '-'
+                $role = New-NBContactRole -Name $name -Slug $slug -Description "Description for $name"
+                $script:TestContactRoleArray += $role
+                [void]$script:CreatedResources.ContactRoles.Add($role.id)
+            }
+        }
+        AfterAll {
+            foreach ($role in $script:TestContactRoleArray) {
+                { Remove-NBContactRole -Id $role.id -Confirm:$false } | Should -Not -Throw
+                $script:CreatedResources.ContactRoles.Remove($role.id)
+            }
+            $script:TestContactRoleArray = $null
         }
 
         It "Should create a contact role" {
@@ -1350,6 +1367,47 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
 
             $role.description | Should -BeLike "*Updated*"
         }
+
+        Context "Should GET using array parameter query" {
+            It "Should get contact roles by array of names" {
+                $names = $script:TestContactRoleArray[1..2] | ForEach-Object { $_.name }
+                $roles = Get-NBContactRole -Name $names
+
+                $roles | Should -HaveCount 2
+                foreach ($role in $script:TestContactRoleArray[1..2]) {
+                    $roles.id | Should -Contain $role.id
+                    $roles.Name | Should -Contain $role.name
+                    $roles.slug | Should -Contain $role.slug
+                    $roles.description | Should -Contain $role.description
+                }
+            }
+
+            It "Should get contact roles by array of slugs" {
+                $slugs = $script:TestContactRoleArray[1..2] | ForEach-Object { $_.slug }
+                $roles = Get-NBContactRole -Slug $slugs
+
+                $roles | Should -HaveCount 2
+                foreach ($role in $script:TestContactRoleArray[1..2]) {
+                    $roles.id | Should -Contain $role.id
+                    $roles.Name | Should -Contain $role.name
+                    $roles.slug | Should -Contain $role.slug
+                    $roles.description | Should -Contain $role.description
+                }
+            }
+
+            It "Should get contact roles by array of descriptions" {
+                $descriptions = $script:TestContactRoleArray[1..2] | ForEach-Object { $_.description }
+                $roles = Get-NBContactRole -Description $descriptions
+
+                $roles | Should -HaveCount 2
+                foreach ($role in $script:TestContactRoleArray[1..2]) {
+                    $roles.id | Should -Contain $role.id
+                    $roles.Name | Should -Contain $role.name
+                    $roles.slug | Should -Contain $role.slug
+                    $roles.description | Should -Contain $role.description
+                }
+            }
+        }
     }
 
     Context "Contact CRUD" {
@@ -1371,6 +1429,7 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
                 $script:CreatedResources.ContactGroups.Remove($Script:TestContactGroup2Id)
                 $Script:TestContactGroup2Id = $null
             }
+            $null = Set-NBQueryOption -IgnoreCase:$false
         }
 
         It "Should create a contact" {
@@ -1440,6 +1499,22 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             #Cleanup: delete contact
             { Remove-NBContact -Id $contact2.id -Confirm:$false  } | Should -Not -Throw
             $script:CreatedResources.Contacts.Remove($contact2.id)
+        }
+        It "Should find contact name using case-insensitive search" {
+            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
+            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
+            # search would not match -- skip rather than assert case-insensitivity.
+            $nbVersionString = (Get-NBVersion).'netbox-version'
+            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
+                Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+'
+                return
+            }
+            $null = Set-NBQueryOption -IgnoreCase
+            $contact = Get-NBContact -Name $script:TestContactName.ToUpper()
+
+            $contact | Should -Not -BeNullOrEmpty
+            $contact.id | Should -Be $script:TestContactId
+            $contact.name | Should -Be $script:TestContactName
         }
     }
 

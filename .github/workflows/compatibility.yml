@@ -82,8 +82,8 @@ jobs:
           # - Cursor-based pagination (?start= alternative to ?offset=)
           # - REST API partial tag assignment (add_tags/remove_tags)
           # - Django 6.0 upgrade (server-side)
-          - netbox: "v4.6.1-5.0.1"
-            netbox_short: "4.6.1"
+          - netbox: "v4.6.3-5.0.1"
+            netbox_short: "4.6.3"
             is_beta: false
             expected_failures: []
 

@@ -83,7 +83,7 @@ function Get-NBContactAssignment {
 
         [Parameter(ParameterSetName = 'Query',
                    Position = 0)]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter(ParameterSetName = 'ByID', ValueFromPipelineByPropertyName = $true)]
         [uint64[]]$Id,
@@ -94,16 +94,16 @@ function Get-NBContactAssignment {
 
         [Parameter(ParameterSetName = 'Query')]
         [Alias('Content_Type')]
-        [string]$Object_Type,
+        [string[]]$Object_Type,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Object_Id,
+        [uint64[]]$Object_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Contact_Id,
+        [uint64[]]$Contact_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [uint64]$Role_Id,
+        [uint64[]]$Role_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

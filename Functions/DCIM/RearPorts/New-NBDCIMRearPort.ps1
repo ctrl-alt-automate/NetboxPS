@@ -19,7 +19,7 @@
 .PARAMETER Type
     The connector type of the rear port. Common types include:
     - Copper: '8p8c' (RJ-45), '8p6c', '8p4c', '110-punch', 'bnc'
-    - Fiber: 'lc', 'lc-apc', 'sc', 'sc-apc', 'st', 'mpo', 'mtrj'
+    - Fiber: 'lc', 'lc-apc', 'mu', 'mu-apc', 'sc', 'sc-apc', 'st', 'mpo', 'mtrj'
     - Coax: 'f', 'n', 'bnc'
     - Other: 'splice', 'other'
 
@@ -102,7 +102,8 @@ function New-NBDCIMRearPort {
             'gg45', 'tera-4p', 'tera-2p', 'tera-1p', '110-punch', 'bnc', 'f', 'n', 'mrj21',
             'fc', 'fc-pc', 'fc-upc', 'fc-apc',
             'lc', 'lc-pc', 'lc-upc', 'lc-apc', 'lsh', 'lsh-pc', 'lsh-upc', 'lsh-apc',
-            'lx5', 'lx5-pc', 'lx5-upc', 'lx5-apc', 'mpo', 'mtrj', 'sc', 'sc-pc', 'sc-upc',
+            'lx5', 'lx5-pc', 'lx5-upc', 'lx5-apc', 'mpo', 'mtrj',
+            'mu', 'mu-pc', 'mu-upc', 'mu-apc', 'sc', 'sc-pc', 'sc-upc',
             'sc-apc', 'st', 'cs', 'sn', 'sma-905', 'sma-906', 'urm-p2', 'urm-p4', 'urm-p8',
             'usb-a', 'usb-b', 'usb-c', 'usb-mini-a', 'usb-mini-b',
             'usb-micro-a', 'usb-micro-b', 'usb-micro-ab',

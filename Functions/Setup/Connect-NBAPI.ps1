@@ -37,12 +37,24 @@ function Connect-NBAPI {
     .PARAMETER TimeoutSeconds
         The number of seconds before the HTTP call times out. Defaults to 30 seconds
 
+    .PARAMETER IgnoreCase
+        When set, string query parameters are sent case-insensitively using Netbox's "__ie" lookup
+        (e.g., ?name__ie=value). Only applies to parameters supported by the connected Netbox version,
+        and only on endpoints where that lookup is available; unsupported fields stay case-sensitive.
+        See Set-NBQueryOption for details.
+
     .EXAMPLE
         PS C:\> Connect-NBAPI -Hostname "netbox.domain.com"
 
         This will prompt for Credential, then proceed to attempt a connection to Netbox
-.NOTES
-    AddedInVersion: v1.0.4
+
+    .EXAMPLE
+        PS C:\> Connect-NBAPI -Hostname "netbox.domain.com" -IgnoreCase
+
+        This will prompt for Credential, then proceed to attempt a connection to Netbox with case-insensitive query parameters enabled
+
+    .NOTES
+        AddedInVersion: v1.0.4
 
 
 #>
@@ -78,7 +90,9 @@ function Connect-NBAPI {
 
         [ValidateNotNullOrEmpty()]
         [ValidateRange(1, 65535)]
-        [uint16]$TimeoutSeconds = 30
+        [uint16]$TimeoutSeconds = 30,
+
+        [switch]$IgnoreCase
     )
 
     if (-not $Credential) {
@@ -171,6 +185,9 @@ function Connect-NBAPI {
     } else {
         Write-Verbose "Found compatible version [$versionString] (parsed: $($script:NetboxConfig.ParsedVersion))!"
     }
+
+    # This needs a valid ParsedVersion to work, so it must be called after the version check
+    $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
 
     $script:NetboxConfig.Connected = $true
     Write-Verbose "Successfully connected!"

@@ -1739,16 +1739,71 @@ Describe "Bulk Operations Live Integration Tests" -Tag 'Bulk', 'Integration', 'L
     BeforeAll {
         Remove-Module PowerNetbox -Force -ErrorAction SilentlyContinue
         $ModulePath = Join-Path (Join-Path $PSScriptRoot "..") "PowerNetbox/PowerNetbox.psd1"
+        if (-not (Test-Path $ModulePath)) {
+            $ModulePath = Join-Path (Join-Path $PSScriptRoot "..") "PowerNetbox.psd1"
+        }
         Import-Module $ModulePath -Force
 
-        $cred = [PSCredential]::new('api', (ConvertTo-SecureString $env:NETBOX_TOKEN -AsPlainText -Force))
-        Connect-NBAPI -Hostname $env:NETBOX_HOST -Credential $cred
+        # Build connect parameters from the environment, mirroring Integration.Tests.ps1:
+        # parse "host:port", default the scheme to http for localhost (Docker/Podman CI)
+        # and https otherwise, and honour an explicit $env:NETBOX_SCHEME override.
+        $secureToken = ConvertTo-SecureString -String $env:NETBOX_TOKEN -AsPlainText -Force
+        $credential = [PSCredential]::new('api', $secureToken)
 
-        # Get test prerequisites
-        $script:TestSite = Get-NBDCIMSite -Limit 1 | Select-Object -First 1
-        $script:TestRole = Get-NBDCIMDeviceRole -Limit 1 | Select-Object -First 1
-        $script:TestType = Get-NBDCIMDeviceType -Limit 1 | Select-Object -First 1
-        $script:TestCluster = Get-NBVirtualizationCluster -Limit 1 | Select-Object -First 1
+        $hostValue = $env:NETBOX_HOST
+        $hostname = $hostValue
+        $port = $null
+        if ($hostValue -match '^(.+):(\d+)$') {
+            $hostname = $Matches[1]
+            $port = [int]$Matches[2]
+        }
+
+        $scheme = $env:NETBOX_SCHEME
+        if ([string]::IsNullOrEmpty($scheme)) {
+            if ($hostname -match 'localhost|127\.0\.0\.1') { $scheme = 'http' } else { $scheme = 'https' }
+        }
+
+        $connectParams = @{
+            Hostname   = $hostname
+            Credential = $credential
+            Scheme     = $scheme
+        }
+        if ($port) { $connectParams['Port'] = $port }
+        if ($scheme -eq 'https') { $connectParams['SkipCertificateCheck'] = $true }
+
+        Connect-NBAPI @connectParams
+
+        # Create our own fixtures rather than relying on objects pre-existing in the
+        # database: a fresh Docker/Podman image has no site/role/device-type/cluster.
+        # Everything created here is torn down in AfterAll (reverse dependency order).
+        $script:BulkRunId = [guid]::NewGuid().ToString().Substring(0, 8)
+        $script:BulkCreated = @{
+            ClusterType  = $null
+            Cluster      = $null
+            DeviceType   = $null
+            DeviceRole   = $null
+            Manufacturer = $null
+            Site         = $null
+        }
+
+        $script:TestSite = New-NBDCIMSite -Name "bulk-$($script:BulkRunId)-site" -Slug "bulk-$($script:BulkRunId)-site" -Status 'active'
+        $script:BulkCreated.Site = $script:TestSite
+
+        $manufacturer = New-NBDCIMManufacturer -Name "bulk-$($script:BulkRunId)-mfr" -Slug "bulk-$($script:BulkRunId)-mfr"
+        $script:BulkCreated.Manufacturer = $manufacturer
+
+        $script:TestType = New-NBDCIMDeviceType -Model "bulk-$($script:BulkRunId)-type" -Slug "bulk-$($script:BulkRunId)-type" -Manufacturer $manufacturer.id
+        $script:BulkCreated.DeviceType = $script:TestType
+
+        $script:TestRole = New-NBDCIMDeviceRole -Name "bulk-$($script:BulkRunId)-role" -Slug "bulk-$($script:BulkRunId)-role" -Color '0000ff'
+        $script:BulkCreated.DeviceRole = $script:TestRole
+
+        $clusterType = New-NBVirtualizationClusterType -Name "bulk-$($script:BulkRunId)-ct" -Slug "bulk-$($script:BulkRunId)-ct"
+        $script:BulkCreated.ClusterType = $clusterType
+
+        $script:TestCluster = New-NBVirtualizationCluster -Name "bulk-$($script:BulkRunId)-cluster" -Type $clusterType.id
+        $script:BulkCreated.Cluster = $script:TestCluster
+
         $script:skipTests = $false
     }
 
@@ -1776,7 +1831,7 @@ Describe "Bulk Operations Live Integration Tests" -Tag 'Bulk', 'Integration', 'L
         }
     }
 
-    It "Should bulk create VMs (live)" -Skip:(-not $script:TestCluster) {
+    It "Should bulk create VMs (live)" {
         $timestamp = Get-Date -Format "yyyyMMddHHmmss"
         $vms = 1..3 | ForEach-Object {
             [PSCustomObject]@{
@@ -1834,6 +1889,25 @@ Describe "Bulk Operations Live Integration Tests" -Tag 'Bulk', 'Integration', 'L
         finally {
             # Cleanup
             $created | Remove-NBDCIMDevice -Force
+        }
+    }
+
+    AfterAll {
+        # Tear down fixtures in reverse dependency order. Bulk-created Devices/VMs are
+        # already removed in each It's finally block; this removes the reference data.
+        $cleanup = @(
+            @{ Command = 'Remove-NBVirtualizationCluster';     Id = $script:BulkCreated.Cluster.id }
+            @{ Command = 'Remove-NBVirtualizationClusterType'; Id = $script:BulkCreated.ClusterType.id }
+            @{ Command = 'Remove-NBDCIMDeviceType';            Id = $script:BulkCreated.DeviceType.id }
+            @{ Command = 'Remove-NBDCIMDeviceRole';            Id = $script:BulkCreated.DeviceRole.id }
+            @{ Command = 'Remove-NBDCIMManufacturer';          Id = $script:BulkCreated.Manufacturer.id }
+            @{ Command = 'Remove-NBDCIMSite';                  Id = $script:BulkCreated.Site.id }
+        )
+        foreach ($item in $cleanup) {
+            if ($item.Id) {
+                try { & $item.Command -Id $item.Id -Confirm:$false -ErrorAction Stop }
+                catch { Write-Warning "Bulk fixture cleanup failed for $($item.Command) ID $($item.Id): $($_.Exception.Message)" }
+            }
         }
     }
 }

@@ -32,9 +32,9 @@ on:
   workflow_dispatch:
     inputs:
       netbox_version:
-        description: 'Netbox Docker image tag (e.g., v4.6.1-5.0.1)'
+        description: 'Netbox Docker image tag (e.g., v4.6.3-5.0.1)'
         required: false
-        default: 'v4.6.1-5.0.1'
+        default: 'v4.6.3-5.0.1'
         type: string
       branching_version:
         description: 'Branching plugin version (e.g., 1.0.3)'
@@ -63,8 +63,8 @@ jobs:
             branching: "1.0.3"
 
           # Netbox 4.6.x with branching 1.0.3 (primary target, netbox-docker 5.0.1)
-          - netbox: "v4.6.1-5.0.1"
-            netbox_short: "4.6.1"
+          - netbox: "v4.6.3-5.0.1"
+            netbox_short: "4.6.3"
             branching: "1.0.3"
 
     env:
