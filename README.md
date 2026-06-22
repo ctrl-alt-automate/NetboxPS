@@ -70,7 +70,7 @@ and authentication details, and worked examples are in the documentation:
 
 ### Case sensitivity - insensitivity
 
-Netbox API, by default, uses all query parameter values case sensitive. As Powershell is [case insensitive as possible](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_case-sensitivity) the module offers an option to use case insensitive query values.
+The NetBox API, by default, treats all query parameter values as case-sensitive. As PowerShell is [as case-insensitive as possible](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_case-sensitivity), the module offers an option to use case-insensitive query values.
 
 #### Activating case insensitive mode
 
@@ -78,11 +78,11 @@ Netbox API, by default, uses all query parameter values case sensitive. As Power
 
 #### Requirements and limitations
 
-Depending on the version of Netbox API used, the API supports this option for a specific set of parameters and endpoints, . Due to this current limitation, the module can only support case insesitivity for the same set of cases.
+Depending on the version of the NetBox API used, the API supports this option for a specific set of parameters and endpoints. Due to this current limitation, the module can only support case insensitivity for the same set of cases.
 
 - Minimum version of Netbox API is 4.4+.
-- A list of parameters offerd by each APIs version, can be found in the repository See [_IgnoreCaseParameters.ps1](./Functions/Helpers/_IgnoreCaseParameters.ps1).\
-  Each parameter is paired with a exception list of endpoints. This means, it is supported on all endpoints which are not part of the list.
+- A list of parameters offered by each API version can be found in the repository. See [_IgnoreCaseParameters.ps1](./Functions/Helpers/_IgnoreCaseParameters.ps1).
+  Each parameter is paired with an exception list of endpoints. This means it is supported on all endpoints which are not part of the list.
 
 ## Requirements
 
