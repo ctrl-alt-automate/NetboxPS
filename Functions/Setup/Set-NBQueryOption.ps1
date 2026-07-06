@@ -56,7 +56,7 @@ function Set-NBQueryOption {
                 $script:NetboxConfig.MatchMode = $MatchMode
             }
         }
-        $Script:IgnoreCaseParameterHash = @{}       # reset list (equal to case sensitive)
+        $Script:QueryParameterHash = @{}       # reset list (equal to case sensitive)
 
         if ($IgnoreCase -eq $true -or $MatchMode -ne 'Exact') {
             CheckNetboxIsConnected
@@ -68,13 +68,13 @@ function Set-NBQueryOption {
             }
             foreach ($key in $Script:IgnoreCaseParameterDictonary.Keys) {
                 if ([version]$key -eq [version]$activeApiMinorVersion) {
-                    $Script:IgnoreCaseParameterHash = $Script:IgnoreCaseParameterDictonary[$key]
+                    $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictonary[$key]
                     break
                 }
             }
-            if ($Script:IgnoreCaseParameterHash.Keys.Count -eq 0) {
+            if ($Script:QueryParameterHash.Keys.Count -eq 0) {
                 $latestKnownVersion = (@($Script:IgnoreCaseParameterDictonary.Keys)[-1])
-                $Script:IgnoreCaseParameterHash = $Script:IgnoreCaseParameterDictonary[$latestKnownVersion]
+                $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictonary[$latestKnownVersion]
                 Write-Warning "No case-insensitive parameters are defined for API version $($activeApiMinorVersion).x. Taking the latest known version ($latestKnownVersion)."
             }
         }

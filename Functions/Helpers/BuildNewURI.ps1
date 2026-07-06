@@ -71,11 +71,11 @@ function BuildNewURI {
         foreach ($param in $Parameters.GetEnumerator()) {
             # Handle array values by repeating the key for each value (e.g., ?key=value1&key=value2)
             $paramKey = $param.Key
-            if ($Script:NetboxConfig.IgnoreCaseInQueries -and $Script:IgnoreCaseParameterHash.ContainsKey($param.Key)) {
+            if ($Script:NetboxConfig.IgnoreCaseInQueries -and $Script:QueryParameterHash.ContainsKey($param.Key)) {
                 $apiCheck = $uriBuilder.Path
                 # temp try/catch to handle cases where the path is not in the hashset, which should not happen but just in case
                 try {
-                    if (-not ($Script:IgnoreCaseParameterHash[$param.Key]).Contains($apiCheck)) {
+                    if (-not ($Script:QueryParameterHash[$param.Key]).Contains($apiCheck)) {
                         Write-Verbose " Parameter $($param.Key) for endpoint $apiCheck is not in the ignore case list"
                         $paramKey = "$($param.Key)__ie"
                     }

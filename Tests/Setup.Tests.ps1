@@ -361,7 +361,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     # Check internal state is also reset
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
                     $Script:NetboxConfig.MatchMode | Should -Be 'Exact'
-                    ($Script:IgnoreCaseParameterHash.Keys).Count | Should -Be 0
+                    ($Script:QueryParameterHash.Keys).Count | Should -Be 0
                 }
             }
             It "Should set and get query option MatchMode" {
@@ -388,7 +388,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     # Check internal state is also reset
                     $script:NetboxConfig.MatchMode | Should -Be 'Exact'
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
-                    ($Script:IgnoreCaseParameterHash.Keys).Count | Should -Be 0
+                    ($Script:QueryParameterHash.Keys).Count | Should -Be 0
                 }
             }
             It "For API v3.0.0 should not use any case-insensitive parameters" {
@@ -396,28 +396,28 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     $script:NetboxConfig.ParsedVersion = '3.0.0'
                     $ret = Set-NBQueryOption -IgnoreCase -WarningAction SilentlyContinue -WarningVariable warn
                     $warn | Should -BeLike '*less than the minimum supported version*'
-                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -Be 0
+                    $Script:QueryParameterHash.Keys.Count | Should -Be 0
                 }
             }
             It "For API version < 4.5.0 should use the baseline + v4.4.9 list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion = '4.4.8'          # 4.4.9 is the first baseline version, 4.4.8 is less than that, but we only use <major>.<minor> => 4.4. is defined
                     $ret = Set-NBQueryOption -IgnoreCase
-                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV449.Count)
+                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV449.Count)
                 }
             }
             It "For API version >= 4.5.0 and < 4.6.0 should use the baseline + v4.5.0 list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion = '4.5.0'
                     $ret = Set-NBQueryOption -IgnoreCase
-                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV450.Count)
+                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV450.Count)
                 }
             }
             It "For API version >= 4.6.0 should use the baseline + v4.6.1 list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion = '4.6.0'
                     $ret = Set-NBQueryOption -IgnoreCase
-                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
+                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
                 }
             }
             It "For API versions newer than our last known version, it should use the latest known version" {
@@ -425,7 +425,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     $script:NetboxConfig.ParsedVersion = '99.99.99'
                     $ret = Set-NBQueryOption -IgnoreCase -WarningAction SilentlyContinue -WarningVariable warn
                     $warn | Should -BeLike '*taking the latest known version*'
-                    $Script:IgnoreCaseParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
+                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
                 }
             }
         }

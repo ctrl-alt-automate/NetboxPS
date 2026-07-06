@@ -182,7 +182,7 @@ $Script:IgnoreCaseParameterV461 = @{
 
 # Set-NBQueryOption will set this to whatever is appropriate for the API version
 # default is to start with case insensitive
-$Script:IgnoreCaseParameterHash = @{}
+$Script:QueryParameterHash = @{}
 # This will contain the collection of all case-insensitive parameters per known API version, including any exceptions for specific endpoints
 # Keep it orderd so that we can easily find the first and last known versions
 $Script:IgnoreCaseParameterDictonary  = [ordered]@{}

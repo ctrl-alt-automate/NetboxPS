@@ -130,7 +130,7 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             }
             It "Should not use __ie if parameter is not in the list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
-                    $Script:IgnoreCaseParameterHash=@{}  # simulate parameter not in the list
+                    $Script:QueryParameterHash=@{}  # simulate parameter not in the list
                     $URIParameters = @{
                         'name' = 'NameValue'
                     }
@@ -142,7 +142,7 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             }
             It "Should  not use __ie if parameter is in the list but endpoint is in the ignore list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
-                    $Script:IgnoreCaseParameterHash['name'] = @('api/seg1/seg2/','api/otherexcludedendpoint/')  # simulate endpoint in ignore list
+                    $Script:QueryParameterHash['name'] = @('api/seg1/seg2/','api/otherexcludedendpoint/')  # simulate endpoint in ignore list
                     $URIParameters = @{
                         'name' = 'NameValue'
                     }
@@ -155,7 +155,7 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             It "Should use __ie if parameter is in the list and endpoint list is empty" {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
-                    $Script:IgnoreCaseParameterHash['name'] = @()  # simulate endpoint list is empty
+                    $Script:QueryParameterHash['name'] = @()  # simulate endpoint list is empty
                     $URIParameters = @{
                         'name' = 'NameValue'
                     }
@@ -168,7 +168,7 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             It "Should use __ie if parameter is in the list and endpoint is not in the ignore list; it should also work with array values" {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
-                    $Script:IgnoreCaseParameterHash['name'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
+                    $Script:QueryParameterHash['name'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
                     $URIParameters = @{
                         'name' = @('NameValue', 'AnotherNameValue')  # test that array values are also supported with __ie
                         'casesensitiveparam' = 'value2'
