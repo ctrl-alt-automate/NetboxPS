@@ -304,14 +304,6 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
             $fakeCredential = [PSCredential]::new('notapplicable', (ConvertTo-SecureString -String "faketoken" -AsPlainText -Force))
             Set-NBCredential -Credential $fakeCredential | Out-Null
         }
-        AfterAll {
-            # Reset the query option to its previous state
-            Set-NBQueryOption -IgnoreCase:$ignoreCaseBefore.Value | Out-Null
-            Set-NBQueryOption -MatchMode:$matchModeBefore.Value | Out-Null
-            InModuleScope -ModuleName 'PowerNetbox' {
-                $script:NetboxConfig.ParsedVersion = $parsedVersionBefore
-            }
-        }
         Context "While not connected" {
             It "Should return the current query option" {
                 $result = Get-NbQueryOption
@@ -344,6 +336,16 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 # calling the real connect function here, but having mocked the internal request in the context of this Describe
                 Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443
             }
+            AfterAll {
+                # Reset the query option to its previous state
+                InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ IgnoreCase = $ignoreCaseBefore.Value; MatchMode = $matchModeBefore.Value; ParsedVersion = $parsedVersionBefore } {
+                    $Script:NetboxConfig.IgnoreCaseInQueries = $IgnoreCase
+                    $Script:NetboxConfig.MatchMode = $MatchMode
+                    $Script:QueryParameterDecoration = ''
+                    $Script:QueryParameterHash = @{}
+                    $script:NetboxConfig.ParsedVersion = $ParsedVersion
+                }
+            }
 
             It "Should set and get query option IgnoreCase" {
                 Set-NBQueryOption -IgnoreCase:$true | Should -Be $true
@@ -352,6 +354,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $true
                     $Script:NetboxConfig.MatchMode | Should -Be 'Exact'
+                    $script:QueryParameterDecoration | Should -Be '__ie'
                 }
 
                 Set-NBQueryOption -IgnoreCase:$false | Should -Be $false
@@ -361,6 +364,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     # Check internal state is also reset
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
                     $Script:NetboxConfig.MatchMode | Should -Be 'Exact'
+                    $script:QueryParameterDecoration | Should -Be ''
                     ($Script:QueryParameterHash.Keys).Count | Should -Be 0
                 }
             }
@@ -371,6 +375,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.MatchMode | Should -Be 'Wildcard'
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
+                    $script:QueryParameterDecoration | Should -Be '__regex'
                 }
 
                 Set-NBQueryOption -MatchMode 'Regex' | Should -Be 'Regex'
@@ -379,6 +384,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.MatchMode | Should -Be 'Regex'
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
+                    $script:QueryParameterDecoration | Should -Be '__regex'
                 }
 
                 Set-NBQueryOption -MatchMode 'Exact' | Should -Be 'Exact'
@@ -388,6 +394,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     # Check internal state is also reset
                     $script:NetboxConfig.MatchMode | Should -Be 'Exact'
                     $script:NetboxConfig.IgnoreCaseInQueries | Should -Be $false
+                    $script:QueryParameterDecoration | Should -Be ''
                     ($Script:QueryParameterHash.Keys).Count | Should -Be 0
                 }
             }

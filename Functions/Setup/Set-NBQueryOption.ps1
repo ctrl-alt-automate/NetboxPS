@@ -56,9 +56,33 @@ function Set-NBQueryOption {
                 $script:NetboxConfig.MatchMode = $MatchMode
             }
         }
+        switch ("$($script:NetboxConfig.IgnoreCaseInQueries), $($script:NetboxConfig.MatchMode)") {
+            'False, Exact' {
+                $Script:QueryParameterDecoration = ''
+            }
+            'False, Wildcard' {
+                $Script:QueryParameterDecoration = '__regex'
+            }
+            'False, Regex' {
+                $Script:QueryParameterDecoration = '__regex'
+            }
+            'True, Exact' {
+                $Script:QueryParameterDecoration = '__ie'
+            }
+            'True, Wildcard' {
+                $Script:QueryParameterDecoration = '__iregex'
+            }
+            'True, Regex' {
+                $Script:QueryParameterDecoration = '__iregex'
+            }
+            default {
+                Throw "Invalid combination of IgnoreCase and MatchMode: $($script:NetboxConfig.IgnoreCaseInQueries), $($script:NetboxConfig.MatchMode)"
+            }
+        }
+
         $Script:QueryParameterHash = @{}       # reset list (equal to case sensitive)
 
-        if ($IgnoreCase -eq $true -or $MatchMode -ne 'Exact') {
+        if ('' -ne $Script:QueryParameterDecoration) {
             CheckNetboxIsConnected
             # depending on the API version, we have different sets of parameters that are supported.
             $activeApiMinorVersion = "{0}.{1}" -f ($script:NetboxConfig.ParsedVersion -split '\.')[0..1] #, ($script:NetboxConfig.ParsedVersion -split '\.')[1]
