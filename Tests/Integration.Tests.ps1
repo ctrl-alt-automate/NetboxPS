@@ -1430,6 +1430,7 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
                 $Script:TestContactGroup2Id = $null
             }
             $null = Set-NBQueryOption -IgnoreCase:$false
+            $null = Set-NBQueryOption -MatchMode 'Exact'
         }
 
         It "Should create a contact" {
@@ -1516,6 +1517,58 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             $contact.id | Should -Be $script:TestContactId
             $contact.name | Should -Be $script:TestContactName
         }
+        It "Should find contact name using case-insensitive search using regex" {
+            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
+            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
+            # search would not match -- skip rather than assert case-insensitivity.
+            $nbVersionString = (Get-NBVersion).'netbox-version'
+            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
+                Set-ItResult -Skipped -Because 'Case-insensitive (__iregex) query support requires Netbox 4.4+'
+                return
+            }
+            $null = Set-NBQueryOption -IgnoreCase
+            $null = Set-NBQueryOption -MatchMode 'Regex'
+            $contact = Get-NBContact -Name ".*-contact$"
+
+            $contact | Should -Not -BeNullOrEmpty
+            $contact.id | Should -Be $script:TestContactId
+            $contact.name | Should -Be $script:TestContactName
+        }
+        It "Should find contact name using case-sensitive search using regex" {
+            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
+            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
+            # search would not match -- skip rather than assert case-insensitivity.
+            $nbVersionString = (Get-NBVersion).'netbox-version'
+            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
+                Set-ItResult -Skipped -Because 'Case-sensitive (__regex) query support requires Netbox 4.4+'
+                return
+            }
+            $null = Set-NBQueryOption -IgnoreCase:$false
+            $null = Set-NBQueryOption -MatchMode 'Regex'
+            $contact = Get-NBContact -Name ".*-contact$"
+            $contact | Should -BeNullOrEmpty -Because "-contact is lower-case, and the contact name ends with -Contact (upper-case C), so a case-sensitive regex should not match"
+
+            $contact = Get-NBContact -Name ".*-Contact$"
+            $contact | Should -Not -BeNullOrEmpty -Because ".*-Contact$ and case insensitive regex should match *-Contact"
+            $contact.id | Should -Be $script:TestContactId
+            $contact.name | Should -Be $script:TestContactName
+        }
+        It "Should find contact name using case-insensitive search using wildcard" {
+            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
+            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
+            # search would not match -- skip rather than assert case-insensitivity.
+            $nbVersionString = (Get-NBVersion).'netbox-version'
+            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
+                Set-ItResult -Skipped -Because 'Case-insensitive (__iregex) query support requires Netbox 4.4+'
+                return
+            }
+            $null = Set-NBQueryOption -IgnoreCase:$true
+            $null = Set-NBQueryOption -MatchMode 'Wildcard'
+            $contact = Get-NBContact -Name "*-contact"
+            $contact | Should -Not -BeNullOrEmpty -Because ".*-Contact$ and case insensitive regex should match *-Contact"
+            $contact.id | Should -Be $script:TestContactId
+            $contact.name | Should -Be $script:TestContactName
+        }
     }
 
     Context "Contact Assignment CRUD" {
@@ -1529,14 +1582,28 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             $assignmentSite = New-NBDCIMSite -Name $script:AssignmentSiteName -Slug $script:AssignmentSiteSlug -Status 'active'
             $script:AssignmentSiteId = $assignmentSite.id
             [void]$script:CreatedResources.Sites.Add($assignmentSite.id)
+
+            $script:TestContactAssignmentContactRoleName = "$($script:TestPrefix)-AssignmentContactRole"
+            $script:TestContactAssignmentContactRoleSlug = $script:TestContactAssignmentContactRoleName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            $role = New-NBContactRole -Name $script:TestContactAssignmentContactRoleName -Slug $script:TestContactAssignmentContactRoleSlug
+            $script:TestContactAssignmentContactRoleId = $role.id
+            [void]$script:CreatedResources.ContactRoles.Add($role.id)
+
+            $Script:TestContactAssignmentContactName = "$($script:TestPrefix)-AssignmentContact"
+            $script:TestContactAssignmentContactSlug = $Script:TestContactAssignmentContactName.ToLower() -replace '[^a-z0-9-]', '-'
+
+            $contact = New-NBContact -Name $Script:TestContactAssignmentContactName
+            $script:TestContactAssignmentContactId = $contact.id
+            [void]$script:CreatedResources.Contacts.Add($contact.id)
         }
 
         It "Should create a contact assignment to a site" {
-            $assignment = New-NBContactAssignment -Object_Type 'dcim.site' -Object_Id $script:AssignmentSiteId -Contact $script:TestContactId -Role $script:TestContactRoleId
+            $assignment = New-NBContactAssignment -Object_Type 'dcim.site' -Object_Id $script:AssignmentSiteId -Contact $script:TestContactAssignmentContactId -Role $script:TestContactAssignmentContactRoleId
 
             $assignment | Should -Not -BeNullOrEmpty
-            $assignment.contact.id | Should -Be $script:TestContactId
-            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.contact.id | Should -Be $script:TestContactAssignmentContactId
+            $assignment.role.id | Should -Be $script:TestContactAssignmentContactRoleId
             $assignment.priority | Should -BeNullOrEmpty
 
             $script:TestContactAssignmentId = $assignment.id
@@ -1550,17 +1617,17 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId
-            $assignment.contact.id | Should -Be $script:TestContactId
-            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.contact.id | Should -Be $script:TestContactAssignmentContactId
+            $assignment.role.id | Should -Be $script:TestContactAssignmentContactRoleId
         }
 
         It "Should get contact assignment by Contact_ID" {
-            $assignment = Get-NBContactAssignment -Contact_Id $script:TestContactId
+            $assignment = Get-NBContactAssignment -Contact_Id $script:TestContactAssignmentContactId
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId
-            $assignment.contact.id | Should -Be $script:TestContactId
-            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.contact.id | Should -Be $script:TestContactAssignmentContactId
+            $assignment.role.id | Should -Be $script:TestContactAssignmentContactRoleId
         }
 
         It "Should get contact assignment by Object_ID" {
@@ -1568,8 +1635,8 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId
-            $assignment.contact.id | Should -Be $script:TestContactId
-            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.contact.id | Should -Be $script:TestContactAssignmentContactId
+            $assignment.role.id | Should -Be $script:TestContactAssignmentContactRoleId
         }
 
         It "Should get contact assignment by Object_Type_ID" {
@@ -1578,8 +1645,8 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId
-            $assignment.contact.id | Should -Be $script:TestContactId
-            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.contact.id | Should -Be $script:TestContactAssignmentContactId
+            $assignment.role.id | Should -Be $script:TestContactAssignmentContactRoleId
         }
 
         It "Should get contact assignment by Object_Type" {
@@ -1587,8 +1654,8 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId
-            $assignment.contact.id | Should -Be $script:TestContactId
-            $assignment.role.id | Should -Be $script:TestContactRoleId
+            $assignment.contact.id | Should -Be $script:TestContactAssignmentContactId
+            $assignment.role.id | Should -Be $script:TestContactAssignmentContactRoleId
         }
 
         It "Should update contact assignment" {
