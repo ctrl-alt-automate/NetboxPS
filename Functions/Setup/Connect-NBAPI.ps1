@@ -4,7 +4,8 @@ function Connect-NBAPI {
         Connects to the Netbox API and ensures Credential work properly
 
     .DESCRIPTION
-        Connects to the Netbox API and ensures Credential work properly
+        Connects to the Netbox API and ensures Credential work properly.
+        After a successful connection, the query options IgnoreCase and MatchMode are set to their respective values (or defaults).
 
     .PARAMETER Hostname
         The hostname for the resource such as netbox.domain.com
