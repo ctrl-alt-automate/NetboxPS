@@ -71,24 +71,33 @@ function BuildNewURI {
         foreach ($param in $Parameters.GetEnumerator()) {
             # Handle array values by repeating the key for each value (e.g., ?key=value1&key=value2)
             $paramKey = $param.Key
-            if ($Script:QueryParameterDecoration -ne '' -and $Script:QueryParameterHash.ContainsKey($param.Key)) {
+            $useQueryOption = $Script:QueryParameterDecoration -ne '' -and $Script:QueryParameterHash.ContainsKey($param.Key)
+            if ($useQueryOption) {
                 $apiCheck = $uriBuilder.Path
-                # temp try/catch to handle cases where the path is not in the hashset, which should not happen but just in case
-                try {
-                    if (-not ($Script:QueryParameterHash[$param.Key]).Contains($apiCheck)) {
-                        Write-Verbose " Parameter $($param.Key) for endpoint $apiCheck is not in the ignore case list"
-                        $paramKey = "$($param.Key)$($Script:QueryParameterDecoration)"
-                    }
-                } catch {
-                    Write-Verbose " IgnoreCase lookup skipped for $($param.Key): $_"
-                }
+                $useQueryOption = -not ($Script:QueryParameterHash[$param.Key]).Contains($apiCheck)
             }
-            $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
-            foreach ($thisValue in $param.Value) {
-                Write-Verbose " Adding URI parameter $($paramKey):$thisValue"
-                # URL encode key and value using .NET Uri class (available everywhere)
-                $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
-                $QueryParts.Add("$EncodedKey=$EncodedValue")
+            if ($useQueryOption) {
+                Write-Verbose " Parameter $($param.Key) for endpoint $apiCheck is not in the ignore case list"
+                $paramKey = "$($param.Key)$($Script:QueryParameterDecoration)"
+                $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
+                foreach ($thisValue in $param.Value) {
+                    Write-Verbose " Adding URI parameter $($paramKey):$thisValue"
+                    # if Powershell wildcard query is used, we need to convert wildcard to regex for Netbox API
+                    if ($Script:NetboxConfig.MatchMode -eq 'Wildcard') {
+                        $thisValue = Convert-PSWildcardToRegex -String $thisValue
+                    }
+                    # URL encode key and value using .NET Uri class (available everywhere)
+                    $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
+                    $QueryParts.Add("$EncodedKey=$EncodedValue")
+                }
+            } else {
+                $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
+                foreach ($thisValue in $param.Value) {
+                    Write-Verbose " Adding URI parameter $($paramKey):$thisValue"
+                    # URL encode key and value using .NET Uri class (available everywhere)
+                    $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
+                    $QueryParts.Add("$EncodedKey=$EncodedValue")
+                }
             }
         }
 

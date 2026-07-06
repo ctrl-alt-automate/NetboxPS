@@ -188,33 +188,45 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                     $null = Set-NbQueryOption -IgnoreCase:$IgnoreCase
                     $null = Set-NbQueryOption -MatchMode:$MatchMode
                 }
+                AfterAll {
+                    $null = Set-NBQueryOption -IgnoreCase:$false
+                    $null = Set-NBQueryOption -MatchMode:'Exact'
+                }
                 It "<Usecase> should use [<ParamDecoration>] if parameter is in the list and endpoint list is empty" {
                     InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ IgnoreCase = $IgnoreCase; MatchMode = $MatchMode; ParamDecoration = $ParamDecoration } {
-                        # $Script:NetboxConfig.IgnoreCaseInQueries = $IgnoreCase                 # can be set by Connect-NBAPI
-                        # $Script:NetboxConfig.QueryMatchMode = $MatchMode
-                        $Script:QueryParameterHash['name'] = @()  # simulate endpoint list is empty
+                        $Script:QueryParameterHash['ParamSupportQO'] = @()  # simulate endpoint list is empty
                         $URIParameters = @{
-                            'name' = 'NameValue'
+                            'ParamSupportQO' = 'NameValue'
                         }
 
                         $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
-                        $URIBuilder.Query | Should -Match "name$($ParamDecoration)=NameValue"
-                        $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?name$($ParamDecoration)=NameValue"
+                        if ($MatchMode -ne 'Wildcard') {
+                            $URIBuilder.Query | Should -Match "ParamSupportQO$($ParamDecoration)=NameValue"
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?ParamSupportQO$($ParamDecoration)=NameValue"
+                        } else {
+                            $URIBuilder.Query | Should -Match "ParamSupportQO$($ParamDecoration)=%5ENameValue%24"
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?ParamSupportQO$($ParamDecoration)=%5ENameValue%24" -Because "regex strings are ^parametervalue$'"
+                        }
                     }
                 }
                 It "<Usecase> should use [<ParamDecoration>] if parameter is in the list and endpoint is not in the ignore list; it should also work with array values" {
                     InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ IgnoreCase = $IgnoreCase; MatchMode = $MatchMode; ParamDecoration = $ParamDecoration } {
-                        $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
-                        $Script:QueryParameterHash['name'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
+                        $Script:QueryParameterHash['ParamSupportQO'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
                         $URIParameters = @{
-                            'name' = @('NameValue', 'AnotherNameValue')  # test that array values are also supported with __ie
-                            'casesensitiveparam' = 'value2'
+                            'ParamSupportQO' = @('NameValue', 'AnotherNameValue')  # test that array values are also supported with __ie
+                            'NoQoSupport' = 'value2'                               # test a parameter that is not in the list, to ensure it does not get decorated
                         }
 
                         $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
-                        $matchString = "(?=.*name$($ParamDecoration)=NameValue)(?=.*name$($ParamDecoration)=AnotherNameValue)(?=.*casesensitiveparam=value2)"
-                        $URIBuilder.Query | Should -Match $matchString
-                        $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?$matchString"
+                        if ($MatchMode -ne 'Wildcard') {
+                            $matchString = "(?=.*ParamSupportQO$($ParamDecoration)=NameValue)(?=.*ParamSupportQO$($ParamDecoration)=AnotherNameValue)(?=.*NoQoSupport=value2)"
+                            $URIBuilder.Query | Should -Match $matchString
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?$matchString"
+                        } else {
+                            $matchString = "(?=.*ParamSupportQO$($ParamDecoration)=%5ENameValue%24)(?=.*ParamSupportQO$($ParamDecoration)=%5EAnotherNameValue%24)(?=.*NoQoSupport=value2)"
+                            $URIBuilder.Query | Should -Match $matchString
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?$matchString"
+                        }
                     }
                 }
             }
