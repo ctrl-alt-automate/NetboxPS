@@ -20,6 +20,25 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
         }
     }
 
+    Context 'Regex conversion tests' {
+        It "<WildcardString> should return <Expected> for <InputString>" -ForEach @(
+                @{ InputString = 'abc*';        WildcardString = 'abc*';        ExpectedRegex = '^abc.*$';      ExpectedResult = $true }
+                @{ InputString = 'abcd';        WildcardString = 'abc*';        ExpectedRegex = '^abc.*$';      ExpectedResult = $true }
+                @{ InputString = 'ab';          WildcardString = 'abc*';        ExpectedRegex = '^abc.*$';      ExpectedResult = $false }
+                @{ InputString = 'abcd';        WildcardString = '*[b]*';       ExpectedRegex = '^.*[b].*$';    ExpectedResult = $true }
+                @{ InputString = 'abcd';        WildcardString = '*[b-z]*';     ExpectedRegex = '^.*[b-z].*$';  ExpectedResult = $true }
+            ) {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ WildcardString = $WildcardString; InputString = $InputString; ExpectedRegex = $ExpectedRegex; ExpectedResult = $ExpectedResult } {
+                $likeResult = $InputString -like $WildcardString
+                $likeResult | Should -Be $ExpectedResult -Because 'Wildcard comparison should return expected result'
+                $converted = Convert-PSWildcardToRegex -String $WildcardString
+                $converted | Should -BeExactly $ExpectedRegex -Because 'Converted regex should match expected regex'
+                $convertedResult = $InputString -match $converted
+                $convertedResult | Should -Be $ExpectedResult -Because 'Converted regex should return expected result'
+            }
+        }
+    }
+
     Context "Building URIBuilder" {
         BeforeAll {
             # Configure the module's NetboxConfig since BuildNewURI now reads from it directly
