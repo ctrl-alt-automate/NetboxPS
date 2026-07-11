@@ -19,20 +19,32 @@
     .PARAMETER OutputFormat
         The format for the output of the findings. Default is 'ConsoleList'. Possible values are 'ConsoleList', 'ConsoleTable', 'Json', and 'Object'.
 
+    .PARAMETER QueryParameterHash
+        Verify against this definition hashtable. Default is taken from 'Functions/Helpers/_IgnoreCaseParameters.ps1' depending on the API version.
+        It must reflect the API version and the corresponding check to be done.
+        We use this parameter for testing the script itself to test against different scenarios.
+
+    .PARAMETER Check
+        The type of check to perform. Default is 'IgnoreCase'. Possible values are 'IgnoreCase', 'Regex', 'IgnoreCaseRegex', and 'FunctionNames'.
+
+    .PARAMETER ApiSchema
+        Provide the API schema as a PSObject. If not provided, the script will fetch it from the API schema endpoint.
+        We use this in the tests to provide a mock API schema for testing different scenarios.
+        For validation against the current running module and API, leave it $null.
+
     .NOTES
         The parameter/exception list is based on the API v4.4.9 list of fully supported case-insensitive parameters, which is the minimum version
         supported by this module. The list is based on the API schema of NetBox.
 
-        # Goal 1: Cleaner reimplementation of an internal parameter-validation script.
-        # Goal 2: Validate whether the functions' array parameters are supported by the API, and where they could be a possible extension.
+
 #>
 [CmdletBinding()]
 param (
     [ValidateNotNullOrEmpty()]
     [string]$Hostname = $env:NETBOX_HOST,
 
-    [ValidateSet('https', 'http', IgnoreCase = $true)]
-    [string]$Scheme = 'https',
+    [ValidateSet('https', 'http')]
+    [string]$Scheme = ($env:NETBOX_SCHEME ?? 'https' ),
 
     [ValidateNotNullOrEmpty()]
     [string] $NetboxVersion = $env:NETBOX_VERSION,
@@ -41,10 +53,31 @@ param (
     [string] $PathProjectRoot = (Join-Path -Path $PSScriptRoot -ChildPath '..'),
 
     [ValidateSet('ConsoleTable', 'ConsoleList', 'Json', 'Object')]
-    [string]$OutputFormat = 'ConsoleTable'
+    [string] $OutputFormat = 'ConsoleTable',
+
+    [hashtable] $QueryParameterHash = $null,
+
+    [ValidateSet('IgnoreCase', 'Regex', 'IgnoreCaseRegex', 'FunctionNames')]
+    [string] $Check = 'IgnoreCase',
+
+    [PSObject] $ApiSchema = $null
 )
 $previousErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Stop'
+
+function Get-QueryParameterHashToCheck {
+    [CmdletBinding()]
+    param(
+        [ValidateNotNullOrEmpty()]
+        [string] $PathDefinitionFile,
+
+        [ValidateNotNullOrEmpty()]
+        [string] $ApiVersion,
+
+    [ValidateSet('All','IgnoreCase', 'Regex', 'IgnoreCaseRegex', 'FunctionNames')]
+        [string] $Check
+    )
+}
 
 function Get-DerivedFunctionNameFromEndpoint {
     param (
@@ -291,21 +324,6 @@ function Expand-FunctionAndParameterFromModule {
     }
 }
 
-#region prepare query parameter definitions from source file and load module for later getting function definitions
-$pathDefinitionFile = Join-Path -Path $PathProjectRoot -ChildPath 'Functions','Helpers','_IgnoreCaseParameters.ps1'
-if (-not (Test-Path -Path $PathDefinitionFile)) {
-    Write-Error "Definition file not found: $PathDefinitionFile"
-}
-
-Try {
-    . $PathDefinitionFile
-}
-Catch {
-    Write-Error "Failed to load definition file: $PathDefinitionFile" -ErrorAction Continue
-    Write-Error $_.Exception.Message
-    exit 1
-}
-
 # We will use the currently loaded module for function definitions. If it is not loaded, we will load it from the project root.
 if (-not (Get-Module -Name PowerNetbox)) {
     $psdPath = Join-Path -Path $PathProjectRoot -ChildPath 'PowerNetbox' -AdditionalChildPath 'PowerNetbox.psd1'
@@ -315,12 +333,13 @@ if (-not (Get-Module -Name PowerNetbox)) {
     }
     Import-Module $psdPath -Force -ErrorAction Stop
 }
-#endregion
 
-#region Read API schema and extract functions and query parameters
-    $url = "$($Scheme)://$Hostname/api/schema/?format=json"
-    $apiSchema = Invoke-RestMethod $url -ContentType 'application/json'
-    Write-Host "API schema version: $($apiSchema.info.version)"
+    #region Read API schema and extract functions and query parameters
+    if ($null -eq $ApiSchema) {
+        $url = "$($Scheme)://$Hostname/api/schema/?format=json"
+        $ApiSchema = Invoke-RestMethod -Uri $url -ContentType 'application/json'
+        Write-Host "API schema version: $($ApiSchema.info.version)"
+    }
 
     #region verify that the API schema version matches the expected version, if provided (e.g. should look like 4.5.10-Docker-4.0.2 (4.5))
     # only major and minor version are used for the validation, as patch versions should not introduce breaking changes.
@@ -350,12 +369,32 @@ if (-not (Get-Module -Name PowerNetbox)) {
 
     $flatApiParameters = Expand-FunctionAndParameterFromApiSchema -schema $apiSchema
     $flatFunctionParameters = Expand-FunctionAndParameterFromModule
-#endregion
+    #endregion
+
+    #region Load the dictionary of query parameter handling for this scenario.
+    if ($null -eq $QueryParameterHash) {
+        # TODO: Currently untested for other scenerios
+        . (Join-Path -Path $PathProjectRoot -ChildPath 'Functions' -AdditionalChildPath  'Helpers','_IgnoreCaseParameters.ps1')
+        $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$objApiVersion.tostring()]
+        if ($null -eq $thisVersionDict) {
+            $latestVersion = $Script:IgnoreCaseParameterDictonary.Keys | Sort-Object -Descending | Select-Object -First 1
+            Write-Warning "No dictionary entry found for API version $($objApiVersion.tostring()). Testing against the latest known version $($latestVersion)."
+            $findings.Add([pscustomobject]@{
+                Finding = 'No dictionary entry for this API version'
+                Data = "API version $($objApiVersion.tostring())."
+            })
+            $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$latestVersion]
+        }
+        $QueryParameterHash = $thisVersionDict
+    } else {
+        $thisVersionDict = $QueryParameterHash
+    }
+    #endregion
 
     $findings = [System.Collections.Generic.List[object]]::new()
 
 #region check for parameters that support __ie and build an exception list of endpoints, where a parameter is not supporting __ie
-    # Parameters to ccheck
+    # Parameters to check
     # Those supporting __ie at least once
     $objParamsSupporting__ie = $flatApiParameters | Where-Object { ($_.Operators -contains 'ie' -and $_.ItemsType -eq 'string') }
     $nameParamsSupporting__ie = $objParamsSupporting__ie | Select-Object -ExpandProperty Parameter | Sort-Object -Unique
@@ -388,17 +427,6 @@ if (-not (Get-Module -Name PowerNetbox)) {
     #endregion
 
     #region check against the dictionary for this API version
-    # Evaluate the dictionary for this API version. If not found, use the latest known version and report a finding.
-    $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$objApiVersion.tostring()]
-    if ($null -eq $thisVersionDict) {
-        $latestVersion = $Script:IgnoreCaseParameterDictonary.Keys | Sort-Object -Descending | Select-Object -First 1
-        Write-Warning "No dictionary entry found for API version $($objApiVersion.tostring()). Testing against the latest known version $($latestVersion)."
-        $findings.Add([pscustomobject]@{
-            Finding = 'No dictionary entry for this API version'
-            Data = "API version $($objApiVersion.tostring())."
-        })
-        $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$latestVersion]
-    }
 
     # every parametername must have a corresponding entry
     $allParamNamesNotInDictionary = $nameParamsSupporting__ie | Where-Object { $_ -notin $thisVersionDict.Keys }
