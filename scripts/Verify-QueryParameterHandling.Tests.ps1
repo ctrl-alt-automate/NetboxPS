@@ -111,13 +111,28 @@ Describe 'Verify-QueryParameterHandling' {
                 OutputFormat = 'Object'
                 QueryParameterHash = $null          # Be sure to add this parameter on every test
                 ApiSchema = $ApiSchema              # Avoid multiple calls to the API schema endpoint
+                Check = @('IgnoreCase', 'Regex', 'IgnoreCaseRegex')
             }
         }
         BeforeEach {
         }
+        Context 'Check for function names' {
+            It 'Will find endpoint names which do not have a corresponding function in the module' {
+                $thisParameterHash = $saveParameterHash.Clone()
+                $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash -Check 'FunctionNames'
+                $ret | Should -Not -BeNullOrEmpty
+                $ret.Finding | Select-Object -Unique | Should -Be 'function name not found in module'
+            }
+            It 'When using "-All"' {
+                $thisParameterHash = $saveParameterHash.Clone()
+                $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash -Check 'All'
+                $ret | Should -Not -BeNullOrEmpty
+                $ret.Finding | Select-Object -Unique | Should -Contain 'function name not found in module'
+            }
+        }
         It 'Should not detect anything about query parameters' {
             $thisParameterHash = $saveParameterHash.Clone()
-            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash | Where-Object finding -ne 'function name not found in module'
+            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash
             $ret | Should -BeNullOrEmpty
         }
         It 'Should detect a missing query parameter' {
@@ -125,7 +140,7 @@ Describe 'Verify-QueryParameterHandling' {
             $key = $thisParameterHash.Keys | Select-Object -First 1
             $thisParameterHash.Remove($key) | Out-Null
 
-            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash | Where-Object finding -ne 'function name not found in module'
+            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash # | Where-Object finding -ne 'function name not found in module'
             $ret | Should -Not -BeNullOrEmpty
             $ret.Finding | Should -Be 'not in dictionary'
             $ret.Data.Parameter | Should -Be $key
@@ -134,7 +149,7 @@ Describe 'Verify-QueryParameterHandling' {
             $thisParameterHash = $saveParameterHash.Clone()
             $thisParameterHash['nonexistent_parameter'] = @('nonexistent_endpoint')
 
-            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash | Where-Object finding -ne 'function name not found in module'
+            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash  # | Where-Object finding -ne 'function name not found in module'
             $ret | Should -Not -BeNullOrEmpty
             $ret.Finding | Should -Be 'Dictionary entry without corresponding parametername'
             $ret.Data | Should -Be 'nonexistent_parameter'
@@ -144,7 +159,7 @@ Describe 'Verify-QueryParameterHandling' {
             $key = $thisParameterHash.Keys | Where-Object { $thisParameterHash[$_].Count -eq 0 } | Select-Object -First 1
             $thisParameterHash[$key] = @('api/unknwon/endpoint/')
 
-            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash | Where-Object finding -ne 'function name not found in module'
+            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash # | Where-Object finding -ne 'function name not found in module'
             $ret | Should -Not -BeNullOrEmpty
             $ret.Finding | Should -Be 'exception list not empty'
             $ret.Data | Should -Be $key
@@ -155,7 +170,7 @@ Describe 'Verify-QueryParameterHandling' {
             $exceptionListBefore = $thisParameterHash[$key]
             $thisParameterHash[$key] = $thisParameterHash[$key] | Select-Object -First ($thisParameterHash[$key].Count - 2)
 
-            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash | Where-Object finding -ne 'function name not found in module'
+            $ret = & $Script:ScriptPath @spaltScriptParams -QueryParameterHash $thisParameterHash # | Where-Object finding -ne 'function name not found in module'
             $ret.Count | Should -Be 2 -Because 'We removed 2 endpoints from the exception list'
             $ret[0].Finding | Should -Be 'missing in exception list'
             $ret[0].Data.Parameter | Should -Be $key

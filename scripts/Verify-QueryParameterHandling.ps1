@@ -57,28 +57,39 @@ param (
 
     [hashtable] $QueryParameterHash = $null,
 
-    [ValidateSet('IgnoreCase', 'Regex', 'IgnoreCaseRegex', 'FunctionNames')]
-    [string] $Check = 'IgnoreCase',
+    [ValidateSet('All', 'IgnoreCase', 'Regex', 'IgnoreCaseRegex', 'FunctionNames')]
+    [string[]] $Check = @('All'),
 
     [PSObject] $ApiSchema = $null
 )
 $previousErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Stop'
 
-function Get-QueryParameterHashToCheck {
+function Import-QueryParameterDictionaryFromSourceFile {
+    # Imports the query parameter hash from the source file based on the API version
+    # by dot-sourcing the source code and returning the query parameter hash for the given API version (using the $Script: variables).
     [CmdletBinding()]
     param(
         [ValidateNotNullOrEmpty()]
-        [string] $PathDefinitionFile,
+        [string] $PathProjectRoot,
 
         [ValidateNotNullOrEmpty()]
-        [string] $ApiVersion,
-
-    [ValidateSet('All','IgnoreCase', 'Regex', 'IgnoreCaseRegex', 'FunctionNames')]
-        [string] $Check
+        [version] $objApiVersion
     )
+    # TODO: Currently untested for other scenerios
+    . (Join-Path -Path $PathProjectRoot -ChildPath 'Functions' -AdditionalChildPath  'Helpers','_IgnoreCaseParameters.ps1')
+    $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$objApiVersion.tostring()]
+    if ($null -eq $thisVersionDict) {
+        $latestVersion = $Script:IgnoreCaseParameterDictonary.Keys | Sort-Object -Descending | Select-Object -First 1
+        Write-Warning "No dictionary entry found for API version $($objApiVersion.tostring()). Testing against the latest known version $($latestVersion)."
+        $findings.Add([pscustomobject]@{
+            Finding = 'No dictionary entry for this API version'
+            Data = "API version $($objApiVersion.tostring())."
+        })
+        $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$latestVersion]
+    }
+    $thisVersionDict
 }
-
 function Get-DerivedFunctionNameFromEndpoint {
     param (
         [string] $endpoint
@@ -324,6 +335,145 @@ function Expand-FunctionAndParameterFromModule {
     }
 }
 
+function Find-ParameterDefinitionIssues {
+    <#
+        .SYNOPSIS
+        Determines which API parameters of type 'string' support a given operator and identifies exceptions.
+
+        .PARAMETER APIParameters
+        The list of API parameters to check.
+
+        .PARAMETER Operator
+        The operator to check for support ('ie', 'regex', 'iregex').
+
+        .PARAMETER OperatorParameterDictionary
+        A hashtable mapping parameter names to the list of endpoints where the operator is supported.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param (
+        [Object[]] $APIParameters,
+        [ValidateSet('ie', 'regex', 'iregex')]
+        [string] $Operator,
+        [ValidateNotNullOrEmpty()]
+        [hashtable] $OperatorParameterDictionary
+    )
+
+    $objParamsSupporting__operator = $APIParameters | Where-Object { ($_.Operators -contains $Operator -and $_.ItemsType -eq 'string') }
+    $nameParamsSupporting__operator = $objParamsSupporting__operator | Select-Object -ExpandProperty Parameter | Sort-Object -Unique
+
+    # Those supporting __operator, but would not support it in all endpoints (will need an exception list of those endpoints))
+    # Possible reasons: somewhere used as [int] or as selection from a list of choices, which do not support __ie/__regex/__iregex (and are case sensitive!)
+    $objParamsSupporting__operator_Exceptions = $APIParameters | Where-Object { $_.Parameter -in $nameParamsSupporting__operator -and $_.Operators -notcontains $Operator }
+    $nameParamsSupporting__operator_Exceptions = $objParamsSupporting__operator_Exceptions | Select-Object -ExpandProperty Parameter | Sort-Object -Unique
+    # Group by parameter to get the list of endpoints for each parameter that needs an exception list entry
+    $grpParamsSupporting__operator_Exceptions = $objParamsSupporting__operator_Exceptions | Group-Object -Property Parameter
+
+    #region every parametername must have a corresponding entry
+    $allParamNamesNotInDictionary = $nameParamsSupporting__operator | Where-Object { $_ -notin $OperatorParameterDictionary.Keys }
+    if ($allParamNamesNotInDictionary.Count -gt 0) {
+        # Report only the first occurence for each parameter
+        foreach ($pName in $allParamNamesNotInDictionary) {
+            $firstOccurence = $objParamsSupporting__operator | Where-Object { $_.Parameter -eq $pName } | Select-Object -First 1
+            $toReport = [pscustomobject] @{
+                Finding = 'not in dictionary'
+                Data = $firstOccurence
+            }
+            $toReport
+        }
+    }
+    #endregion
+
+    #region every dictionary entry must have a corresponding parametername
+    $allParamNamesNotInApi = $OperatorParameterDictionary.Keys | Where-Object {
+        $_ -notin $nameParamsSupporting__operator
+    }
+    if ($allParamNamesNotInApi.Count -gt 0) {
+        $toReport = [pscustomobject] @{
+            Finding = 'Dictionary entry without corresponding parametername'
+            Data = $allParamNamesNotInApi
+        }
+        $toReport
+    }
+    #endregion
+
+    #region every parametername which is not fully supporting __operator must have an entry in the exception list for each endpoint where it is not supported
+    $missingExceptionList = foreach ($paramName in $nameParamsSupporting__operator_Exceptions) {
+        if (-not $OperatorParameterDictionary.ContainsKey($paramName)) {
+            $exceptionListInDict = @()
+        } else {
+            $exceptionListInDict = $OperatorParameterDictionary[$paramName]
+        }
+        $exceptionListInApi = $grpParamsSupporting__operator_Exceptions | Where-Object { $_.Name -eq $paramName } | Select-Object -ExpandProperty Group
+        foreach ($param in $exceptionListInApi) {
+            foreach ($endpoint in $param.Endpoint) {
+                # endpoints in the dictionary are stored without the leading slash, because that's how they are checked inside 'BuildNewURI'
+                $endpoint = $endpoint.TrimStart('/')
+                if ($endpoint -notin $exceptionListInDict) {
+                    $thisEndpointData = $param
+                    $thisEndpointData.Endpoint = $endpoint              # report each endpoint separately
+                    $thisEndpointData
+                }
+            }
+        }
+    }
+    if ($missingExceptionList.Count -gt 0) {
+        foreach ($item in ($missingExceptionList | Sort-Object Parameter, endpoint)) {
+            $toReport = [pscustomobject] @{
+                Finding = 'missing in exception list'
+                Data = $item
+            }
+            $toReport
+        }
+    }
+    #endregion
+
+    #region every parametername which is fully supporting __operator must have an empty array of endpoints in the dictionary, as there are no exceptions
+    $allParamNamesFullySupporting__operator = $nameParamsSupporting__operator | Where-Object { $_ -notin $nameParamsSupporting__operator_Exceptions }
+    $nonEmptyExceptionList = foreach ($paramName in $allParamNamesFullySupporting__operator) {
+        if (-not $OperatorParameterDictionary.ContainsKey($paramName)) {
+            continue            # will be reported in another check
+        }
+        $exceptionListInDict = $OperatorParameterDictionary[$paramName]
+        if ($exceptionListInDict.Count -gt 0) {
+            $paramName
+        }
+    }
+    if ($nonEmptyExceptionList.Count -gt 0) {
+        $toReport = [pscustomobject] @{
+            Finding = 'exception list not empty'
+            Data = $nonEmptyExceptionList
+        }
+        $toReport
+    }
+    #endregion
+}
+
+function Find-FunctionNameMissing {
+    # every derived function name should exist in the module
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Object[]] $flatApiParameters,
+        [Object[]] $flatFunctionParameters
+    )
+    $derivedFunctionNames = $flatApiParameters | Select-Object -ExpandProperty FunctionName | Sort-Object -Unique
+    $functionNamesInModule = $flatFunctionParameters | Select-Object -ExpandProperty FunctionName | Sort-Object -Unique
+    $derivedFunctionNamesNotInModule = $derivedFunctionNames | Where-Object { $_ -notin $functionNamesInModule } | Sort-Object -Unique
+    if ($derivedFunctionNamesNotInModule.Count -gt 0) {
+        foreach ($fn in $derivedFunctionNamesNotInModule) {
+            $toReport = [pscustomobject] @{
+                Finding = 'function name not found in module'
+                Data = [PSCustomObject] @{
+                    FunctionName = $fn
+                }
+            }
+            $toReport
+        }
+    }
+    #endregion
+}
+
 # We will use the currently loaded module for function definitions. If it is not loaded, we will load it from the project root.
 if (-not (Get-Module -Name PowerNetbox)) {
     $psdPath = Join-Path -Path $PathProjectRoot -ChildPath 'PowerNetbox' -AdditionalChildPath 'PowerNetbox.psd1'
@@ -373,156 +523,47 @@ if (-not (Get-Module -Name PowerNetbox)) {
 
     #region Load the dictionary of query parameter handling for this scenario.
     if ($null -eq $QueryParameterHash) {
-        # TODO: Currently untested for other scenerios
-        . (Join-Path -Path $PathProjectRoot -ChildPath 'Functions' -AdditionalChildPath  'Helpers','_IgnoreCaseParameters.ps1')
-        $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$objApiVersion.tostring()]
-        if ($null -eq $thisVersionDict) {
-            $latestVersion = $Script:IgnoreCaseParameterDictonary.Keys | Sort-Object -Descending | Select-Object -First 1
-            Write-Warning "No dictionary entry found for API version $($objApiVersion.tostring()). Testing against the latest known version $($latestVersion)."
-            $findings.Add([pscustomobject]@{
-                Finding = 'No dictionary entry for this API version'
-                Data = "API version $($objApiVersion.tostring())."
-            })
-            $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$latestVersion]
-        }
-        $QueryParameterHash = $thisVersionDict
-    } else {
-        $thisVersionDict = $QueryParameterHash
+        $QueryParameterHash = Import-QueryParameterDictionaryFromSourceFile -PathProjectRoot $PathProjectRoot -objApiVersion $objApiVersion
     }
     #endregion
 
     $findings = [System.Collections.Generic.List[object]]::new()
-
-#region check for parameters that support __ie and build an exception list of endpoints, where a parameter is not supporting __ie
-    # Parameters to check
-    # Those supporting __ie at least once
-    $objParamsSupporting__ie = $flatApiParameters | Where-Object { ($_.Operators -contains 'ie' -and $_.ItemsType -eq 'string') }
-    $nameParamsSupporting__ie = $objParamsSupporting__ie | Select-Object -ExpandProperty Parameter | Sort-Object -Unique
-
-    # Those supporting __ie, but would not support it in all endpoints (will need an exception list of those endpoints))
-    # Possible reasons: somewhere used as [int] od as selection from a list of choices, which do not support __ie (and are case sensitive!)
-    $objParamsSupporting__ie_Exceptions = $flatApiParameters | Where-Object { $_.Parameter -in $nameParamsSupporting__ie -and $_.Operators -notcontains 'ie' }
-    $nameParamsSupporting__ie_Exceptions = $objParamsSupporting__ie_Exceptions | Select-Object -ExpandProperty Parameter | Sort-Object -Unique
-    # Group by parameter to get the list of endpoints for each parameter that needs an exception list entry
-    $grpParamsSupporting__ie_Exceptions = $objParamsSupporting__ie_Exceptions | Group-Object -Property Parameter
-
-    #region Find those supporting __ie but would not support __regex or __iregex
-    $objMissingRegexSupport = [System.Collections.Generic.List[object]]::new()
-    foreach ($param in $objParamsSupporting__ie) {
-        if ($param.Operators -notcontains 'regex' -or $param.Operators -notcontains 'iregex') {
-            $objMissingRegexSupport.Add($param)
-        }
-        if ($param.Operators.Count -lt 4) {
-            Write-Warning "Parameter $($param.Parameter) for endpoint $($param.Endpoint) supports regex operators but has less than 4 operators. This would be surprising."
-            $objMissingRegexSupport.Add($param)
-        }
+    $ChecksToPerform = $Check
+    if ($Check -eq 'All') {
+        $ChecksToPerform = @('IgnoreCase', 'Regex', 'IgnoreCaseRegex', 'FunctionNames')
     }
-    if ($objMissingRegexSupport.Count -gt 0) {
-        $toReport = [pscustomobject] @{
-            Finding = 'Supports __ie, but not __regex or __iregex'
-            Data = $objMissingRegexSupport
-        }
-        $findings.Add($toReport)
-    }
-    #endregion
-
-    #region check against the dictionary for this API version
-
-    # every parametername must have a corresponding entry
-    $allParamNamesNotInDictionary = $nameParamsSupporting__ie | Where-Object { $_ -notin $thisVersionDict.Keys }
-    if ($allParamNamesNotInDictionary.Count -gt 0) {
-        # Report only the first occurence for each parameter
-        foreach ($pName in $allParamNamesNotInDictionary) {
-            $firstOccurence = $objParamsSupporting__ie | Where-Object { $_.Parameter -eq $pName } | Select-Object -First 1
-            $toReport = [pscustomobject] @{
-                Finding = 'not in dictionary'
-                Data = $firstOccurence
+    switch ($ChecksToPerform) {
+        'IgnoreCase' {
+            Write-Verbose "Perform IgnoreCase check"
+            $paramFindings = Find-ParameterDefinitionIssues -APIParameters $flatApiParameters -Operator 'ie' -OperatorParameterDictionary $QueryParameterHash
+            if ($paramFindings.Count -gt 0) {
+                $findings.AddRange(@($paramFindings))
             }
-            $findings.Add($toReport)
+            continue
         }
-    }
-
-    # every dictionary entry must have a corresponding parametername
-    $allParamNamesNotInApi = $thisVersionDict.Keys | Where-Object {
-        $_ -notin $nameParamsSupporting__ie
-    }
-    if ($allParamNamesNotInApi.Count -gt 0) {
-        $toReport = [pscustomobject] @{
-            Finding = 'Dictionary entry without corresponding parametername'
-            Data = $allParamNamesNotInApi
+        'Regex' {
+            Write-Verbose "Perform Regex check"
+            continue
         }
-        $findings.Add($toReport)
-    }
-
-    # every parametername which has an exception list must have a non-empty array of endpoints in the dictionary containing each endpoint,
-    # where the parameter does not support __ie
-    $missingExceptionList = foreach ($param in $nameParamsSupporting__ie_Exceptions) {
-        if (-not $thisVersionDict.ContainsKey($param)) {
-            $exceptionListInDict = @()
-        } else {
-            $exceptionListInDict = $thisVersionDict[$param]
+        'IgnoreCaseRegex' {
+            Write-Verbose "Perform IgnoreCaseRegex check"
+            continue
         }
-        $exceptionListInApi = $grpParamsSupporting__ie_Exceptions | Where-Object { $_.Name -eq $param } | Select-Object -ExpandProperty Group
-        foreach ($param in $exceptionListInApi) {
-            foreach ($endpoint in $param.Endpoint) {
-                # endpoints in the dictionary are stored without the leading slash, because that's how they are checked inside 'BuildNewURI'
-                $endpoint = $endpoint.TrimStart('/')
-                if ($endpoint -notin $exceptionListInDict) {
-                    $thisEndpointData = $param
-                    $thisEndpointData.Endpoint = $endpoint              # report each endpoint separately
-                    $thisEndpointData
-                }
+        'FunctionNames' {
+            Write-Verbose "Perform FunctionNames check"
+            $functionFindings = Find-FunctionNameMissing -flatApiParameters $flatApiParameters -flatFunctionParameters $flatFunctionParameters
+            if ($functionFindings.Count -gt 0) {
+                $findings.AddRange(@($functionFindings))
             }
+            continue
         }
-    }
-    if ($missingExceptionList.Count -gt 0) {
-        foreach ($item in ($missingExceptionList | Sort-Object Parameter, endpoint)) {
-            $toReport = [pscustomobject] @{
-                Finding = 'missing in exception list'
-                Data = $item
-            }
-            $findings.Add($toReport)
+        Default {
+            Write-Warning "Unknown check: $ChecksToPerform"
+            continue
         }
     }
 
-    # every parametername which is fully supporting __ie must have an empty array of endpoints in the dictionary, as there are no exceptions
-    $allParamNamesFullySupporting__ie = $nameParamsSupporting__ie | Where-Object { $_ -notin $nameParamsSupporting__ie_Exceptions }
-    $nonEmptyExceptionList = foreach ($param in $allParamNamesFullySupporting__ie) {
-        if (-not $thisVersionDict.ContainsKey($param)) {
-            continue            # will be reported in another check
-        }
-        $exceptionListInDict = $thisVersionDict[$param]
-        if ($exceptionListInDict.Count -gt 0) {
-            $param
-        }
-    }
-    if ($nonEmptyExceptionList.Count -gt 0) {
-        $toReport = [pscustomobject] @{
-            Finding = 'exception list not empty'
-            Data = $nonEmptyExceptionList
-        }
-        $findings.Add($toReport)
-    }
-    #endregion
 
-    #region function checks
-    # every derived function name should exist in the module
-    $derivedFunctionNames = $flatApiParameters | Select-Object -ExpandProperty FunctionName | Sort-Object -Unique
-    $functionNamesInModule = $flatFunctionParameters | Select-Object -ExpandProperty FunctionName | Sort-Object -Unique
-    $derivedFunctionNamesNotInModule = $derivedFunctionNames | Where-Object { $_ -notin $functionNamesInModule } | Sort-Object -Unique
-    if ($derivedFunctionNamesNotInModule.Count -gt 0) {
-        foreach ($fn in $derivedFunctionNamesNotInModule) {
-            $toReport = [pscustomobject] @{
-                Finding = 'function name not found in module'
-                Data = [PSCustomObject] @{
-                    FunctionName = $fn
-                }
-            }
-            $findings.Add($toReport)
-        }
-    }
-    #endregion
-#endregion
 
 switch -regex ($OutputFormat) {
     'ConsoleList|ConsoleTable' {
