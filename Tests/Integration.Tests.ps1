@@ -414,6 +414,11 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
 
         Write-Host "Test Run ID: $script:TestRunId" -ForegroundColor Cyan
+
+        #control execution of case-insensitive/regex query tests based on API version
+        $Script:QueryWildcardSupport = InModuleScope -ModuleName 'PowerNetbox' {
+             Get-VersionQueryParameterSupport -ShowWarning
+        }
     }
 
     AfterAll {
@@ -1429,8 +1434,6 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
                 $script:CreatedResources.ContactGroups.Remove($Script:TestContactGroup2Id)
                 $Script:TestContactGroup2Id = $null
             }
-            $null = Set-NBQueryOption -IgnoreCase:$false
-            $null = Set-NBQueryOption -MatchMode 'Exact'
         }
 
         It "Should create a contact" {
@@ -1484,7 +1487,7 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
 
         It "Should find two contacts in the same group" {
             # create contact
-            $contact2 = New-NBContact -Name "$($script:TestPrefix)-GroupContact2" -Group_Id $Script:TestContactGroup2Id
+            $contact2 = New-NBContact -Name "$($script:TestPrefix)-GroupContact2" -Group_Id $Script:TestContactGroup2Id -Title 'Test contact created for group search and query option tests'
             [void]$script:CreatedResources.Contacts.Add($contact2.id)
 
             $group = Get-NBContactGroup -Id $Script:TestContactGroup2Id
@@ -1501,73 +1504,68 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
             { Remove-NBContact -Id $contact2.id -Confirm:$false  } | Should -Not -Throw
             $script:CreatedResources.Contacts.Remove($contact2.id)
         }
-        It "Should find contact name using case-insensitive search" {
-            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
-            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
-            # search would not match -- skip rather than assert case-insensitivity.
-            $nbVersionString = (Get-NBVersion).'netbox-version'
-            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
-                Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+'
-                return
-            }
-            $null = Set-NBQueryOption -IgnoreCase
-            $contact = Get-NBContact -Name $script:TestContactName.ToUpper()
+        Context "Query Options" {
+            BeforeAll {
+                # Reset query options to defaults
+                if ($null -eq $Script:QueryWildcardSupport.UsedVersion) {
+                    Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+ and is tested to work up to 4.6.x'
+                    return
+                }
+                $savedQueryOption = Get-NBQueryOption
+                $null = Set-NBQueryOption -IgnoreCase:$false
+                $null = Set-NBQueryOption -MatchMode 'Exact'
 
-            $contact | Should -Not -BeNullOrEmpty
-            $contact.id | Should -Be $script:TestContactId
-            $contact.name | Should -Be $script:TestContactName
-        }
-        It "Should find contact name using case-insensitive search using regex" {
-            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
-            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
-            # search would not match -- skip rather than assert case-insensitivity.
-            $nbVersionString = (Get-NBVersion).'netbox-version'
-            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
-                Set-ItResult -Skipped -Because 'Case-insensitive (__iregex) query support requires Netbox 4.4+'
-                return
+                # create contacts for exact these tests
+                $Script:QueryOptionContacts = @(
+                    @{ Id = $null; Name = "$($script:TestPrefix)-QueryOptionContact"; Title = 'Test contact' }
+                    @{ Id = $null; Name = "$($script:TestPrefix)-QueryOptionContact2"; Title = 'Test contact 2' }
+                    @{ Id = $null; Name = "$($script:TestPrefix)-QueryOptionContact3"; Title = 'Test contact 3' }
+                )
+                foreach ($contactInfo in $Script:QueryOptionContacts) {
+                    Write-Host "    Creating contact for query option tests: $($contactInfo.Name) with title '$($contactInfo.Title)'" -ForegroundColor Green
+                    $contact = New-NBContact -Name $contactInfo.Name -Title $contactInfo.Title
+                    [void]$script:CreatedResources.Contacts.Add($contact.id)
+                    $contactInfo.Id = $contact.id
+                }
             }
-            $null = Set-NBQueryOption -IgnoreCase
-            $null = Set-NBQueryOption -MatchMode 'Regex'
-            $contact = Get-NBContact -Name ".*-contact$"
+            AfterAll {
+                # Cleanup: delete contacts created for query option tests
+                if ($null -eq $Script:QueryWildcardSupport.UsedVersion) {
+                    Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+ and is tested to work up to 4.6.x'
+                    return
+                }
+                foreach ($contactInfo in $Script:QueryOptionContacts) {
+                    Remove-NBContact -Id $contactInfo.Id -Confirm:$false -ErrorAction SilentlyContinue
+                    [void]$script:CreatedResources.Contacts.Remove($contactInfo.Id)
+                }
+                $Script:QueryOptionContacts = @()
 
-            $contact | Should -Not -BeNullOrEmpty
-            $contact.id | Should -Be $script:TestContactId
-            $contact.name | Should -Be $script:TestContactName
-        }
-        It "Should find contact name using case-sensitive search using regex" {
-            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
-            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
-            # search would not match -- skip rather than assert case-insensitivity.
-            $nbVersionString = (Get-NBVersion).'netbox-version'
-            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
-                Set-ItResult -Skipped -Because 'Case-sensitive (__regex) query support requires Netbox 4.4+'
-                return
+                # Restore query options to their original values
+                $null = Set-NBQueryOption -IgnoreCase:$savedQueryOption[0].Value
+                $null = Set-NBQueryOption -MatchMode $savedQueryOption[1].Value
             }
-            $null = Set-NBQueryOption -IgnoreCase:$false
-            $null = Set-NBQueryOption -MatchMode 'Regex'
-            $contact = Get-NBContact -Name ".*-contact$"
-            $contact | Should -BeNullOrEmpty -Because "-contact is lower-case, and the contact name ends with -Contact (upper-case C), so a case-sensitive regex should not match"
+            It "IgnoreCase $<IgnoreCase> + MatchMode <MatchMode>: <searchString> should find <expectedCount> contact(s)" -ForEach @(
+                @{ searchString = 'Test contact';      expectedCount = 1;  IgnoreCase = $false;    MatchMode = 'Exact   ' }
+                @{ searchString = 'Test contact';      expectedCount = 1;  IgnoreCase = $false;    MatchMode = 'Wildcard' }     # resolves to '^Test contact$' => 1 match
+                @{ searchString = 'Test contact';      expectedCount = 3;  IgnoreCase = $false;    MatchMode = 'Regex   ' }     # regex match hits substrings => 3 matches
+                @{ searchString = 'test contact';      expectedCount = 0;  IgnoreCase = $false;    MatchMode = 'Exact   ' }
+                @{ searchString = '*test contact*';    expectedCount = 0;  IgnoreCase = $false;    MatchMode = 'Wildcard' }
+                @{ searchString = '.*test contact.*';  expectedCount = 0;  IgnoreCase = $false;    MatchMode = 'Regex   ' }
+                @{ searchString = 'test contact';      expectedCount = 1;  IgnoreCase = $true;     MatchMode = 'Exact   ' }
+                @{ searchString = '*test contact*';    expectedCount = 3;  IgnoreCase = $true;     MatchMode = 'Wildcard' }
+                @{ searchString = '.*test contact.*';  expectedCount = 3;  IgnoreCase = $true;     MatchMode = 'Regex   ' }
+            ) {
+                if ($null -eq $Script:QueryWildcardSupport.UsedVersion) {
+                    Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+ and is tested to work up to 4.6.x'
+                    return
+                }
 
-            $contact = Get-NBContact -Name ".*-Contact$"
-            $contact | Should -Not -BeNullOrEmpty -Because ".*-Contact$ and case insensitive regex should match *-Contact"
-            $contact.id | Should -Be $script:TestContactId
-            $contact.name | Should -Be $script:TestContactName
-        }
-        It "Should find contact name using case-insensitive search using wildcard" {
-            # Case-insensitive (__ie) query support requires Netbox 4.4+. On 4.3.x
-            # Set-NBQueryOption -IgnoreCase safely no-ops (warns), so an upper-cased
-            # search would not match -- skip rather than assert case-insensitivity.
-            $nbVersionString = (Get-NBVersion).'netbox-version'
-            if ($nbVersionString -notmatch '^\d+\.\d+' -or [version]($nbVersionString -replace '-.*$') -lt [version]'4.4.0') {
-                Set-ItResult -Skipped -Because 'Case-insensitive (__iregex) query support requires Netbox 4.4+'
-                return
+                $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
+                $null = Set-NBQueryOption -MatchMode $MatchMode.Trim()
+                $contact = Get-NBContact -Title $searchString
+
+                $contact | Should -HaveCount $expectedCount
             }
-            $null = Set-NBQueryOption -IgnoreCase:$true
-            $null = Set-NBQueryOption -MatchMode 'Wildcard'
-            $contact = Get-NBContact -Name "*-contact"
-            $contact | Should -Not -BeNullOrEmpty -Because ".*-Contact$ and case insensitive regex should match *-Contact"
-            $contact.id | Should -Be $script:TestContactId
-            $contact.name | Should -Be $script:TestContactName
         }
     }
 
@@ -1650,7 +1648,7 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
 
         It "Should get contact assignment by Object_Type" {
-            $assignment = Get-NBContactAssignment -Object_Type 'dcim.site'
+            $assignment = Get-NBContactAssignment -Object_Type 'dcim.site' -Verbose
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId

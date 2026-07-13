@@ -56,52 +56,47 @@ function Set-NBQueryOption {
                 $script:NetboxConfig.MatchMode = $MatchMode
             }
         }
-        switch ("$($script:NetboxConfig.IgnoreCaseInQueries), $($script:NetboxConfig.MatchMode)") {
-            'False, Exact' {
-                $Script:QueryParameterDecoration = ''
+
+        # depending on the API version, we have different sets of parameters that are supported.
+        # Per API version, a set of IgnoreCaseParameterDictonary and RegexParameterDictionary must be defined in the module (see _IgnoreCaseParameters.ps1)
+        # This is presumed, to get the latest known version supported from IgnoreCaseParameterDictonary only
+        $Script:QueryParameterDecoration = ''
+        $Script:QueryParameterHash = @{}
+        if ($script:NetboxConfig.IgnoreCaseInQueries -or $script:NetboxConfig.MatchMode -ne 'Exact') {
+            $qpSupport = Get-VersionQueryParameterSupport -ShowWarning
+            if ($null -eq $qpSupport.UsedVersion) {
+                return                  # version below oldest supported version
+            }
+            switch ("$($script:NetboxConfig.IgnoreCaseInQueries), $($script:NetboxConfig.MatchMode)") {
+                'False, Exact' {
+                    $Script:QueryParameterDecoration = ''
+                    $Script:QueryParameterHash = @{}
+                }
+            'True, Exact' {
+                $Script:QueryParameterDecoration = '__ie'
+                $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictonary[$qpSupport.UsedVersion.tostring()]
             }
             'False, Wildcard' {
                 $Script:QueryParameterDecoration = '__regex'
+                $Script:QueryParameterHash = $Script:RegexParameterDictionary[$qpSupport.UsedVersion.tostring()]
             }
             'False, Regex' {
                 $Script:QueryParameterDecoration = '__regex'
-            }
-            'True, Exact' {
-                $Script:QueryParameterDecoration = '__ie'
+                $Script:QueryParameterHash = $Script:RegexParameterDictionary[$qpSupport.UsedVersion.tostring()]
             }
             'True, Wildcard' {
                 $Script:QueryParameterDecoration = '__iregex'
+                $Script:QueryParameterHash = $Script:RegexParameterDictionary[$qpSupport.UsedVersion.tostring()]
             }
             'True, Regex' {
                 $Script:QueryParameterDecoration = '__iregex'
+                $Script:QueryParameterHash = $Script:RegexParameterDictionary[$qpSupport.UsedVersion.tostring()]
             }
             default {
                 Throw "Invalid combination of IgnoreCase and MatchMode: $($script:NetboxConfig.IgnoreCaseInQueries), $($script:NetboxConfig.MatchMode)"
             }
         }
-
-        $Script:QueryParameterHash = @{}       # reset list (equal to case sensitive)
-
-        if ('' -ne $Script:QueryParameterDecoration) {
-            CheckNetboxIsConnected
-            # depending on the API version, we have different sets of parameters that are supported.
-            $activeApiMinorVersion = "{0}.{1}" -f ($script:NetboxConfig.ParsedVersion -split '\.')[0..1] #, ($script:NetboxConfig.ParsedVersion -split '\.')[1]
-            if ([version]$activeApiMinorVersion -lt [version](@($Script:IgnoreCaseParameterDictonary.Keys)[0])) {
-                Write-Warning "API version $($script:NetboxConfig.ParsedVersion) is less than the minimum supported version ($(@($Script:IgnoreCaseParameterDictonary.Keys)[0])). No case-insensitive parameters will be used."
-                return $false
-            }
-            foreach ($key in $Script:IgnoreCaseParameterDictonary.Keys) {
-                if ([version]$key -eq [version]$activeApiMinorVersion) {
-                    $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictonary[$key]
-                    break
-                }
-            }
-            if ($Script:QueryParameterHash.Keys.Count -eq 0) {
-                $latestKnownVersion = (@($Script:IgnoreCaseParameterDictonary.Keys)[-1])
-                $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictonary[$latestKnownVersion]
-                Write-Warning "No case-insensitive parameters are defined for API version $($activeApiMinorVersion).x. Taking the latest known version ($latestKnownVersion)."
-            }
-        }
+    }
 
         switch ($PSCmdlet.ParameterSetName) {
             'IgnoreCase' {
