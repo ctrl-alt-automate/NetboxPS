@@ -346,13 +346,13 @@ $Script:QueryParameterDecoration = ''       # valid values are '', '__ie', '__re
 $Script:QueryParameterHash = @{}
 # This will contain the collection of all case-insensitive parameters per known API version, including any exceptions for specific endpoints
 # Keep it orderd so that we can easily find the first and last known versions
-$Script:IgnoreCaseParameterDictonary  = [ordered]@{}
-$Script:IgnoreCaseParameterDictonary['4.4'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV449
-$Script:IgnoreCaseParameterDictonary['4.5'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV450
-$Script:IgnoreCaseParameterDictonary['4.6'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV461
+$Script:IgnoreCaseParameterDictionary  = [ordered]@{}
+$Script:IgnoreCaseParameterDictionary['4.4'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV449
+$Script:IgnoreCaseParameterDictionary['4.5'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV450
+$Script:IgnoreCaseParameterDictionary['4.6'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV461
 
 $Script:RegexParameterDictionary  = [ordered]@{}
 # For testing, we do like there is only the baseline; TODO: Remove #
-$Script:RegexParameterDictionary['4.4'] = $Script:RegexParameterBaseline + $Script:IgnoreCaseParameterV449
-$Script:RegexParameterDictionary['4.5'] = $Script:RegexParameterBaseline + $Script:IgnoreCaseParameterV450
-$Script:RegexParameterDictionary['4.6'] = $Script:RegexParameterBaseline + $Script:IgnoreCaseParameterV461
+$Script:RegexParameterDictionary['4.4'] = $Script:RegexParameterBaseline + $Script:RegexParameterV449
+$Script:RegexParameterDictionary['4.5'] = $Script:RegexParameterBaseline + $Script:RegexParameterV450
+$Script:RegexParameterDictionary['4.6'] = $Script:RegexParameterBaseline + $Script:RegexParameterV461
