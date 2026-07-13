@@ -135,7 +135,7 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                 # We need to set the parsed version to a value for testing, but we will restore it after the tests
                 $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion
-                    $script:NetboxConfig.ParsedVersion = '4.6.1'
+                    $script:NetboxConfig.ParsedVersion = [version]'4.6.1'
                 }
 
                 # We must be connected to check the API version
