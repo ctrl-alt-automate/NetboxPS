@@ -202,12 +202,13 @@ function Connect-NBAPI {
         Write-Verbose "Found compatible version [$versionString] (parsed: $($script:NetboxConfig.ParsedVersion))!"
     }
 
+    $script:NetboxConfig.Connected = $true
+    Write-Verbose "Successfully connected!"
+
     # This needs a valid ParsedVersion to work, so it must be called after the version check
     $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
     $null = Set-NBQueryOption -MatchMode $MatchMode
 
-    $script:NetboxConfig.Connected = $true
-    Write-Verbose "Successfully connected!"
 
     Write-Verbose "Connection process completed"
 }
