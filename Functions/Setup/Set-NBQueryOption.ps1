@@ -58,8 +58,8 @@ function Set-NBQueryOption {
         }
 
         # depending on the API version, we have different sets of parameters that are supported.
-        # Per API version, a set of IgnoreCaseParameterDictonary and RegexParameterDictionary must be defined in the module (see _IgnoreCaseParameters.ps1)
-        # This is presumed, to get the latest known version supported from IgnoreCaseParameterDictonary only
+        # Per API version, a set of IgnoreCaseParameterDictionary and RegexParameterDictionary must be defined in the module (see _IgnoreCaseParameters.ps1)
+        # This is presumed, to get the latest known version supported from IgnoreCaseParameterDictionary only
         $Script:QueryParameterDecoration = ''
         $Script:QueryParameterHash = @{}
         if ($script:NetboxConfig.IgnoreCaseInQueries -or $script:NetboxConfig.MatchMode -ne 'Exact') {
@@ -74,7 +74,7 @@ function Set-NBQueryOption {
                 }
             'True, Exact' {
                 $Script:QueryParameterDecoration = '__ie'
-                $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictonary[$qpSupport.UsedVersion.tostring()]
+                $Script:QueryParameterHash = $Script:IgnoreCaseParameterDictionary[$qpSupport.UsedVersion.tostring()]
             }
             'False, Wildcard' {
                 $Script:QueryParameterDecoration = '__regex'

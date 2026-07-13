@@ -78,15 +78,15 @@ function Import-QueryParameterDictionaryFromSourceFile {
     )
     # TODO: Currently untested for other scenerios
     . (Join-Path -Path $PathProjectRoot -ChildPath 'Functions' -AdditionalChildPath  'Helpers','_IgnoreCaseParameters.ps1')
-    $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$objApiVersion.tostring()]
+    $thisVersionDict = $Script:IgnoreCaseParameterDictionary[$objApiVersion.tostring()]
     if ($null -eq $thisVersionDict) {
-        $latestVersion = $Script:IgnoreCaseParameterDictonary.Keys | Sort-Object -Descending | Select-Object -First 1
+        $latestVersion = $Script:IgnoreCaseParameterDictionary.Keys | Sort-Object -Descending | Select-Object -First 1
         Write-Warning "No dictionary entry found for API version $($objApiVersion.tostring()). Testing against the latest known version $($latestVersion)."
         $findings.Add([pscustomobject]@{
             Finding = 'No dictionary entry for this API version'
             Data = "API version $($objApiVersion.tostring())."
         })
-        $thisVersionDict = $Script:IgnoreCaseParameterDictonary[$latestVersion]
+        $thisVersionDict = $Script:IgnoreCaseParameterDictionary[$latestVersion]
     }
     $thisVersionDict
 }

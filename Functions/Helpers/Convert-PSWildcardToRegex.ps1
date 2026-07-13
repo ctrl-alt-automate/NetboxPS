@@ -23,9 +23,6 @@ function Convert-PSWildcardToRegex {
     )
 
     process {
-        if ($null -eq $String) {
-            return
-        }
         if ([string]::IsNullOrEmpty($String)) {
             return $String
         }

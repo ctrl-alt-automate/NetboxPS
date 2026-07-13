@@ -79,25 +79,19 @@ function BuildNewURI {
             if ($useQueryOption) {
                 Write-Verbose " Parameter $($param.Key) for endpoint $apiCheck is not in the ignore case list"
                 $paramKey = "$($param.Key)$($Script:QueryParameterDecoration)"
-                $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
-                foreach ($thisValue in $param.Value) {
-                    Write-Verbose " Adding URI parameter $($paramKey):$thisValue"
-                    # if Powershell wildcard query is used, we need to convert wildcard to regex for Netbox API
-                    if ($Script:NetboxConfig.MatchMode -eq 'Wildcard') {
-                        $thisValue = Convert-PSWildcardToRegex -String $thisValue
-                    }
-                    # URL encode key and value using .NET Uri class (available everywhere)
-                    $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
-                    $QueryParts.Add("$EncodedKey=$EncodedValue")
+            }
+
+            $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
+            foreach ($thisValue in $param.Value) {
+                Write-Verbose " Adding URI parameter $($paramKey):$thisValue"
+                $valueToEncode = $thisValue
+                # if Powershell wildcard query is used, we need to convert wildcard to regex for Netbox API
+                if ($useQueryOption -and $Script:NetboxConfig.MatchMode -eq 'Wildcard') {
+                    $valueToEncode = Convert-PSWildcardToRegex -String $thisValue
                 }
-            } else {
-                $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
-                foreach ($thisValue in $param.Value) {
-                    Write-Verbose " Adding URI parameter $($paramKey):$thisValue"
-                    # URL encode key and value using .NET Uri class (available everywhere)
-                    $EncodedValue = [System.Uri]::EscapeDataString([string]$thisValue)
-                    $QueryParts.Add("$EncodedKey=$EncodedValue")
-                }
+                # URL encode key and value using .NET Uri class (available everywhere)
+                $EncodedValue = [System.Uri]::EscapeDataString([string]$valueToEncode)
+                $QueryParts.Add("$EncodedKey=$EncodedValue")
             }
         }
 

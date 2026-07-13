@@ -100,12 +100,12 @@ Describe 'Verify-QueryParameterHandling' {
             $nbVersion = [version] (Get-NbVersion).'netbox-version'
             $ApiVersion = $nbVersion.Major.ToString() + '.' + $nbVersion.Minor.ToString()
 
-            $OriginalCaseParameterDictonary = InModuleScope -ModuleName PowerNetBox {
-                $Script:IgnoreCaseParameterDictonary
+            $OriginalCaseParameterDictionary = InModuleScope -ModuleName PowerNetBox {
+                $Script:IgnoreCaseParameterDictionary
             }
-            $OriginalCaseParameterDictonary | Should -Not -BeNullOrEmpty
+            $OriginalCaseParameterDictionary | Should -Not -BeNullOrEmpty
             #endregion
-            $saveParameterHash = $OriginalCaseParameterDictonary[$ApiVersion]
+            $saveParameterHash = $OriginalCaseParameterDictionary[$ApiVersion]
 
             $spaltScriptParams = @{
                 OutputFormat = 'Object'

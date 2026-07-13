@@ -21,16 +21,16 @@ function Get-VersionQueryParameterSupport {
     CheckNetboxIsConnected
 
     $result = [PSCustomObject]@{
-        MinVersion      = [version] (@($Script:IgnoreCaseParameterDictonary.Keys)[0])
-        MaxVersion      = [version] (@($Script:IgnoreCaseParameterDictonary.Keys)[-1])
+        MinVersion      = [version] (@($Script:IgnoreCaseParameterDictionary.Keys)[0])
+        MaxVersion      = [version] (@($Script:IgnoreCaseParameterDictionary.Keys)[-1])
         APIVersion      = [version]::new($script:NetboxConfig.ParsedVersion.Major, $script:NetboxConfig.ParsedVersion.Minor)
-        UsedVersion     = (@($Script:IgnoreCaseParameterDictonary.Keys)[-1])   # Default is the latest known version; $null: unsupported version
+        UsedVersion     = (@($Script:IgnoreCaseParameterDictionary.Keys)[-1])   # Default is the latest known version; $null: unsupported version
     }
     if ($result.APIVersion -lt $result.MinVersion -and $ShowWarning) {
-        Write-Warning "API version $($script:NetboxConfig.ParsedVersion) is less than the minimum supported version ($(@($Script:IgnoreCaseParameterDictonary.Keys)[0])). No case-insensitive parameters will be used."
+        Write-Warning "API version $($script:NetboxConfig.ParsedVersion) is less than the minimum supported version ($(@($Script:IgnoreCaseParameterDictionary.Keys)[0])). PowerNetbox query options will not be used."
         $result.UsedVersion = $null
     } else {
-        foreach ($key in $Script:IgnoreCaseParameterDictonary.Keys) {
+        foreach ($key in $Script:IgnoreCaseParameterDictionary.Keys) {
             if ([version]$key -eq $result.APIVersion) {
                 $result.UsedVersion = [version]$key
                 break
