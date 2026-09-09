@@ -19,12 +19,16 @@ function Get-NBQueryOption {
     param ()
 
     Write-Verbose "Getting Netbox Query Options"
-    if ($null -eq $script:NetboxConfig.IgnoreCaseInQueries) {
+    if ($null -eq $script:NetboxConfig.IgnoreCaseInQueries -or $null -eq $script:NetboxConfig.MatchMode) {
         throw "Netbox Query Options are not set! You may set them with Set-NBQueryOption"
     }
 
     [PSCustomObject]@{
         Name = "IgnoreCase"
         Value = $script:NetboxConfig.IgnoreCaseInQueries
+    }
+    [PSCustomObject]@{
+        Name = "MatchMode"
+        Value = $script:NetboxConfig.MatchMode
     }
 }

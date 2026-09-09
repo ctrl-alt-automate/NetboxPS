@@ -53,7 +53,7 @@ Describe "Code Quality Tests" -Tag 'Quality' {
                 'Get-NBCredential', 'Get-NBHostname', 'Get-NBHostPort',
                 'Get-NBHostScheme', 'Get-NBInvokeParams', 'Get-NBTimeout',
                 'Get-NBRequestHeaders', 'Get-NBVersion', 'Get-NBBranchContext',
-                'Get-NBAPIDefinition', 'Get-NBQueryOption'
+                'Get-NBAPIDefinition', 'Get-NBQueryOption', 'Get-VersionQueryParameterSupport'
             )
             $getFunctions = $script:PublicFunctions | Where-Object {
                 $_.Verb -eq 'Get' -and $_.Name -notin $excludedFunctions

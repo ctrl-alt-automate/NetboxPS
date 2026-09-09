@@ -68,6 +68,8 @@ and authentication details, and worked examples are in the documentation:
 
 ---
 
+## Filter parameter usage in API queries
+
 ### Case sensitivity - insensitivity
 
 The NetBox API, by default, treats all query parameter values as case-sensitive. As PowerShell is [as case-insensitive as possible](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_case-sensitivity), the module offers an option to use case-insensitive query values.
@@ -76,9 +78,22 @@ The NetBox API, by default, treats all query parameter values as case-sensitive.
 
 `Set-NBQueryOption -IgnoreCase:$true` or `Connect-NBAPI -IgnoreCase`.
 
-#### Requirements and limitations
+### Using wildcards/regex when filtering queries
 
-Depending on the version of the NetBox API used, the API supports this option for a specific set of parameters and endpoints. Due to this current limitation, the module can only support case insensitivity for the same set of cases.
+By default, the module uses filter queries, that ask for an exact match.\
+You can influence this behaviour by choosing between three modes: Exact, Wildcard, Regex. Every API string parameter, which supports regex/iregex operators, is enabled
+
+1. Exact: The search string is sent 1:1 through the API
+2. Wildcard: [Wildcard characters](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_wildcards) in the search string, are taken into account for filtering query results.
+3. Regex: Search strings accept Regex tokens for filtering result sets. Please keep in mind, that regex is matching parts of a string!
+
+#### Activating advanced match modes
+
+`Set-NBQueryOption -MatchMode Wildcard|Regex` or `Connect-NBAPI -Matchmode`.
+
+### Requirements and limitations
+
+Depending on the version of the NetBox API used, the API supports these options for a specific set of parameters and endpoints. Due to this current limitation, the module can only support case insensitivity and wildcard searches for the same set of cases.
 
 - Minimum version of Netbox API is 4.4+.
 - A list of parameters offered by each API version can be found in the repository. See [_IgnoreCaseParameters.ps1](./Functions/Helpers/_IgnoreCaseParameters.ps1).
