@@ -319,7 +319,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $MatchMode -eq 'Exact' } -Verifiable
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { Throw "Should not be called" }
                 Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443
-                Assert-MockCalled -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2
+                Should -Invoke -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2 -Exactly
                 $null = Get-NbQueryOption
             }
             It "Should call Set-NBQueryOption inside Connect-NBAPI (both parameters set)" {
@@ -327,7 +327,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $IgnoreCase -eq $true } -Verifiable
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $MatchMode -eq 'Regex' } -Verifiable
                 Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443 -IgnoreCase -MatchMode 'Regex'
-                Assert-MockCalled -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2
+                Should -Invoke -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2 -Exactly
                 $null = Get-NbQueryOption
             }
             It "Should call Set-NBQueryOption inside Connect-NBAPI (Ignorecase set)" {
@@ -335,7 +335,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $IgnoreCase -eq $true } -Verifiable
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $MatchMode -eq 'Exact' } -Verifiable
                 Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443 -IgnoreCase
-                Assert-MockCalled -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2
+                Should -Invoke -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2 -Exactly
                 $null = Get-NbQueryOption
             }
             It "Should call Set-NBQueryOption inside Connect-NBAPI (MatchMode set)" {
@@ -343,7 +343,7 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $IgnoreCase -eq $false } -Verifiable
                 Mock -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -MockWith { return $true } -ParameterFilter { $MatchMode -eq 'Wildcard' } -Verifiable
                 Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443 -MatchMode 'Wildcard'
-                Assert-MockCalled -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2
+                Should -Invoke -CommandName 'Set-NBQueryOption' -ModuleName 'PowerNetbox' -Times 2 -Exactly
                 $null = Get-NbQueryOption
             }
         }
