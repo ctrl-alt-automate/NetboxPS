@@ -163,6 +163,7 @@ function Get-NBDCIMCable {
             'breakout-1c2p-2c1p',       # added in Netbox 4.5.7 (#21760)
             'breakout-1c4p-4c1p',
             'breakout-1c6p-6c1p',
+            'breakout-1c8p-8c1p',
             'breakout-2c4p-8c1p-shuffle'
         )]
         [Alias('Profile')]

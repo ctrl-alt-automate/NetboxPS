@@ -16,13 +16,20 @@
 #   URL:       http://localhost:8000
 #   Username:  admin
 #   Password:  admin
-#   API Token: For Netbox ≤4.4.x: 0123456789abcdef0123456789abcdef01234567
-#              For Netbox 4.5.0+: Dynamically created v2 token (see workflow)
+#   API Token: netbox-docker <= 3.x (Netbox <= 4.4): v1 token
+#                0123456789abcdef0123456789abcdef01234567  (Authorization: Token ...)
+#              netbox-docker 4.0.x (Netbox 4.5): v2 token with a RANDOM key -> read it from
+#                the container log, or let the workflow create one dynamically
+#              netbox-docker 5.0.2+ (Netbox 4.6.10 / 4.7+): deterministic v2 token built from
+#                SUPERUSER_API_KEY + SUPERUSER_API_TOKEN:
+#                nbt_powernetbox1.0123456789abcdef0123456789abcdef01234567  (Authorization: Bearer ...)
 #
-# Netbox 4.5.0+ Token Changes:
-#   - Tokens now use v2 format with Bearer authentication
-#   - SUPERUSER_API_TOKEN env var creates a v1 legacy token (still works)
-#   - If v1 fails, workflows create a token dynamically after container start
+# Token provisioning changes across netbox-docker releases:
+#   - <= 3.x : SUPERUSER_API_TOKEN creates a v1 legacy token
+#   - 4.0.x  : SUPERUSER_API_TOKEN creates a v2 token (key auto-generated, so not predictable)
+#   - 5.0.2+ : a v2 token is created ONLY when both SUPERUSER_API_KEY (12 chars) and
+#              SUPERUSER_API_TOKEN (40 chars) are set; v1 tokens are no longer provisioned
+#   - The workflows try the v1 token, then the deterministic v2 token, then create one dynamically
 #
 # Note: This configuration is optimized for fast startup in CI environments.
 #       Do NOT use these credentials or settings in production.
@@ -133,6 +140,9 @@ services:
       SUPERUSER_EMAIL: admin@example.com
       SUPERUSER_PASSWORD: admin
       SUPERUSER_API_TOKEN: "0123456789abcdef0123456789abcdef01234567"
+      # netbox-docker 5.0.2+ combines this 12-char key with the token above into a deterministic
+      # v2 token: nbt_powernetbox1.0123456789abcdef0123456789abcdef01234567 (older images ignore it)
+      SUPERUSER_API_KEY: "powernetbox1"
       SKIP_SUPERUSER: "false"
 
       # ----------------------------------------------------------------------
