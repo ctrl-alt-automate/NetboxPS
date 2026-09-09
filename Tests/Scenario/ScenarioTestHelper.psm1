@@ -6,7 +6,19 @@
 #
 
 # Module-scope variables
-$script:TestDataPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) ".." | Join-Path -ChildPath "TestData"
+# TestData lives next to the repository (PowerNetbox-project/TestData). Walk up from this file until we
+# find it, so the helper also works from a git worktree (.worktrees/<name>/Tests/Scenario); or set
+# POWERNETBOX_TESTDATA to point at it explicitly.
+$script:TestDataPath = if ($env:POWERNETBOX_TESTDATA) { $env:POWERNETBOX_TESTDATA } else {
+    $probe = $PSScriptRoot
+    $found = $null
+    for ($i = 0; $i -lt 8 -and $probe; $i++) {
+        $candidate = Join-Path $probe 'TestData'
+        if ((Test-Path (Join-Path $candidate 'import_testdata.py'))) { $found = $candidate; break }
+        $probe = Split-Path $probe -Parent
+    }
+    if ($found) { $found } else { Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) '..' | Join-Path -ChildPath 'TestData' }
+}
 
 # Test environments = the local Docker stacks started with scripts/Start-NetboxDocker.ps1
 # (same matrix as CI). Host/port/token per version are fixed there; NETBOX_<ver>_HOST /
