@@ -92,7 +92,7 @@
     Retrieves the module bay types accepted by module type 12.
 
 .NOTES
-    AddedInVersion: v4.7.1.0
+    AddedInVersion: v4.7.0.1
     Requires NetBox 4.7.0 or later (the /api/dcim/module-bay-types/ endpoint).
     The -Brief, -Fields, and -Omit parameters are mutually exclusive.
 .LINK

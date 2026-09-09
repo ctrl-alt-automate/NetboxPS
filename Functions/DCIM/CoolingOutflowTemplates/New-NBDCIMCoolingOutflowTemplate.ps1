@@ -45,7 +45,7 @@
 .LINK
     https://netbox.readthedocs.io/en/stable/rest-api/overview/
 .NOTES
-    AddedInVersion: v4.7.1.0
+    AddedInVersion: v4.7.0.1
 #>
 function New-NBDCIMCoolingOutflowTemplate {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Low')]

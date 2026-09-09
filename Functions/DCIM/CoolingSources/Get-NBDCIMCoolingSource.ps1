@@ -110,7 +110,7 @@
     Returns the brief representation of cooling source ID 5.
 
 .NOTES
-    AddedInVersion: v4.7.1.0
+    AddedInVersion: v4.7.0.1
     Requires NetBox 4.7.0 or later.
     The -Brief, -Fields, and -Omit parameters are mutually exclusive.
 .LINK
