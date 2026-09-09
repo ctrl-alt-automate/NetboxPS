@@ -27,6 +27,11 @@
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
+.PARAMETER Module_Bay_Types
+    One or more module bay type database IDs describing which kinds of modules
+    bays created from this template accept (NetBox 4.7+). Ignored with a warning
+    on older versions.
+
 .EXAMPLE
     New-NBDCIMModuleBayTemplate
 
@@ -50,12 +55,19 @@ function New-NBDCIMModuleBayTemplate {
 
         [object[]]$Tags,
 
+        [uint64[]]$Module_Bay_Types,
+
         [switch]$Raw
     )
     process {
         Write-Verbose "Creating DCIM Module Bay Template"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','module-bay-templates'))
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+        # Module_Bay_Types only exists on NetBox 4.7+; drop it (with a warning) on older versions
+        $skipParams = @('Raw')
+        if (Test-NBMinimumVersion -ParameterName 'Module_Bay_Types' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Module bay types') {
+            $skipParams += 'Module_Bay_Types'
+        }
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Name, 'Create module bay template')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method POST -Body $URIComponents.Parameters -Raw:$Raw
         }

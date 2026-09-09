@@ -43,7 +43,14 @@
 .PARAMETER VLAN_Id
     Filter by vlan database ID.
 
-.PARAMETER Limit
+.PARAMETER Tag
+        Filter by tag slug(s). Several values are combined with AND (object must carry all of them);
+        use Set-NBQueryOption -TagMatch Any (Netbox 4.6.6+) for OR semantics.
+
+    .PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
+    .PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
 .PARAMETER Offset
@@ -76,6 +83,12 @@ function Get-NBWirelessLAN {
         [Parameter(ParameterSetName = 'ByID', ValueFromPipelineByPropertyName = $true)][uint64[]]$Id,
         [Parameter(ParameterSetName = 'Query')][string]$SSID,[Parameter(ParameterSetName = 'Query')][uint64]$Group_Id,
         [Parameter(ParameterSetName = 'Query')][string]$Status,[Parameter(ParameterSetName = 'Query')][uint64]$VLAN_Id,
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
+
         [ValidateRange(1, 1000)]
         [uint16]$Limit,[ValidateRange(0, [int]::MaxValue)]
         [uint16]$Offset,[switch]$Raw)

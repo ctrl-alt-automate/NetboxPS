@@ -91,6 +91,30 @@ You can influence this behaviour by choosing between three modes: Exact, Wildcar
 
 `Set-NBQueryOption -MatchMode Wildcard|Regex` or `Connect-NBAPI -Matchmode`.
 
+### Tag filters: all or any
+
+Every `Get-NB*` cmdlet for a taggable model has `-Tag <slug[]>` and `-Tag_Id <id[]>`. Multiple values are combined with AND by NetBox (the object must carry all of them). `Set-NBQueryOption -TagMatch Any` switches to NetBox 4.6.6+ `tag__any` / `tag_id__any` (object carries at least one). Below 4.6.6 the option is ignored on purpose, because an unknown lookup would silently return every object.
+
+```powershell
+Set-NBQueryOption -TagMatch Any
+Get-NBDCIMDevice -Tag 'edge', 'core'          # edge OR core
+Get-NBDCIMDevice -Name 'core-01' | Set-NBObjectTag -Add 'maintenance' -Remove 'staging'   # partial tag update (4.6+)
+```
+
+`-Tags` on `New-*`/`Set-*` accepts tag names or IDs (names are sent as `{ "name": ... }`, which is what the API requires).
+
+### Cursor pagination (NetBox 4.6+)
+
+`Set-NBQueryOption -Pagination Cursor` makes `-All` walk large tables with NetBox's `?start=<pk>` cursor instead of `limit`/`offset`, which stays fast on very large result sets. Results come back ordered by primary key. Older servers fall back to offset paging automatically; an explicit `-Offset` always wins.
+
+### Optimistic concurrency (NetBox 4.6+, PowerShell 7+)
+
+`Set-NBQueryOption -OptimisticConcurrency` remembers the `ETag` of every object you read and sends it as `If-Match` on the next `Set-*`/`Remove-*` of that object. If someone changed the object in between, NetBox answers `412 Precondition Failed` and the error tells you to re-read and retry, instead of silently overwriting their change.
+
+### Background bulk writes (NetBox 4.7+)
+
+The bulk-capable `New-*`/`Set-*`/`Remove-*` cmdlets (see the bulk operations guide) take `-Background`: each batch is queued as a NetBox background job (`?background=true`, HTTP 202) and the job objects are returned, so very large batches no longer hit proxy timeouts. Inspect the outcome with `Get-NBJob`. Needs an RQ worker on the server.
+
 ### Requirements and limitations
 
 Depending on the version of the NetBox API used, the API supports these options for a specific set of parameters and endpoints. Due to this current limitation, the module can only support case insensitivity and wildcard searches for the same set of cases.

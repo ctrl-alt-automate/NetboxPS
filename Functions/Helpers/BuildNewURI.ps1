@@ -80,6 +80,17 @@ function BuildNewURI {
                 Write-Verbose " Parameter $($param.Key) for endpoint $apiCheck is not in the ignore case list"
                 $paramKey = "$($param.Key)$($Script:QueryParameterDecoration)"
             }
+            # Set-NBQueryOption -TagMatch Any: Netbox 4.6.6+ 'tag__any' / 'tag_id__any' match objects carrying ANY of
+            # the listed tags (default 'tag' requires all of them). Older servers silently ignore unknown lookups and
+            # would return the whole table, so the rewrite is version-gated here as well as at option-set time.
+            if ($Script:NetboxConfig.TagMatch -eq 'Any' -and ($param.Key -eq 'tag' -or $param.Key -eq 'tag_id')) {
+                if ($Script:NetboxConfig.ParsedVersion -and $Script:NetboxConfig.ParsedVersion -ge [version]'4.6.6') {
+                    $paramKey = "$($param.Key)__any"
+                }
+                else {
+                    Write-Verbose " TagMatch Any needs Netbox 4.6.6+; sending plain $($param.Key) (all-tags semantics)"
+                }
+            }
 
             $EncodedKey = [System.Uri]::EscapeDataString($paramKey)
             foreach ($thisValue in $param.Value) {

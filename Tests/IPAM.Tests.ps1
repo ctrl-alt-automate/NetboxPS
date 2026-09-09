@@ -1153,9 +1153,11 @@ Describe "IPAM tests" -Tag 'Ipam' {
         }
 
         It "New-NBIPAMService should send tags" {
-            $Result = New-NBIPAMService -Name 'HTTP' -Ports 80 -Device 1 -Tags 'web', 'prod'
+            $Result = New-NBIPAMService -Name 'HTTP' -Ports 80 -Device 1 -Tags 'web', 12
             $bodyObj = $Result.Body | ConvertFrom-Json
-            $bodyObj.tags | Should -Be @('web', 'prod')
+            # names become attribute dictionaries, IDs stay numeric (Netbox rejects bare name strings)
+            $bodyObj.tags[0].name | Should -Be 'web'
+            $bodyObj.tags[1] | Should -Be 12
         }
 
         It "New-NBIPAMService should throw when neither -Ports nor -Port_Mappings is given" {

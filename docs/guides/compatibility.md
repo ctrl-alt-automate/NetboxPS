@@ -91,12 +91,28 @@ The `Get-NBContentType` function automatically detects your Netbox version and u
 | Token plaintext read-only | Clients can no longer choose the token value on create | No impact (`New-NBToken` never exposed it) |
 | v2 tokens only in netbox-docker 5.0.2+ | `SUPERUSER_API_TOKEN` alone no longer creates a token | `docker-compose.ci.yml` sets `SUPERUSER_API_KEY` for a deterministic `nbt_` token |
 | New interface/port types | `channel`, `100gbase-x-sfp112`, InfiniBand 4X, HPE Synergy; `mdc` port; `breakout-1c8p-8c1p` cable profile | Added to the ValidateSets |
+| Cooling infrastructure | `cooling-sources`, `cooling-feeds`, `cooling-intakes`, `cooling-outflows` (+ templates) | `Get/New/Set/Remove-NBDCIMCooling*` (v4.7.1.0) |
+| Module bay types | `module-bay-types` + `module_bay_types` on module bays / templates / module types | `Get/New/Set/Remove-NBDCIMModuleBayType`, `-Module_Bay_Types` (v4.7.1.0) |
+| New fields | Interface `channels`/`channel_id`/`mac_address`, `cooling_method`, `end_of_life`, Rack `cooling_capability`/`cooling_capacity` | Parameters + filters, version-gated (v4.7.1.0) |
+| Background bulk writes | `?background=true` -> 202 + job | `-Background` on bulk-capable cmdlets (v4.7.1.0) |
+| `tag__any` (4.6.6) | OR semantics for tag filters | `-Tag`/`-Tag_Id` on all Get cmdlets + `Set-NBQueryOption -TagMatch Any` (v4.7.1.0) |
+| Cursor pagination (4.6) | `?start=<pk>` | `Set-NBQueryOption -Pagination Cursor` (v4.7.1.0) |
+| ETag / If-Match (4.6) | optimistic concurrency, 412 on conflict | `Set-NBQueryOption -OptimisticConcurrency` (v4.7.1.0) |
+| `add_tags` / `remove_tags` (4.6) | partial tag assignment | `Set-NBObjectTag` (v4.7.1.0) |
 
-New 4.7 models (cooling infrastructure, module bay types) and fields (`channels`, `end_of_life`, `cooling_method`, ...) are tracked for a follow-up release.
 
 ## Running Compatibility Tests Locally
 
-You can run the compatibility tests locally using Docker:
+The quickest way is the helper script, which starts one Docker stack per NetBox version (fixed ports 8000-8004, correct image tag and API token per netbox-docker generation) and exports `NETBOX_HOST` / `NETBOX_TOKEN` / `NETBOX_SCHEME`:
+
+```powershell
+./scripts/Start-NetboxDocker.ps1 -Version 4.7.0 -Worker -SetEnvironment
+Invoke-Pester ./Tests/Integration.Tests.ps1 -Tag 'Live'
+./scripts/Test-AllNetboxVersions.ps1        # whole matrix, one summary table
+./scripts/Start-NetboxDocker.ps1 -Version 4.7.0 -Down
+```
+
+Or by hand with Docker Compose:
 
 ```bash
 # Start Netbox with a specific version

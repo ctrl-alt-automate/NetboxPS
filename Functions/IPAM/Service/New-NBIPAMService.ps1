@@ -133,7 +133,7 @@ function New-NBIPAMService {
         if ($Description) { $Body['description'] = $Description }
         if ($Comments) { $Body['comments'] = $Comments }
         if ($Custom_Fields) { $Body['custom_fields'] = $Custom_Fields }
-        if ($Tags) { $Body['tags'] = $Tags }
+        if ($Tags) { $Body['tags'] = ConvertToNBTagReference -Tags $Tags }
 
         $URI = BuildNewURI -Segments $Segments
 

@@ -26,7 +26,13 @@
     Maximum Transmission Unit size (typically 1500 for Ethernet).
 
 .PARAMETER MAC_Address
-    The MAC address of the interface in format XX:XX:XX:XX:XX:XX.
+    The MAC address of the interface in format XX:XX:XX:XX:XX:XX. On NetBox
+    4.7+ this creates/updates the MAC address record and sets it as the
+    interface's primary MAC in a single call (NetBox #18821). To point the
+    primary MAC at an existing MAC address record by its database ID use
+    -Primary_MAC_Address instead. Pass '' to clear the primary MAC (sent as
+    JSON null). Requires NetBox 4.7.0 or later; ignored with a warning on
+    older servers.
 
 .PARAMETER MGMT_Only
     If true, this interface is used for management traffic only.
@@ -105,6 +111,17 @@
 
 .PARAMETER Primary_MAC_Address
     Numeric ID of the primary MAC address record. Pass $null to clear.
+    See -MAC_Address to set the MAC by value instead (NetBox 4.7+).
+
+.PARAMETER Channels
+    Number of channels this (breakout) parent interface is channelized into
+    (1-1024). Pass $null to clear. Requires NetBox 4.7.0 or later; ignored
+    with a warning on older servers.
+
+.PARAMETER Channel_Id
+    For a subinterface of type 'channel': the channel number (1-1024) on the
+    parent interface that this subinterface is bound to. Pass $null to clear.
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
 
 .PARAMETER Owner
     Numeric ID of the owning user or team. Pass $null to clear.
@@ -203,12 +220,19 @@ function Set-NBDCIMInterface {
 
         [Nullable[uint64]]$Primary_MAC_Address,
 
+        # No [ValidateRange]: it fires before [Nullable[T]] binding, so
+        # -Channels $null (clear) would throw (see #398). Server enforces 1-1024.
+        [Nullable[uint16]]$Channels,
+
+        [Nullable[uint16]]$Channel_Id,
+
         [Nullable[uint64]]$Owner,
 
         [string]$Changelog_Message,
 
         [uint16]$MTU,
 
+        [AllowEmptyString()]
         [string]$MAC_Address,
 
         [bool]$MGMT_Only,
@@ -296,11 +320,26 @@ function Set-NBDCIMInterface {
             }
         }
 
+        # -MAC_Address '' clears the primary MAC server-side (mac_address is
+        # nullable with minLength 1, so JSON null is the only way to clear it).
+        if ($PSBoundParameters.ContainsKey('MAC_Address') -and $PSBoundParameters['MAC_Address'] -eq '') {
+            $PSBoundParameters['MAC_Address'] = $null
+        }
+
+        # NetBox 4.7+ only fields (channelized interfaces, writable MAC):
+        # drop them with a warning when connected to an older server.
+        $skipParams = @('Id', 'Raw')
+        foreach ($p in @('Channels', 'Channel_Id', 'MAC_Address')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
+
         foreach ($InterfaceId in $Id) {
 
             $Segments = [System.Collections.ArrayList]::new(@('dcim', 'interfaces', $InterfaceId))
 
-            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id', 'Raw'
+            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
             $URI = BuildNewURI -Segments $Segments
 

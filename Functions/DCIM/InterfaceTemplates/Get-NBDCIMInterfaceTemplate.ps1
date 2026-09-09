@@ -46,6 +46,15 @@
 .PARAMETER Query
     Free-text search across the object (NetBox 'q' parameter).
 
+.PARAMETER Channels
+    Filter by number of channels (one or more values). Requires NetBox 4.7.0
+    or later; ignored with a warning on older servers.
+
+.PARAMETER Channel_Id
+    Filter by channel number on the parent interface template (one or more
+    values). Requires NetBox 4.7.0 or later; ignored with a warning on older
+    servers.
+
 .PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
@@ -82,6 +91,8 @@ function Get-NBDCIMInterfaceTemplate {
         [Parameter(ParameterSetName = 'Query')][uint64]$Module_Type_Id,
         [Parameter(ParameterSetName = 'Query')][string]$Type,
         [Parameter(ParameterSetName = 'Query')][string]$Query,
+        [Parameter(ParameterSetName = 'Query')][uint16[]]$Channels,
+        [Parameter(ParameterSetName = 'Query')][uint16[]]$Channel_Id,
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
         [ValidateRange(0, [int]::MaxValue)]
@@ -97,7 +108,16 @@ function Get-NBDCIMInterfaceTemplate {
             'ByID' { foreach ($i in $Id) { InvokeNetboxRequest -URI (BuildNewURI -Segments @('dcim','interface-templates',$i)) -Raw:$Raw } }
             default {
                 $Segments = [System.Collections.ArrayList]::new(@('dcim','interface-templates'))
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
+
+                # NetBox 4.7+ only filters: drop them with a warning on older servers.
+                $skipParams = @('Raw', 'All', 'PageSize')
+                foreach ($p in @('Channels', 'Channel_Id')) {
+                    if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p filter") {
+                        $skipParams += $p
+                    }
+                }
+
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
                 InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters) -Raw:$Raw -All:$All -PageSize $PageSize
             }
         }

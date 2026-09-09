@@ -91,6 +91,11 @@
     Local config context data (free-form JSON; hashtable or object). Takes
     precedence over source contexts. Pass $null to clear.
 
+.PARAMETER Cooling_Method
+    Cooling method. One of: 'air', 'liquid', 'hybrid', 'immersion'.
+    Pass '' to clear the field server-side (sent as JSON null).
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
 .PARAMETER Virtual_Chassis
     Virtual Chassis.
 
@@ -135,6 +140,10 @@
     Number of devices to update per API request in bulk mode.
     Default: 50, Range: 1-1000
 
+.PARAMETER Background
+    Netbox 4.7+: queue each bulk batch as a background job (?background=true) instead of processing it
+    synchronously; the returned items are the job objects (check them with Get-NBJob). Ignored with a
+    warning on older Netbox versions. Only meaningful together with -BatchSize pipeline input.
 .PARAMETER Force
     Skip confirmation prompts.
 
@@ -285,6 +294,11 @@ function Set-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Single')]
         [object]$Local_Context_Data,
 
+        [Parameter(ParameterSetName = 'Single')]
+        [AllowEmptyString()]
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', '', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+
         # Bulk mode parameters
         [Parameter(ParameterSetName = 'Bulk', Mandatory = $true, ValueFromPipeline = $true)]
         [PSCustomObject]$InputObject,
@@ -292,6 +306,8 @@ function Set-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Bulk')]
         [ValidateRange(1, 1000)]
         [int]$BatchSize = 100,
+
+        [switch]$Background,
 
         # Common parameters
         [Parameter()]
@@ -318,8 +334,10 @@ function Set-NBDCIMDevice {
         # the field server-side: BuildURIComponents + ConvertTo-Json emit
         # "airflow": null on the wire, which NetBox PATCH accepts (airflow is
         # enum-nullable). Same idiom as Set-NBDCIMInterface -Duplex '' (#401).
-        if ($PSBoundParameters.ContainsKey('Airflow') -and $PSBoundParameters['Airflow'] -eq '') {
-            $PSBoundParameters['Airflow'] = $null
+        foreach ($p in @('Airflow', 'Cooling_Method')) {
+            if ($PSBoundParameters.ContainsKey($p) -and $PSBoundParameters[$p] -eq '') {
+                $PSBoundParameters[$p] = $null
+            }
         }
 
         if ($PSCmdlet.ParameterSetName -eq 'Single') {
@@ -327,7 +345,15 @@ function Set-NBDCIMDevice {
             if ($Force -or $PSCmdlet.ShouldProcess("Device ID $Id", "Update device")) {
                 $DeviceSegments = [System.Collections.ArrayList]::new(@('dcim', 'devices', $Id))
 
-                $URIComponents = BuildURIComponents -URISegments $DeviceSegments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id', 'Force', 'Raw'
+                # NetBox 4.7+ only fields: drop them with a warning on older servers.
+                $skipParams = @('Id', 'Force', 'Raw')
+                foreach ($p in @('Cooling_Method')) {
+                    if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                        $skipParams += $p
+                    }
+                }
+
+                $URIComponents = BuildURIComponents -URISegments $DeviceSegments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
                 $DeviceURI = BuildNewURI -Segments $URIComponents.Segments
 
@@ -371,6 +397,7 @@ function Set-NBDCIMDevice {
             if ($Force -or $PSCmdlet.ShouldProcess($target, 'Update devices (bulk)')) {
                 Write-Verbose "Processing $($bulkItems.Count) devices in bulk PATCH mode with batch size $BatchSize"
 
+                $useBackground = $Background -and -not (Test-NBMinimumVersion -ParameterName 'Background' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Background bulk processing (-Background)')
                 $bulkParams = @{
                     URI          = $URI
                     Items        = $bulkItems.ToArray()
@@ -378,6 +405,7 @@ function Set-NBDCIMDevice {
                     BatchSize    = $BatchSize
                     ShowProgress = $true
                     ActivityName = 'Updating devices'
+                    Background   = $useBackground
                 }
                 $result = Send-NBBulkRequest @bulkParams
 

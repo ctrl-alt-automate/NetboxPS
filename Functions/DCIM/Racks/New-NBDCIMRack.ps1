@@ -38,9 +38,11 @@ function New-NBDCIMRack {
 
     .PARAMETER Form_Factor
         The rack form factor (NetBox 4.6+), e.g. '2-post-frame', '4-post-cabinet', 'wall-cabinet'.
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Width
         The rack width (10 or 19 inches)
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER U_Height
         The height in rack units (default: 42)
@@ -53,12 +55,15 @@ function New-NBDCIMRack {
 
     .PARAMETER Outer_Width
         The outer width in millimeters
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Outer_Depth
         The outer depth in millimeters
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Outer_Height
         The outer height in millimeters
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Mounting_Depth
         The mounting depth in millimeters
@@ -83,6 +88,18 @@ function New-NBDCIMRack {
 
     .PARAMETER Owner
         The owner ID for object ownership (Netbox 4.5+ only).
+
+    .PARAMETER Cooling_Capability
+        Cooling capability. One of: 'air-only', 'hybrid', 'liquid-only'.
+        When -Rack_Type is set, NetBox derives this value from the rack type
+        and ignores the rack-level value.
+        Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
+    .PARAMETER Cooling_Capacity
+        Cooling capacity in kW. Requires NetBox 4.7.0 or later; ignored with a
+        warning on older servers.
+        When -Rack_Type is set, NetBox derives this value from the rack type
+        and ignores the rack-level value.
 
     .PARAMETER Raw
         Return the raw API response
@@ -170,6 +187,10 @@ function New-NBDCIMRack {
 
         [uint64]$Owner,
 
+        [ValidateSet('air-only', 'hybrid', 'liquid-only', IgnoreCase = $true)]
+        [string]$Cooling_Capability,
+
+        [decimal]$Cooling_Capacity,
 
         [object[]]$Tags,
 
@@ -180,7 +201,23 @@ function New-NBDCIMRack {
         Write-Verbose "Creating DCIM Rack"
         $Segments = [System.Collections.ArrayList]::new(@('dcim', 'racks'))
 
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+        # Rack-level geometry is now inferred from the rack type (NetBox 4.7);
+        # these params still work but go away in NetBox 5.0.
+        foreach ($p in @('Form_Factor', 'Width', 'Outer_Width', 'Outer_Depth', 'Outer_Height')) {
+            if ($PSBoundParameters.ContainsKey($p)) {
+                Write-Verbose "-$p is deprecated in NetBox 4.7 in favour of the rack type and will be removed in NetBox 5.0."
+            }
+        }
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
+        $skipParams = @('Raw')
+        foreach ($p in @('Cooling_Capability', 'Cooling_Capacity')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
+
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
         $URI = BuildNewURI -Segments $URIComponents.Segments
 

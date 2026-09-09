@@ -41,7 +41,14 @@
 .PARAMETER Raw
     Return the raw API response instead of the results array.
 
-.PARAMETER Limit
+.PARAMETER Tag
+        Filter by tag slug(s). Several values are combined with AND (object must carry all of them);
+        use Set-NBQueryOption -TagMatch Any (Netbox 4.6.6+) for OR semantics.
+
+    .PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
+    .PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
 .PARAMETER Offset
@@ -131,6 +138,11 @@
 .PARAMETER Serial
     Filter by serial number.
 
+.PARAMETER Cooling_Method
+    Filter by cooling method: 'air', 'liquid', 'hybrid' or 'immersion'
+    (scalar filter). Requires NetBox 4.7.0 or later; ignored with a warning
+    on older servers.
+
 .EXAMPLE
     Get-NBDCIMDevice
     Returns the first page of devices (config_context excluded by default).
@@ -183,6 +195,12 @@ function Get-NBDCIMDevice {
         [string[]]$Omit,
 
         [switch]$IncludeConfigContext,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
@@ -279,6 +297,10 @@ function Get-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Query')]
         [string]$Serial,
 
+        [Parameter(ParameterSetName = 'Query')]
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+
         [switch]$Raw
     )
 
@@ -328,7 +350,16 @@ function Get-NBDCIMDevice {
                     $paramsToPass['Omit'] = $omitFields | Select-Object -Unique
                 }
                 [void]$paramsToPass.Remove('IncludeConfigContext')
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $paramsToPass -SkipParameterByName 'Raw', 'All', 'PageSize'
+
+                # NetBox 4.7+ only fields: drop them with a warning on older servers.
+                $skipParams = @('Raw', 'All', 'PageSize')
+                foreach ($p in @('Cooling_Method')) {
+                    if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p filter") {
+                        $skipParams += $p
+                    }
+                }
+
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $paramsToPass -SkipParameterByName $skipParams
                 $URI = BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters
                 InvokeNetboxRequest -URI $URI -Raw:$Raw -All:$All -PageSize $PageSize
             }
