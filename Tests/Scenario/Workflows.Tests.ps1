@@ -112,6 +112,21 @@ Describe "Server Lifecycle Workflow" -Tag 'Scenario', 'Workflow', 'Lifecycle' {
         $script:WF_Type = Get-NBDCIMDeviceType -Query $script:Prefix | Select-Object -First 1
         $script:WF_Rack = Get-NBDCIMRack -Query $script:Prefix | Select-Object -First 1
 
+        # The imported test data already fills part of the rack; find a free front-face unit for the
+        # (1U) test server instead of hard-coding one that collides with existing devices.
+        $script:WF_Position = $null
+        if ($script:WF_Rack) {
+            $occupied = @{}
+            foreach ($d in (Get-NBDCIMDevice -Rack_Id $script:WF_Rack.id -All)) {
+                if ($d.position) {
+                    $height = [Math]::Max(1, [int][Math]::Ceiling([double]$d.device_type.u_height))
+                    for ($u = [int][Math]::Floor([double]$d.position); $u -lt ([int][Math]::Floor([double]$d.position) + $height); $u++) { $occupied[$u] = $true }
+                }
+            }
+            $script:WF_Position = ([int]$script:WF_Rack.u_height)..1 | Where-Object { -not $occupied.ContainsKey($_) } | Select-Object -First 1
+            if (-not $script:WF_Position) { $script:WF_Rack = $null }
+        }
+
         if (-not $script:WF_Site -or -not $script:WF_Role -or -not $script:WF_Type) {
             $script:SkipLifecycleTests = $true
         }
@@ -135,7 +150,7 @@ Describe "Server Lifecycle Workflow" -Tag 'Scenario', 'Workflow', 'Lifecycle' {
 
             if ($script:WF_Rack) {
                 $params.Rack = $script:WF_Rack.id
-                $params.Position = 10
+                $params.Position = $script:WF_Position
                 $params.Face = 'front'
             }
 
@@ -194,7 +209,7 @@ Describe "Server Lifecycle Workflow" -Tag 'Scenario', 'Workflow', 'Lifecycle' {
                 [PSCustomObject]@{
                     Device = $script:WF_Device.id
                     Name   = "eth$_"
-                    Type   = '10gbase-sr'
+                    Type   = '10gbase-x-sfpp'   # exists on every supported NetBox (10gbase-sr only since 4.4)
                 }
             } | New-NBDCIMInterface -Force
 

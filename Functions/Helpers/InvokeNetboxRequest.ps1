@@ -345,7 +345,19 @@ function InvokeNetboxRequest {
                 # Try to parse as JSON first (Netbox API returns JSON errors)
                 try {
                     $errorData = $errorBody | ConvertFrom-Json -ErrorAction Stop
-                    if ($errorData.detail) {
+                    if ($errorData -is [System.Array]) {
+                        # Pre-4.7 bulk create/update failure: one entry per submitted object, empty for
+                        # the ones that were fine. Render '[index] field: message' like the 4.7 format.
+                        $perObject = for ($i = 0; $i -lt $errorData.Count; $i++) {
+                            $entry = $errorData[$i]
+                            if ($null -eq $entry) { continue }
+                            $props = @($entry.PSObject.Properties)
+                            if ($props.Count -eq 0) { continue }
+                            "[$i] " + (($props | ForEach-Object { "$($_.Name): $($_.Value -join ', ')" }) -join '; ')
+                        }
+                        $errorMessage = if ($perObject) { "$($perObject.Count) of $($errorData.Count) objects failed validation.`n" + ($perObject -join "`n") } else { $errorBody }
+                    }
+                    elseif ($errorData.detail) {
                         $errorMessage = $errorData.detail
                         # Netbox 4.7+ bulk create/update failures return
                         # {"detail": ..., "errors": [{"index": N, "errors": {field: [msg]}}]}
