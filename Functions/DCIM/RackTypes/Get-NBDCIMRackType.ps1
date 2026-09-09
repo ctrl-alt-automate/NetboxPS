@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Retrieves Rack Types objects from Netbox DCIM module.
 
