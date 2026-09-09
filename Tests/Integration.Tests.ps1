@@ -1506,11 +1506,13 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
         Context "Query Options" {
             BeforeAll {
-                # Reset query options to defaults
+                # NOTE: Set-ItResult is NOT allowed here -- in a BeforeAll/AfterAll it fails the whole
+                # Context instead of skipping it. Guard fixture creation with a plain return and let each
+                # It block call Set-ItResult -Skipped itself (Netbox < 4.4 has no __ie/__regex lookups).
                 if ($null -eq $Script:QueryWildcardSupport.UsedVersion) {
-                    Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+ and is tested to work up to 4.6.x'
                     return
                 }
+                # Reset query options to defaults
                 $savedQueryOption = Get-NBQueryOption
                 $null = Set-NBQueryOption -IgnoreCase:$false
                 $null = Set-NBQueryOption -MatchMode 'Exact'
@@ -1529,9 +1531,8 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
                 }
             }
             AfterAll {
-                # Cleanup: delete contacts created for query option tests
+                # Cleanup: delete contacts created for query option tests (nothing was created below 4.4)
                 if ($null -eq $Script:QueryWildcardSupport.UsedVersion) {
-                    Set-ItResult -Skipped -Because 'Case-insensitive (__ie) query support requires Netbox 4.4+ and is tested to work up to 4.6.x'
                     return
                 }
                 foreach ($contactInfo in $Script:QueryOptionContacts) {
@@ -1648,7 +1649,7 @@ Describe "Live Integration Tests" -Tag 'Integration', 'Live' -Skip:(-not $script
         }
 
         It "Should get contact assignment by Object_Type" {
-            $assignment = Get-NBContactAssignment -Object_Type 'dcim.site' -Verbose
+            $assignment = Get-NBContactAssignment -Object_Type 'dcim.site'
 
             $assignment | Should -Not -BeNullOrEmpty
             $assignment.id | Should -Be $script:TestContactAssignmentId

@@ -35,10 +35,12 @@
 #>
 function Set-NBQueryOption {
     [CmdletBinding(ConfirmImpact = 'Low',
-        SupportsShouldProcess = $true)]
+        SupportsShouldProcess = $true,
+        DefaultParameterSetName = 'IgnoreCase')]
     [OutputType([boolean], [string])]
     param (
-        [Parameter(ParameterSetName = 'IgnoreCase', Mandatory = $true)]
+        # Not mandatory + default set: a bare `Set-NBQueryOption` keeps its pre-MatchMode meaning (IgnoreCase = $false)
+        [Parameter(ParameterSetName = 'IgnoreCase')]
         [switch]$IgnoreCase,
 
         [Parameter(ParameterSetName = 'MatchMode', Mandatory = $true)]

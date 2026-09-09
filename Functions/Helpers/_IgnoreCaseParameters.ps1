@@ -184,7 +184,7 @@ $Script:IgnoreCaseParameterV461 = @{
 }
 #endregion
 
-#region IgnoreCase parameter dictionary
+#region Regex parameter dictionary
 $Script:RegexParameterBaseline = @{
     'account'                  = @()
     'action_type'              = @()
@@ -352,7 +352,6 @@ $Script:IgnoreCaseParameterDictionary['4.5'] = $Script:IgnoreCaseParameterBaseli
 $Script:IgnoreCaseParameterDictionary['4.6'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV461
 
 $Script:RegexParameterDictionary  = [ordered]@{}
-# For testing, we do like there is only the baseline; TODO: Remove #
 $Script:RegexParameterDictionary['4.4'] = $Script:RegexParameterBaseline + $Script:RegexParameterV449
 $Script:RegexParameterDictionary['4.5'] = $Script:RegexParameterBaseline + $Script:RegexParameterV450
 $Script:RegexParameterDictionary['4.6'] = $Script:RegexParameterBaseline + $Script:RegexParameterV461

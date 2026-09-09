@@ -10,7 +10,7 @@ function Get-VersionQueryParameterSupport {
     Switch to show warnings if the active API version is outside the supported range.
 
     .OUTPUTS
-    [PSCustomObject] with properties [version]MinVersion, [version]MaxVersion, [version]APIVersion, and [string!!]UsedVersion.
+    [PSCustomObject] with properties [version]MinVersion, [version]MaxVersion, [version]APIVersion, and [version]UsedVersion ($null when the API is older than MinVersion).
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -24,7 +24,7 @@ function Get-VersionQueryParameterSupport {
         MinVersion      = [version] (@($Script:IgnoreCaseParameterDictionary.Keys)[0])
         MaxVersion      = [version] (@($Script:IgnoreCaseParameterDictionary.Keys)[-1])
         APIVersion      = [version]::new($script:NetboxConfig.ParsedVersion.Major, $script:NetboxConfig.ParsedVersion.Minor)
-        UsedVersion     = (@($Script:IgnoreCaseParameterDictionary.Keys)[-1])   # Default is the latest known version; $null: unsupported version
+        UsedVersion     = [version] (@($Script:IgnoreCaseParameterDictionary.Keys)[-1])   # Default is the latest known version; $null: unsupported version
     }
     if ($result.APIVersion -lt $result.MinVersion -and $ShowWarning) {
         Write-Warning "API version $($script:NetboxConfig.ParsedVersion) is less than the minimum supported version ($(@($Script:IgnoreCaseParameterDictionary.Keys)[0])). PowerNetbox query options will not be used."
