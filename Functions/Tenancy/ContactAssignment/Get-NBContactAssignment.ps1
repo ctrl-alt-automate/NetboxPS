@@ -29,6 +29,13 @@ function Get-NBContactAssignment {
     .PARAMETER Role_Id
         Filter by contact role database ID.
 
+    .PARAMETER Tag
+        Filter by tag slug(s). Several values are combined with AND (object must carry all of them);
+        use Set-NBQueryOption -TagMatch Any (Netbox 4.6.6+) for OR semantics.
+
+    .PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
     .PARAMETER Limit
         Limit the number of results to this number
 
@@ -104,6 +111,12 @@ function Get-NBContactAssignment {
 
         [Parameter(ParameterSetName = 'Query')]
         [uint64[]]$Role_Id,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

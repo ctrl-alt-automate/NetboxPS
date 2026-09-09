@@ -35,6 +35,10 @@
     Default: 0 (no batching - backwards compatible single-item mode)
     Range: 1-1000
 
+.PARAMETER Background
+    Netbox 4.7+: queue each bulk batch as a background job (?background=true) instead of processing it
+    synchronously; the returned items are the job objects (check them with Get-NBJob). Ignored with a
+    warning on older Netbox versions. Only meaningful together with -BatchSize pipeline input.
 .PARAMETER Force
     Skip confirmation prompts for bulk operations.
 
@@ -67,6 +71,10 @@
 .PARAMETER Local_Context_Data
     Local config context data (free-form JSON; hashtable or object). Takes
     precedence over source contexts in the rendered config context.
+
+.PARAMETER Cooling_Method
+    Cooling method. One of: 'air', 'liquid', 'hybrid', 'immersion'.
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
 
 .PARAMETER Status
     Operational status.
@@ -255,6 +263,10 @@ function New-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Single')]
         [object]$Local_Context_Data,
 
+        [Parameter(ParameterSetName = 'Single')]
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+
         # Bulk mode parameters
         [Parameter(ParameterSetName = 'Bulk', Mandatory = $true, ValueFromPipeline = $true)]
         [PSCustomObject]$InputObject,
@@ -262,6 +274,8 @@ function New-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Bulk')]
         [ValidateRange(1, 1000)]
         [int]$BatchSize = 100,
+
+        [switch]$Background,
 
         [Parameter(ParameterSetName = 'Bulk')]
         [switch]$Force,
@@ -287,7 +301,15 @@ function New-NBDCIMDevice {
     process {
         if ($PSCmdlet.ParameterSetName -eq 'Single') {
             # Original single-item behavior
-            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+            # NetBox 4.7+ only fields: drop them with a warning on older servers.
+            $skipParams = @('Raw')
+            foreach ($p in @('Cooling_Method')) {
+                if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                    $skipParams += $p
+                }
+            }
+
+            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
             if ($PSCmdlet.ShouldProcess($Name, 'Create new Device')) {
                 InvokeNetboxRequest -URI $URI -Body $URIComponents.Parameters -Method POST -Raw:$Raw
@@ -318,6 +340,7 @@ function New-NBDCIMDevice {
             if ($Force -or $PSCmdlet.ShouldProcess($target, 'Create devices (bulk)')) {
                 Write-Verbose "Processing $($bulkItems.Count) devices in bulk mode with batch size $BatchSize"
 
+                $useBackground = $Background -and -not (Test-NBMinimumVersion -ParameterName 'Background' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Background bulk processing (-Background)')
                 $bulkParams = @{
                     URI          = $URI
                     Items        = $bulkItems.ToArray()
@@ -325,6 +348,7 @@ function New-NBDCIMDevice {
                     BatchSize    = $BatchSize
                     ShowProgress = $true
                     ActivityName = 'Creating devices'
+                    Background   = $useBackground
                 }
                 $result = Send-NBBulkRequest @bulkParams
 

@@ -60,6 +60,15 @@
 .PARAMETER Comments
     Detailed comments (Markdown is supported).
 
+.PARAMETER Cooling_Capability
+    Cooling capability. One of: 'air-only', 'hybrid', 'liquid-only'.
+    Pass '' to clear the field server-side (sent as JSON null).
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
+.PARAMETER Cooling_Capacity
+    Cooling capacity in kW. Pass $null to clear. Requires NetBox 4.7.0 or
+    later; ignored with a warning on older servers.
+
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -98,6 +107,10 @@ function Set-NBDCIMRackType {
         [string]$Mounting_Depth,
         [string]$Description,
         [string]$Comments,
+        [AllowEmptyString()]
+        [ValidateSet('air-only', 'hybrid', 'liquid-only', '', IgnoreCase = $true)]
+        [string]$Cooling_Capability,
+        [Nullable[decimal]]$Cooling_Capacity,
         [string[]]$Tags,
         [hashtable]$Custom_Fields,
         [switch]$Raw
@@ -105,7 +118,24 @@ function Set-NBDCIMRackType {
     process {
         Write-Verbose "Updating DCIM Rack Type"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','rack-types',$Id))
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id','Raw'
+
+        # Translate '' -> $null for clearable enum params BEFORE BuildURIComponents,
+        # so the PATCH body carries JSON null (NetBox rejects "" for nullable enums).
+        foreach ($p in @('Cooling_Capability')) {
+            if ($PSBoundParameters.ContainsKey($p) -and $PSBoundParameters[$p] -eq '') {
+                $PSBoundParameters[$p] = $null
+            }
+        }
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
+        $skipParams = @('Id', 'Raw')
+        foreach ($p in @('Cooling_Capability', 'Cooling_Capacity')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
+
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Id, 'Update rack type')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method PATCH -Body $URIComponents.Parameters -Raw:$Raw
         }

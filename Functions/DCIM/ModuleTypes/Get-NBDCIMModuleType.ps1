@@ -43,6 +43,24 @@
 .PARAMETER Query
     Free-text search across the object (NetBox 'q' parameter).
 
+.PARAMETER Tag
+        Filter by tag slug(s). Several values are combined with AND (object must carry all of them);
+        use Set-NBQueryOption -TagMatch Any (Netbox 4.6.6+) for OR semantics.
+
+    .PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
+
+
+.PARAMETER Cooling_Method
+    Filter by cooling method: 'air', 'liquid', 'hybrid' or 'immersion'
+    (scalar filter). Requires NetBox 4.7.0 or later; ignored with a warning
+    on older servers.
+
+.PARAMETER End_Of_Life
+    Filter by end-of-life date (one or more dates, sent as yyyy-MM-dd).
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
 .PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
@@ -78,6 +96,16 @@ function Get-NBDCIMModuleType {
         [Parameter(ParameterSetName = 'Query')][uint64]$Manufacturer_Id,
         [Parameter(ParameterSetName = 'Query')][string]$Part_Number,
         [Parameter(ParameterSetName = 'Query')][string]$Query,
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+        [Parameter(ParameterSetName = 'Query')][datetime[]]$End_Of_Life,
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
         [ValidateRange(0, [int]::MaxValue)]
@@ -93,7 +121,20 @@ function Get-NBDCIMModuleType {
             'ByID' { foreach ($i in $Id) { InvokeNetboxRequest -URI (BuildNewURI -Segments @('dcim','module-types',$i)) -Raw:$Raw } }
             default {
                 $Segments = [System.Collections.ArrayList]::new(@('dcim','module-types'))
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
+
+                if ($PSBoundParameters.ContainsKey('End_Of_Life')) {
+                    $PSBoundParameters['End_Of_Life'] = @($End_Of_Life | ForEach-Object { $_.ToString('yyyy-MM-dd') })
+                }
+
+                # NetBox 4.7+ only fields: drop them with a warning on older servers.
+                $skipParams = @('Raw', 'All', 'PageSize')
+                foreach ($p in @('Cooling_Method', 'End_Of_Life')) {
+                    if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p filter") {
+                        $skipParams += $p
+                    }
+                }
+
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
                 InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters) -Raw:$Raw -All:$All -PageSize $PageSize
             }
         }

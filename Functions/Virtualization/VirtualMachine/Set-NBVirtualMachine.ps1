@@ -74,6 +74,10 @@
     Number of VMs to update per API request in bulk mode.
     Default: 50, Range: 1-1000
 
+.PARAMETER Background
+    Netbox 4.7+: queue each bulk batch as a background job (?background=true) instead of processing it
+    synchronously; the returned items are the job objects (check them with Get-NBJob). Ignored with a
+    warning on older Netbox versions. Only meaningful together with -BatchSize pipeline input.
 .PARAMETER Force
     Skip confirmation prompts.
 
@@ -187,6 +191,8 @@ function Set-NBVirtualMachine {
         [ValidateRange(1, 1000)]
         [int]$BatchSize = 100,
 
+        [switch]$Background,
+
         # Common parameters
         [Parameter()]
         [switch]$Force,
@@ -251,6 +257,7 @@ function Set-NBVirtualMachine {
             if ($Force -or $PSCmdlet.ShouldProcess($target, 'Update virtual machines (bulk)')) {
                 Write-Verbose "Processing $($bulkItems.Count) VMs in bulk PATCH mode with batch size $BatchSize"
 
+                $useBackground = $Background -and -not (Test-NBMinimumVersion -ParameterName 'Background' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Background bulk processing (-Background)')
                 $bulkParams = @{
                     URI          = $URI
                     Items        = $bulkItems.ToArray()
@@ -258,6 +265,7 @@ function Set-NBVirtualMachine {
                     BatchSize    = $BatchSize
                     ShowProgress = $true
                     ActivityName = 'Updating virtual machines'
+                    Background   = $useBackground
                 }
                 $result = Send-NBBulkRequest @bulkParams
 

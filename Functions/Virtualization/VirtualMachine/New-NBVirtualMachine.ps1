@@ -77,6 +77,10 @@
     Number of VMs to create per API request in bulk mode.
     Default: 50, Range: 1-1000
 
+.PARAMETER Background
+    Netbox 4.7+: queue each bulk batch as a background job (?background=true) instead of processing it
+    synchronously; the returned items are the job objects (check them with Get-NBJob). Ignored with a
+    warning on older Netbox versions. Only meaningful together with -BatchSize pipeline input.
 .PARAMETER Force
     Skip confirmation prompts for bulk operations.
 
@@ -190,6 +194,8 @@ function New-NBVirtualMachine {
         [ValidateRange(1, 1000)]
         [int]$BatchSize = 100,
 
+        [switch]$Background,
+
         [Parameter(ParameterSetName = 'Bulk')]
         [switch]$Force,
 
@@ -245,6 +251,7 @@ function New-NBVirtualMachine {
             if ($Force -or $PSCmdlet.ShouldProcess($target, 'Create virtual machines (bulk)')) {
                 Write-Verbose "Processing $($bulkItems.Count) VMs in bulk mode with batch size $BatchSize"
 
+                $useBackground = $Background -and -not (Test-NBMinimumVersion -ParameterName 'Background' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Background bulk processing (-Background)')
                 $bulkParams = @{
                     URI          = $URI
                     Items        = $bulkItems.ToArray()
@@ -252,6 +259,7 @@ function New-NBVirtualMachine {
                     BatchSize    = $BatchSize
                     ShowProgress = $true
                     ActivityName = 'Creating virtual machines'
+                    Background   = $useBackground
                 }
                 $result = Send-NBBulkRequest @bulkParams
 

@@ -14,6 +14,26 @@
     - Wildcard: Query parameters will be treated as Powershell wildcards.
     - Regex: Query parameters will be treated as regular expressions (Netbox's `regex`).
 
+.PARAMETER Pagination
+    How -All walks large result sets. 'Offset' (default) uses limit/offset pages exactly as before.
+    'Cursor' uses Netbox 4.6+ cursor pagination (?start=<pk>, results ordered by primary key), which
+    stays fast on very large tables where offset paging degrades. Requires Netbox 4.6+; on older
+    servers offset paging is used automatically. Explicit -Offset on a Get cmdlet always wins.
+
+.PARAMETER TagMatch
+    How multiple values of a -Tag / -Tag_Id filter combine. 'All' (default) is Netbox's native
+    behaviour: an object must carry every listed tag. 'Any' sends Netbox 4.6.6+ 'tag__any' /
+    'tag_id__any' so an object matches when it carries at least one of them. Below Netbox 4.6.6 the
+    option is ignored (plain 'tag' is sent) because an unknown lookup would silently return every object.
+
+.PARAMETER OptimisticConcurrency
+    Netbox 4.6+ returns an ETag on single-object GETs and honours If-Match on PATCH/PUT/DELETE
+    (HTTP 412 when the object changed in between). When enabled, the module remembers the ETag of
+    every object it reads and sends it as If-Match on the next update or delete of that same object,
+    so concurrent edits fail loudly instead of silently overwriting each other. Needs PowerShell 7+
+    (response headers are not exposed on Windows PowerShell 5.1). Use -OptimisticConcurrency:$false
+    to disable; disabling also clears the cached ETags.
+
 .EXAMPLE
     Set-NBQueryOption -IgnoreCase
     Sets the Netbox API query parameters to be case-insensitive.
@@ -25,6 +45,22 @@
 .EXAMPLE
     Set-NBQueryOption -MatchMode 'Wildcard'
     Sets the Netbox API query parameters to be treated as Powershell wildcards.
+
+.EXAMPLE
+    Set-NBQueryOption -Pagination Cursor
+    Get-NBIPAMAddress -All
+    Walks the whole IP address table with cursor pagination (Netbox 4.6+).
+
+.EXAMPLE
+    Set-NBQueryOption -TagMatch Any
+    Get-NBDCIMDevice -Tag 'edge', 'core'
+    Returns devices tagged 'edge' OR 'core' (Netbox 4.6.6+); with the default 'All' both tags are required.
+
+.EXAMPLE
+    Set-NBQueryOption -OptimisticConcurrency
+    $dev = Get-NBDCIMDevice -Id 42
+    Set-NBDCIMDevice -Id 42 -Description 'changed'
+    The PATCH carries If-Match with the ETag from the GET; it fails with HTTP 412 if someone else changed device 42 in between.
 
 .LINK
     https://netbox.readthedocs.io/en/stable/rest-api/overview/
@@ -45,7 +81,18 @@ function Set-NBQueryOption {
 
         [Parameter(ParameterSetName = 'MatchMode', Mandatory = $true)]
         [ValidateSet('Exact', 'Wildcard', 'Regex')]
-        [string]$MatchMode = 'Exact'
+        [string]$MatchMode = 'Exact',
+
+        [Parameter(ParameterSetName = 'Pagination', Mandatory = $true)]
+        [ValidateSet('Offset', 'Cursor')]
+        [string]$Pagination,
+
+        [Parameter(ParameterSetName = 'TagMatch', Mandatory = $true)]
+        [ValidateSet('All', 'Any')]
+        [string]$TagMatch,
+
+        [Parameter(ParameterSetName = 'OptimisticConcurrency', Mandatory = $true)]
+        [switch]$OptimisticConcurrency
     )
 
     if ($PSCmdlet.ShouldProcess('Netbox Query Options', 'Set')) {
@@ -56,6 +103,33 @@ function Set-NBQueryOption {
             }
             'MatchMode' {
                 $script:NetboxConfig.MatchMode = $MatchMode
+            }
+            'Pagination' {
+                $script:NetboxConfig.Pagination = $Pagination
+                if ($Pagination -eq 'Cursor' -and $script:NetboxConfig.ParsedVersion -and $script:NetboxConfig.ParsedVersion -lt [version]'4.6.0') {
+                    Write-Warning "Cursor pagination requires Netbox 4.6.0 or higher (connected to $($script:NetboxConfig.ParsedVersion)). Offset pagination will be used until you connect to a newer server."
+                }
+                Write-Verbose "Set Pagination to $Pagination"
+                return $script:NetboxConfig.Pagination
+            }
+            'TagMatch' {
+                $script:NetboxConfig.TagMatch = $TagMatch
+                if ($TagMatch -eq 'Any' -and $script:NetboxConfig.ParsedVersion -and $script:NetboxConfig.ParsedVersion -lt [version]'4.6.6') {
+                    Write-Warning "TagMatch 'Any' requires Netbox 4.6.6 or higher (connected to $($script:NetboxConfig.ParsedVersion)). Tag filters keep the default all-tags semantics until you connect to a newer server."
+                }
+                Write-Verbose "Set TagMatch to $TagMatch"
+                return $script:NetboxConfig.TagMatch
+            }
+            'OptimisticConcurrency' {
+                $script:NetboxConfig.OptimisticConcurrency = [bool]$OptimisticConcurrency
+                if (-not $OptimisticConcurrency) {
+                    $script:NetboxConfig.ETagCache = @{}
+                }
+                elseif ($script:NetboxConfig.ParsedVersion -and $script:NetboxConfig.ParsedVersion -lt [version]'4.6.0') {
+                    Write-Warning "Optimistic concurrency (ETag/If-Match) requires Netbox 4.6.0 or higher (connected to $($script:NetboxConfig.ParsedVersion)). Older servers send no ETag, so updates are sent without If-Match."
+                }
+                Write-Verbose "Set OptimisticConcurrency to $($script:NetboxConfig.OptimisticConcurrency)"
+                return $script:NetboxConfig.OptimisticConcurrency
             }
         }
 

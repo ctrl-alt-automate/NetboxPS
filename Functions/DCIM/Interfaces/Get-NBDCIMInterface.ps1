@@ -28,7 +28,14 @@
     Specify which fields to include in the response.
     Supports nested field selection (e.g., 'site.name', 'device_type.model').
 
-.PARAMETER Limit
+.PARAMETER Tag
+        Filter by tag slug(s). Several values are combined with AND (object must carry all of them);
+        use Set-NBQueryOption -TagMatch Any (Netbox 4.6.6+) for OR semantics.
+
+    .PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
+    .PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
 .PARAMETER Offset
@@ -62,10 +69,18 @@
     Filter by lag database ID.
 
 .PARAMETER MAC_Address
-    Filter by MAC address.
+    Filter by one or more MAC addresses (repeat-key filter).
 
 .PARAMETER Label
     Filter by physical label.
+
+.PARAMETER Channels
+    Filter by number of channels (one or more values). Requires NetBox 4.7.0
+    or later; ignored with a warning on older servers.
+
+.PARAMETER Channel_Id
+    Filter by channel number on the parent interface (one or more values).
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
 
 .EXAMPLE
     Get-NBDCIMInterface
@@ -95,6 +110,12 @@ function Get-NBDCIMInterface {
         [string[]]$Fields,
 
         [string[]]$Omit,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
@@ -131,10 +152,16 @@ function Get-NBDCIMInterface {
         [uint64]$LAG_Id,
 
         [Parameter(ParameterSetName = 'Query')]
-        [string]$MAC_Address,
+        [string[]]$MAC_Address,
 
         [Parameter(ParameterSetName = 'Query')]
         [string]$Label,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint16[]]$Channels,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint16[]]$Channel_Id,
 
         [switch]$Raw
     )
@@ -148,7 +175,17 @@ function Get-NBDCIMInterface {
             'ByID' { foreach ($i in $Id) { InvokeNetboxRequest -URI (BuildNewURI -Segments @('dcim', 'interfaces', $i)) -Raw:$Raw } }
             default {
                 $Segments = [System.Collections.ArrayList]::new(@('dcim', 'interfaces'))
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
+
+                # NetBox 4.7+ only filters: older servers silently ignore unknown
+                # query keys (returning the full list), so drop them with a warning.
+                $skipParams = @('Raw', 'All', 'PageSize')
+                foreach ($p in @('Channels', 'Channel_Id')) {
+                    if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p filter") {
+                        $skipParams += $p
+                    }
+                }
+
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
                 $URI = BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters
                 InvokeNetboxRequest -URI $URI -Raw:$Raw -All:$All -PageSize $PageSize
             }

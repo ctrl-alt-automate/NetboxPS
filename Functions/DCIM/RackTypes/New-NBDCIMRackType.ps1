@@ -57,6 +57,14 @@
 .PARAMETER Comments
     Detailed comments (Markdown is supported).
 
+.PARAMETER Cooling_Capability
+    Cooling capability. One of: 'air-only', 'hybrid', 'liquid-only'.
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
+.PARAMETER Cooling_Capacity
+    Cooling capacity in kW. Requires NetBox 4.7.0 or later; ignored with a
+    warning on older servers.
+
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -94,6 +102,9 @@ function New-NBDCIMRackType {
         [string]$Mounting_Depth,
         [string]$Description,
         [string]$Comments,
+        [ValidateSet('air-only', 'hybrid', 'liquid-only', IgnoreCase = $true)]
+        [string]$Cooling_Capability,
+        [decimal]$Cooling_Capacity,
         [string[]]$Tags,
         [hashtable]$Custom_Fields,
         [switch]$Raw
@@ -101,7 +112,16 @@ function New-NBDCIMRackType {
     process {
         Write-Verbose "Creating DCIM Rack Type"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','rack-types'))
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
+        $skipParams = @('Raw')
+        foreach ($p in @('Cooling_Capability', 'Cooling_Capacity')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
+
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Model, 'Create rack type')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method POST -Body $URIComponents.Parameters -Raw:$Raw
         }

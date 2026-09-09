@@ -42,6 +42,16 @@
 .PARAMETER Rf_Role
     Rf Role.
 
+.PARAMETER Channels
+    Number of channels this (breakout) interface template is channelized into
+    (1-1024). Requires NetBox 4.7.0 or later; ignored with a warning on
+    older servers.
+
+.PARAMETER Channel_Id
+    For a template of type 'channel': the channel number (1-1024) on the
+    parent interface template that this template is bound to. Requires
+    NetBox 4.7.0 or later; ignored with a warning on older servers.
+
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -72,6 +82,12 @@ function New-NBDCIMInterfaceTemplate {
         [string]$Poe_Type,
         [string]$Rf_Role,
 
+        [ValidateRange(1, 1024)]
+        [uint16]$Channels,
+
+        [ValidateRange(1, 1024)]
+        [uint16]$Channel_Id,
+
         [object[]]$Tags,
 
         [switch]$Raw
@@ -79,7 +95,16 @@ function New-NBDCIMInterfaceTemplate {
     process {
         Write-Verbose "Creating DCIM Interface Template"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','interface-templates'))
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
+        $skipParams = @('Raw')
+        foreach ($p in @('Channels', 'Channel_Id')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
+
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Name, 'Create interface template')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method POST -Body $URIComponents.Parameters -Raw:$Raw
         }

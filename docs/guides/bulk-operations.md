@@ -421,3 +421,24 @@ Measure-Command {
 - [Common Workflows](common-workflows.md) - General workflow examples
 - [DCIM Examples](dcim-examples.md) - Device management examples
 - [IPAM Examples](ipam-examples.md) - IP address management examples
+
+## Background Processing (NetBox 4.7+)
+
+Add `-Background` to any bulk-capable cmdlet to queue each batch as a NetBox background job instead of waiting for the synchronous response:
+
+```powershell
+$result = $devices | New-NBDCIMDevice -BatchSize 500 -Background -Force
+$result.Succeeded | ForEach-Object { Get-NBJob -Id $_.id }     # the returned items are job objects
+```
+
+- NetBox answers `202 Accepted` with the job; validation runs in the worker, so inspect the job status for the real outcome.
+- Requires NetBox 4.7+ and a running RQ worker. On older servers the switch warns and the batch is processed synchronously.
+- `docker compose --profile worker` starts a worker in the local test stack.
+
+## Partial Tag Updates
+
+`Set-NBObjectTag` adds or removes tags on any object without resending its whole tag list (NetBox 4.6+):
+
+```powershell
+Get-NBDCIMDevice -Tag 'staging' | Set-NBObjectTag -Add 'production' -Remove 'staging'
+```

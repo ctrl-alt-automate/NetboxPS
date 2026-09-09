@@ -70,3 +70,42 @@ DCIM/Racks/Set-NBDCIMRack.ps1::Form_Factor
 # airflow enum does include "" + null, but the parity matcher treats the
 # '' as a PowerNetbox-only null-clearing sentinel, not an enum value.
 DCIM/Devices/Set-NBDCIMDevice.ps1::Airflow
+# NetBox 4.7 cooling infrastructure (CoolingSource fluid_type, CoolingFeed
+# max_flow_unit) - same '' sentinel pattern for PATCH null-clearing.
+DCIM/CoolingSources/Set-NBDCIMCoolingSource.ps1::Fluid_Type
+DCIM/CoolingFeeds/Set-NBDCIMCoolingFeed.ps1::Max_Flow_Unit
+
+# NetBox 4.7 cooling components (CoolingIntake / CoolingOutflow + templates).
+# -Type carries the '' sentinel on Set-* for null-clearing (same pattern as above).
+DCIM/CoolingIntakes/Set-NBDCIMCoolingIntake.ps1::Type
+DCIM/CoolingOutflows/Set-NBDCIMCoolingOutflow.ps1::Type
+DCIM/CoolingIntakeTemplates/Set-NBDCIMCoolingIntakeTemplate.ps1::Type
+DCIM/CoolingOutflowTemplates/Set-NBDCIMCoolingOutflowTemplate.ps1::Type
+
+# ---------------------------------------------------------------------------
+# Parameters whose ChoiceSet lives in netbox/netbox/choices.py (the global,
+# app-less module) which the parity script does not scan - it only fetches
+# <app>/choices.py. The heuristic then picks an app ChoiceSet by value overlap.
+# ---------------------------------------------------------------------------
+
+# -Diameter_Unit is netbox.choices.DiameterUnitChoices ('mm', 'cm', 'in').
+# The matcher picks dcim.RackDimensionUnitChoices ('mm', 'in') and flags 'cm'
+# as extra. Verified against the v4.7.0 OpenAPI schema (diameter_unit enum)
+# and netbox/netbox/choices.py. Set-* variants also carry the '' sentinel.
+DCIM/CoolingIntakes/New-NBDCIMCoolingIntake.ps1::Diameter_Unit
+DCIM/CoolingIntakes/Set-NBDCIMCoolingIntake.ps1::Diameter_Unit
+DCIM/CoolingOutflows/New-NBDCIMCoolingOutflow.ps1::Diameter_Unit
+DCIM/CoolingOutflows/Set-NBDCIMCoolingOutflow.ps1::Diameter_Unit
+DCIM/CoolingIntakeTemplates/New-NBDCIMCoolingIntakeTemplate.ps1::Diameter_Unit
+DCIM/CoolingIntakeTemplates/Set-NBDCIMCoolingIntakeTemplate.ps1::Diameter_Unit
+DCIM/CoolingOutflowTemplates/New-NBDCIMCoolingOutflowTemplate.ps1::Diameter_Unit
+DCIM/CoolingOutflowTemplates/Set-NBDCIMCoolingOutflowTemplate.ps1::Diameter_Unit
+
+# NetBox 4.7 cooling fields (fields-47) - same '' sentinel pattern on the
+# Set-* cmdlets: '' is translated to JSON null in process {} to clear the
+# nullable enum server-side.
+DCIM/Devices/Set-NBDCIMDevice.ps1::Cooling_Method
+DCIM/Devices/Set-NBDCIMDeviceType.ps1::Cooling_Method
+DCIM/ModuleTypes/Set-NBDCIMModuleType.ps1::Cooling_Method
+DCIM/Racks/Set-NBDCIMRack.ps1::Cooling_Capability
+DCIM/RackTypes/Set-NBDCIMRackType.ps1::Cooling_Capability

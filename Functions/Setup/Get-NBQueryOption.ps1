@@ -31,4 +31,16 @@ function Get-NBQueryOption {
         Name = "MatchMode"
         Value = $script:NetboxConfig.MatchMode
     }
+    [PSCustomObject]@{
+        Name = "Pagination"
+        Value = $script:NetboxConfig.Pagination
+    }
+    [PSCustomObject]@{
+        Name = "TagMatch"
+        Value = $script:NetboxConfig.TagMatch
+    }
+    [PSCustomObject]@{
+        Name = "OptimisticConcurrency"
+        Value = [bool]$script:NetboxConfig.OptimisticConcurrency
+    }
 }

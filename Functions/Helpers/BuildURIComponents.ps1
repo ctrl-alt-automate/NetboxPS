@@ -86,6 +86,14 @@ function BuildURIComponents {
                 break
             }
 
+            { $_ -in @('Tags', 'Add_Tags', 'Remove_Tags') } {
+                # Netbox only accepts numeric IDs or attribute dictionaries for tag references;
+                # bare names become @{ name = ... } so "-Tags 'web', 12" works as documented.
+                Write-Verbose " Adding $($CmdletParameterName.ToLower()) parameter (tag references)"
+                $URIParameters[$CmdletParameterName.ToLower()] = ConvertToNBTagReference -Tags $ParametersDictionary[$CmdletParameterName]
+                break
+            }
+
             default {
                 Write-Verbose " Adding $($CmdletParameterName.ToLower()) parameter"
                 $URIParameters[$CmdletParameterName.ToLower()] = $ParametersDictionary[$CmdletParameterName]

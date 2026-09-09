@@ -170,6 +170,23 @@ services:
       - netbox-network
     restart: unless-stopped
 
+  # ==========================================================================
+  # Optional RQ worker (docker compose --profile worker ...)
+  # ==========================================================================
+  # Not started in CI. Needed locally to exercise Netbox 4.7 background bulk
+  # writes (?background=true), custom-field provisioning jobs, etc.
+  netbox-worker:
+    profiles: ["worker"]
+    extends:
+      service: netbox
+    command: /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py rqworker high default low
+    ports: !reset []
+    healthcheck:
+      disable: true
+    depends_on:
+      netbox:
+        condition: service_healthy
+
 # ==========================================================================
 # Volumes - Persist data between restarts (but not between CI runs)
 # ==========================================================================
