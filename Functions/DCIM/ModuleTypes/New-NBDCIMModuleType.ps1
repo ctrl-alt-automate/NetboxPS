@@ -36,6 +36,10 @@
 .PARAMETER Custom_Fields
     Hashtable of custom field values to set (cf_<name>).
 
+.PARAMETER Module_Bay_Types
+    One or more module bay type database IDs this module type can be installed
+    into (NetBox 4.7+). Ignored with a warning on older versions.
+
 .EXAMPLE
     New-NBDCIMModuleType
 
@@ -60,12 +64,18 @@ function New-NBDCIMModuleType {
         [string]$Comments,
         [string[]]$Tags,
         [hashtable]$Custom_Fields,
+        [uint64[]]$Module_Bay_Types,
         [switch]$Raw
     )
     process {
         Write-Verbose "Creating DCIM Module Type"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','module-types'))
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+        # Module_Bay_Types only exists on NetBox 4.7+; drop it (with a warning) on older versions
+        $skipParams = @('Raw')
+        if (Test-NBMinimumVersion -ParameterName 'Module_Bay_Types' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Module bay types') {
+            $skipParams += 'Module_Bay_Types'
+        }
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Model, 'Create module type')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method POST -Body $URIComponents.Parameters -Raw:$Raw
         }
