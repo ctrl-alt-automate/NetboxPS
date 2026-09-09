@@ -286,10 +286,11 @@ Describe "IPAM Filter Tests" -Tag 'Scenario', 'Filters', 'IPAM' {
         It "Should filter prefixes by site" {
             $sites = Get-NBDCIMSite -Query $script:Prefix -Limit 1
             if ($sites) {
-                $prefixesBySite = Get-NBIPAMPrefix -Site_Id $sites[0].id
+                # Prefix.site was replaced by the generic scope (scope_type/scope_id) in NetBox 4.2
+                $prefixesBySite = Get-NBIPAMPrefix -Scope_Type 'dcim.site' -Scope_Id $sites[0].id
 
                 if ($prefixesBySite) {
-                    $prefixesBySite | ForEach-Object { $_.site.id | Should -Be $sites[0].id }
+                    $prefixesBySite | ForEach-Object { $_.scope.id | Should -Be $sites[0].id }
                 }
             }
             else {
@@ -614,15 +615,26 @@ Describe "VPN Filter Tests" -Tag 'Scenario', 'Filters', 'VPN' {
 Describe "Tag Filter Tests" -Tag 'Scenario', 'Filters', 'Extras' {
     Context "Tag-Based Filtering" {
         It "Should filter objects by tag" {
-            # Get-NBDCIMDevice doesn't have a Tag parameter - skip for now
-            # TODO: Add Tag parameter to Get-NBDCIMDevice
-            Set-ItResult -Skipped -Because "Tag filtering not yet implemented in Get-NBDCIMDevice"
+            # -Tag / -Tag_Id exist on every taggable Get cmdlet since v4.7.0.1 (AND semantics by default)
+            $tag = Get-NBTag -All | Where-Object { $_.slug -like 'pnb-test-*' } | Select-Object -First 1
+            if (-not $tag) { Set-ItResult -Skipped -Because 'No PNB-Test tags found'; return }
+
+            $devices = Get-NBDCIMDevice -Tag $tag.slug -All
+            $byId = Get-NBDCIMDevice -Tag_Id $tag.id -All
+            @($devices).Count | Should -Be @($byId).Count
+            foreach ($d in $devices) { $d.tags.slug | Should -Contain $tag.slug }
         }
 
         It "Should filter sites by tag" {
-            # Get-NBDCIMSite doesn't have a Tag parameter - skip for now
-            # TODO: Add Tag parameter to Get-NBDCIMSite
-            Set-ItResult -Skipped -Because "Tag filtering not yet implemented in Get-NBDCIMSite"
+            $tag = Get-NBTag -All | Where-Object { $_.slug -like 'pnb-test-*' } | Select-Object -First 1
+            if (-not $tag) { Set-ItResult -Skipped -Because 'No PNB-Test tags found'; return }
+
+            $sites = Get-NBDCIMSite -Tag $tag.slug -All
+            foreach ($s in $sites) { $s.tags.slug | Should -Contain $tag.slug }
+            @(Get-NBDCIMSite -Tag_Id $tag.id -All).Count | Should -Be @($sites).Count
+
+            # NetBox validates the tag filter against existing tags: an unknown slug is a 400, not an empty list
+            { Get-NBDCIMSite -Tag 'pnb-test-no-such-tag-zzz' -ErrorAction Stop } | Should -Throw '*not one of the available choices*'
         }
     }
 }
