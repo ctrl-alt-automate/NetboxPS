@@ -8,32 +8,34 @@
 # Module-scope variables
 $script:TestDataPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) ".." | Join-Path -ChildPath "TestData"
 
-# Test environments loaded from environment variables for security
-# Required env vars per environment:
-#   NETBOX_449_HOST, NETBOX_449_TOKEN
-#   NETBOX_449_ZWQG_HOST, NETBOX_449_ZWQG_TOKEN
-#   NETBOX_437_HOST, NETBOX_437_TOKEN
-#   NETBOX_450_HOST, NETBOX_450_TOKEN
+# Test environments = the local Docker stacks started with scripts/Start-NetboxDocker.ps1
+# (same matrix as CI). Host/port/token per version are fixed there; NETBOX_<ver>_HOST /
+# NETBOX_<ver>_TOKEN environment variables override them (Start-NetboxDocker -SetEnvironment
+# exports exactly those). 'custom' uses NETBOX_HOST / NETBOX_TOKEN / NETBOX_SCHEME as-is.
+$script:V1Token = '0123456789abcdef0123456789abcdef01234567'
+$script:V2Token = "nbt_powernetbox1.$($script:V1Token)"   # netbox-docker 5.0.2+ deterministic v2 token
+
+function script:New-DockerEnvironment([string]$key, [int]$port, [string]$defaultToken) {
+    $envKey = $key -replace '\.', ''
+    $host  = [System.Environment]::GetEnvironmentVariable("NETBOX_${envKey}_HOST")
+    $token = [System.Environment]::GetEnvironmentVariable("NETBOX_${envKey}_TOKEN")
+    @{
+        Hostname = if ($host) { $host } else { "localhost:$port" }
+        Token    = if ($token) { $token } else { $defaultToken }
+        Scheme   = 'http'
+    }
+}
+
 $script:TestEnvironments = @{
-    '4.4.9' = @{
-        Hostname = $env:NETBOX_449_HOST
-        Token    = $env:NETBOX_449_TOKEN
-        Scheme   = 'https'
-    }
-    '4.4.9-zwqg' = @{
-        Hostname = $env:NETBOX_449_ZWQG_HOST
-        Token    = $env:NETBOX_449_ZWQG_TOKEN
-        Scheme   = 'https'
-    }
-    '4.3.7' = @{
-        Hostname = $env:NETBOX_437_HOST
-        Token    = $env:NETBOX_437_TOKEN
-        Scheme   = 'https'
-    }
-    '4.5.0' = @{
-        Hostname = $env:NETBOX_450_HOST
-        Token    = $env:NETBOX_450_TOKEN
-        Scheme   = 'https'
+    '4.7.0'  = New-DockerEnvironment '4.7.0'  8000 $script:V2Token
+    '4.6.10' = New-DockerEnvironment '4.6.10' 8001 $script:V2Token
+    '4.5.10' = New-DockerEnvironment '4.5.10' 8002 $null      # random-key v2 token: Start-NetboxDocker exports NETBOX_4510_TOKEN
+    '4.4.10' = New-DockerEnvironment '4.4.10' 8003 $script:V1Token
+    '4.3.7'  = New-DockerEnvironment '4.3.7'  8004 $script:V1Token
+    'custom' = @{
+        Hostname = $env:NETBOX_HOST
+        Token    = $env:NETBOX_TOKEN
+        Scheme   = if ($env:NETBOX_SCHEME) { $env:NETBOX_SCHEME } else { 'https' }
     }
 }
 
@@ -63,15 +65,16 @@ function Connect-ScenarioTest {
         Connects to a Netbox test environment for scenario testing.
 
     .PARAMETER Environment
-        The Netbox version to connect to (4.3.7, 4.4.9, or 4.5.0).
+        The Netbox version to connect to (4.7.0, 4.6.10, 4.5.10, 4.4.10, 4.3.7) - a local Docker
+        stack from scripts/Start-NetboxDocker.ps1 - or 'custom' (NETBOX_HOST / NETBOX_TOKEN).
 
     .EXAMPLE
-        Connect-ScenarioTest -Environment '4.4.9'
+        Connect-ScenarioTest -Environment '4.7.0'
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('4.3.7', '4.4.9', '4.4.9-zwqg', '4.5.0')]
+        [ValidateSet('4.7.0', '4.6.10', '4.5.10', '4.4.10', '4.3.7', 'custom')]
         [string]$Environment
     )
 
@@ -80,26 +83,23 @@ function Connect-ScenarioTest {
         throw "Environment '$Environment' not found"
     }
 
-    # Validate environment variables are set
+    # Validate we know where to connect
     if (-not $config.Hostname -or -not $config.Token) {
-        $envPrefix = switch ($Environment) {
-            '4.4.9'      { 'NETBOX_449' }
-            '4.4.9-zwqg' { 'NETBOX_449_ZWQG' }
-            '4.3.7'      { 'NETBOX_437' }
-            '4.5.0'      { 'NETBOX_450' }
-        }
-        throw "Environment variables not set for '$Environment'. Required: ${envPrefix}_HOST and ${envPrefix}_TOKEN"
+        $envPrefix = if ($Environment -eq 'custom') { 'NETBOX' } else { "NETBOX_$($Environment -replace '\.', '')" }
+        throw "No host/token for environment '$Environment'. Start it with ./scripts/Start-NetboxDocker.ps1 -Version $Environment -SetEnvironment (exports ${envPrefix}_HOST and ${envPrefix}_TOKEN)."
     }
 
     $secureToken = ConvertTo-SecureString -String $config.Token -AsPlainText -Force
     $credential = [PSCredential]::new('api', $secureToken)
 
+    $hostName, $hostPort = $config.Hostname -split ':', 2
     $connectParams = @{
-        Hostname             = $config.Hostname
+        Hostname             = $hostName
         Credential           = $credential
         Scheme               = $config.Scheme
-        SkipCertificateCheck = $true
+        SkipCertificateCheck = ($config.Scheme -eq 'https')
     }
+    if ($hostPort) { $connectParams.Port = [int]$hostPort }
 
     Connect-NBAPI @connectParams
 
@@ -127,11 +127,11 @@ function Import-ScenarioTestData {
         Skip confirmation and cleanup before import.
 
     .EXAMPLE
-        Import-ScenarioTestData -Environment '4.4.9'
+        Import-ScenarioTestData -Environment '4.7.0'
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [ValidateSet('4.3.7', '4.4.9', '4.4.9-zwqg', '4.5.0')]
+        [ValidateSet('4.7.0', '4.6.10', '4.5.10', '4.4.10', '4.3.7', 'custom')]
         [string]$Environment = $script:CurrentEnvironment,
 
         [switch]$Force
@@ -182,11 +182,11 @@ function Remove-ScenarioTestData {
         The Netbox version to clean up. Defaults to current environment.
 
     .EXAMPLE
-        Remove-ScenarioTestData -Environment '4.4.9'
+        Remove-ScenarioTestData -Environment '4.7.0'
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
     param(
-        [ValidateSet('4.3.7', '4.4.9', '4.4.9-zwqg', '4.5.0')]
+        [ValidateSet('4.7.0', '4.6.10', '4.5.10', '4.4.10', '4.3.7', 'custom')]
         [string]$Environment = $script:CurrentEnvironment
     )
 
@@ -269,7 +269,7 @@ function Assert-ScenarioTestDataExists {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('4.3.7', '4.4.9', '4.4.9-zwqg', '4.5.0')]
+        [ValidateSet('4.7.0', '4.6.10', '4.5.10', '4.4.10', '4.3.7', 'custom')]
         [string]$Environment
     )
 
