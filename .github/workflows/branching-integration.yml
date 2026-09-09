@@ -239,7 +239,7 @@ jobs:
         run: |
           Write-Host "Installing Pester..." -ForegroundColor Cyan
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build PowerNetbox module
         shell: pwsh
