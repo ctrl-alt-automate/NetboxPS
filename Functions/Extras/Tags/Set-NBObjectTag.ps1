@@ -35,7 +35,7 @@
 .LINK
     https://netbox.readthedocs.io/en/stable/rest-api/overview/
 .NOTES
-    AddedInVersion: v4.7.1.0
+    AddedInVersion: v4.7.0.1
     Requires Netbox 4.6+ (netbox-community/netbox#21771).
 #>
 function Set-NBObjectTag {

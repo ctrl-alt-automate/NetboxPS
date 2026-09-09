@@ -16,7 +16,7 @@
     ConvertToNBTagReference -Tags 'web', 12, @{ slug = 'prod' }
     # -> @{ name = 'web' }, 12, @{ slug = 'prod' }
 .NOTES
-    AddedInVersion: v4.7.1.0
+    AddedInVersion: v4.7.0.1
     Internal helper (not exported in production builds).
 #>
 function ConvertToNBTagReference {
