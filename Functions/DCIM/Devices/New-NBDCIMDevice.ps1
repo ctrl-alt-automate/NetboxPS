@@ -72,6 +72,10 @@
     Local config context data (free-form JSON; hashtable or object). Takes
     precedence over source contexts in the rendered config context.
 
+.PARAMETER Cooling_Method
+    Cooling method. One of: 'air', 'liquid', 'hybrid', 'immersion'.
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
 .PARAMETER Status
     Operational status.
 
@@ -259,6 +263,10 @@ function New-NBDCIMDevice {
         [Parameter(ParameterSetName = 'Single')]
         [object]$Local_Context_Data,
 
+        [Parameter(ParameterSetName = 'Single')]
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+
         # Bulk mode parameters
         [Parameter(ParameterSetName = 'Bulk', Mandatory = $true, ValueFromPipeline = $true)]
         [PSCustomObject]$InputObject,
@@ -293,7 +301,15 @@ function New-NBDCIMDevice {
     process {
         if ($PSCmdlet.ParameterSetName -eq 'Single') {
             # Original single-item behavior
-            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+            # NetBox 4.7+ only fields: drop them with a warning on older servers.
+            $skipParams = @('Raw')
+            foreach ($p in @('Cooling_Method')) {
+                if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                    $skipParams += $p
+                }
+            }
+
+            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
             if ($PSCmdlet.ShouldProcess($Name, 'Create new Device')) {
                 InvokeNetboxRequest -URI $URI -Body $URIComponents.Parameters -Method POST -Raw:$Raw

@@ -50,7 +50,18 @@
     .PARAMETER Tag_Id
         Filter by tag ID(s); combines like -Tag.
 
-    .PARAMETER Limit
+    
+
+.PARAMETER Cooling_Capability
+    Filter by cooling capability (one or more of 'air-only', 'hybrid',
+    'liquid-only'). Requires NetBox 4.7.0 or later; ignored with a warning
+    on older servers.
+
+.PARAMETER Cooling_Capacity
+    Filter by cooling capacity in kW (one or more values). Requires NetBox
+    4.7.0 or later; ignored with a warning on older servers.
+
+.PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
 .PARAMETER Offset
@@ -91,6 +102,10 @@ function Get-NBDCIMRackType {
         [Parameter(ParameterSetName = 'Query')]
         [uint64[]]$Tag_Id,
 
+        [Parameter(ParameterSetName = 'Query')]
+        [ValidateSet('air-only', 'hybrid', 'liquid-only', IgnoreCase = $true)]
+        [string[]]$Cooling_Capability,
+        [Parameter(ParameterSetName = 'Query')][decimal[]]$Cooling_Capacity,
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
         [ValidateRange(0, [int]::MaxValue)]
@@ -106,7 +121,16 @@ function Get-NBDCIMRackType {
             'ByID' { foreach ($i in $Id) { InvokeNetboxRequest -URI (BuildNewURI -Segments @('dcim','rack-types',$i)) -Raw:$Raw } }
             default {
                 $Segments = [System.Collections.ArrayList]::new(@('dcim','rack-types'))
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
+
+                # NetBox 4.7+ only fields: drop them with a warning on older servers.
+                $skipParams = @('Raw', 'All', 'PageSize')
+                foreach ($p in @('Cooling_Capability', 'Cooling_Capacity')) {
+                    if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p filter") {
+                        $skipParams += $p
+                    }
+                }
+
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
                 InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters) -Raw:$Raw -All:$All -PageSize $PageSize
             }
         }

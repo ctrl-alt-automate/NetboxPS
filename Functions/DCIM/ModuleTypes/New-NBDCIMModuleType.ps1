@@ -30,6 +30,15 @@
 .PARAMETER Comments
     Detailed comments (Markdown is supported).
 
+.PARAMETER Cooling_Method
+    Cooling method. One of: 'air', 'liquid', 'hybrid', 'immersion'.
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
+.PARAMETER End_Of_Life
+    Date after which this module type is no longer supported by the manufacturer.
+    Sent as yyyy-MM-dd. Requires NetBox 4.7.0 or later; ignored with a
+    warning on older servers.
+
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -62,6 +71,9 @@ function New-NBDCIMModuleType {
         [string]$Weight_Unit,
         [string]$Description,
         [string]$Comments,
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+        [datetime]$End_Of_Life,
         [string[]]$Tags,
         [hashtable]$Custom_Fields,
         [uint64[]]$Module_Bay_Types,
@@ -70,11 +82,23 @@ function New-NBDCIMModuleType {
     process {
         Write-Verbose "Creating DCIM Module Type"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','module-types'))
-        # Module_Bay_Types only exists on NetBox 4.7+; drop it (with a warning) on older versions
+
+        # NetBox DateField wants yyyy-MM-dd, not the ISO datetime ConvertTo-Json emits.
+        if ($PSBoundParameters.ContainsKey('End_Of_Life') -and $null -ne $PSBoundParameters['End_Of_Life']) {
+            $PSBoundParameters['End_Of_Life'] = ([datetime]$PSBoundParameters['End_Of_Life']).ToString('yyyy-MM-dd')
+        }
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
         $skipParams = @('Raw')
+        foreach ($p in @('Cooling_Method', 'End_Of_Life')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
         if (Test-NBMinimumVersion -ParameterName 'Module_Bay_Types' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Module bay types') {
             $skipParams += 'Module_Bay_Types'
         }
+
         $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Model, 'Create module type')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method POST -Body $URIComponents.Parameters -Raw:$Raw

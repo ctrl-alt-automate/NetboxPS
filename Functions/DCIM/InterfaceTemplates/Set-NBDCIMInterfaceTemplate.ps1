@@ -45,6 +45,17 @@
 .PARAMETER Rf_Role
     Rf Role.
 
+.PARAMETER Channels
+    Number of channels this (breakout) interface template is channelized into
+    (1-1024). Pass $null to clear. Requires NetBox 4.7.0 or later; ignored
+    with a warning on older servers.
+
+.PARAMETER Channel_Id
+    For a template of type 'channel': the channel number (1-1024) on the
+    parent interface template that this template is bound to. Pass $null to
+    clear. Requires NetBox 4.7.0 or later; ignored with a warning on older
+    servers.
+
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -76,6 +87,11 @@ function Set-NBDCIMInterfaceTemplate {
         [string]$Poe_Type,
         [string]$Rf_Role,
 
+        # No [ValidateRange]: it fires before [Nullable[T]] binding (#398).
+        [Nullable[uint16]]$Channels,
+
+        [Nullable[uint16]]$Channel_Id,
+
         [object[]]$Tags,
 
         [switch]$Raw
@@ -83,7 +99,16 @@ function Set-NBDCIMInterfaceTemplate {
     process {
         Write-Verbose "Updating DCIM Interface Template"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','interface-templates',$Id))
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id','Raw'
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
+        $skipParams = @('Id', 'Raw')
+        foreach ($p in @('Channels', 'Channel_Id')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
+
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Id, 'Update interface template')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method PATCH -Body $URIComponents.Parameters -Raw:$Raw
         }

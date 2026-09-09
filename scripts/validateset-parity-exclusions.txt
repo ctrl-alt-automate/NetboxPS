@@ -100,3 +100,12 @@ DCIM/CoolingIntakeTemplates/New-NBDCIMCoolingIntakeTemplate.ps1::Diameter_Unit
 DCIM/CoolingIntakeTemplates/Set-NBDCIMCoolingIntakeTemplate.ps1::Diameter_Unit
 DCIM/CoolingOutflowTemplates/New-NBDCIMCoolingOutflowTemplate.ps1::Diameter_Unit
 DCIM/CoolingOutflowTemplates/Set-NBDCIMCoolingOutflowTemplate.ps1::Diameter_Unit
+
+# NetBox 4.7 cooling fields (fields-47) - same '' sentinel pattern on the
+# Set-* cmdlets: '' is translated to JSON null in process {} to clear the
+# nullable enum server-side.
+DCIM/Devices/Set-NBDCIMDevice.ps1::Cooling_Method
+DCIM/Devices/Set-NBDCIMDeviceType.ps1::Cooling_Method
+DCIM/ModuleTypes/Set-NBDCIMModuleType.ps1::Cooling_Method
+DCIM/Racks/Set-NBDCIMRack.ps1::Cooling_Capability
+DCIM/RackTypes/Set-NBDCIMRackType.ps1::Cooling_Capability

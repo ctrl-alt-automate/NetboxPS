@@ -43,9 +43,11 @@ function Set-NBDCIMRack {
     .PARAMETER Form_Factor
         The rack form factor (NetBox 4.6+), e.g. '2-post-frame', '4-post-cabinet'.
         Pass '' to clear the field server-side (sent as JSON null).
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Width
         The rack width (10 or 19 inches)
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER U_Height
         The height in rack units
@@ -58,12 +60,15 @@ function Set-NBDCIMRack {
 
     .PARAMETER Outer_Width
         The outer width in millimeters
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Outer_Depth
         The outer depth in millimeters
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Outer_Height
         The outer height in millimeters
+        Deprecated in NetBox 4.7 in favour of the rack type; removed in NetBox 5.0.
 
     .PARAMETER Mounting_Depth
         The mounting depth in millimeters
@@ -88,6 +93,19 @@ function Set-NBDCIMRack {
 
     .PARAMETER Owner
         The owner ID for object ownership (Netbox 4.5+ only).
+
+    .PARAMETER Cooling_Capability
+        Cooling capability. One of: 'air-only', 'hybrid', 'liquid-only'.
+        When -Rack_Type is set, NetBox derives this value from the rack type
+        and ignores the rack-level value.
+        Pass '' to clear the field server-side (sent as JSON null).
+        Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
+    .PARAMETER Cooling_Capacity
+        Cooling capacity in kW. Pass $null to clear. Requires NetBox 4.7.0 or
+        later; ignored with a warning on older servers.
+        When -Rack_Type is set, NetBox derives this value from the rack type
+        and ignores the rack-level value.
 
     .PARAMETER Force
         Skip confirmation prompts
@@ -177,6 +195,12 @@ function Set-NBDCIMRack {
 
         [uint64]$Owner,
 
+        [AllowEmptyString()]
+        [ValidateSet('air-only', 'hybrid', 'liquid-only', '', IgnoreCase = $true)]
+        [string]$Cooling_Capability,
+
+        [Nullable[decimal]]$Cooling_Capacity,
+
         [switch]$Force,
 
 
@@ -191,9 +215,25 @@ function Set-NBDCIMRack {
         # Translate '' -> $null for clearable enum params BEFORE
         # BuildURIComponents, so the PATCH body carries JSON null
         # (NetBox rejects "" for these nullable enum fields).
-        foreach ($p in @('Airflow', 'Form_Factor')) {
+        foreach ($p in @('Airflow', 'Form_Factor', 'Cooling_Capability')) {
             if ($PSBoundParameters.ContainsKey($p) -and $PSBoundParameters[$p] -eq '') {
                 $PSBoundParameters[$p] = $null
+            }
+        }
+
+        # Rack-level geometry is now inferred from the rack type (NetBox 4.7);
+        # these params still work but go away in NetBox 5.0.
+        foreach ($p in @('Form_Factor', 'Width', 'Outer_Width', 'Outer_Depth', 'Outer_Height')) {
+            if ($PSBoundParameters.ContainsKey($p)) {
+                Write-Verbose "-$p is deprecated in NetBox 4.7 in favour of the rack type and will be removed in NetBox 5.0."
+            }
+        }
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
+        $skipParams = @('Id', 'Raw', 'Force')
+        foreach ($p in @('Cooling_Capability', 'Cooling_Capacity')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
             }
         }
 
@@ -202,7 +242,7 @@ function Set-NBDCIMRack {
             if ($Force -or $PSCmdlet.ShouldProcess("ID $RackId", "Update rack")) {
                 $Segments = [System.Collections.ArrayList]::new(@('dcim', 'racks', $RackId))
 
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id', 'Raw', 'Force'
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
                 $URI = BuildNewURI -Segments $URIComponents.Segments
 

@@ -27,7 +27,11 @@
     Maximum Transmission Unit size (typically 1500 for Ethernet).
 
 .PARAMETER MAC_Address
-    The MAC address of the interface in format XX:XX:XX:XX:XX:XX.
+    The MAC address of the interface in format XX:XX:XX:XX:XX:XX. On NetBox
+    4.7+ this creates the MAC address record and sets it as the interface's
+    primary MAC in a single call (NetBox #18821). To reference an existing
+    MAC address record by its database ID use -Primary_MAC_Address instead.
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
 
 .PARAMETER MGMT_Only
     If true, this interface is used for management traffic only.
@@ -106,7 +110,19 @@
 
 .PARAMETER Primary_MAC_Address
     Numeric ID of the primary MAC address record. Use New-NBDCIMMACAddress to
-    create a MAC address record, then pass its id here.
+    create a MAC address record, then pass its id here. See -MAC_Address to
+    set the MAC by value instead (NetBox 4.7+).
+
+.PARAMETER Channels
+    Number of channels this (breakout) parent interface is channelized into
+    (1-1024). Requires NetBox 4.7.0 or later; ignored with a warning on
+    older servers.
+
+.PARAMETER Channel_Id
+    For a subinterface of type 'channel': the channel number (1-1024) on the
+    parent interface that this subinterface is bound to. Set the parent via
+    -Parent. Requires NetBox 4.7.0 or later; ignored with a warning on older
+    servers.
 
 .PARAMETER Owner
     Numeric ID of the owning user or team.
@@ -247,6 +263,14 @@ function New-NBDCIMInterface {
         [uint64]$Primary_MAC_Address,
 
         [Parameter(ParameterSetName = 'Single')]
+        [ValidateRange(1, 1024)]
+        [uint16]$Channels,
+
+        [Parameter(ParameterSetName = 'Single')]
+        [ValidateRange(1, 1024)]
+        [uint16]$Channel_Id,
+
+        [Parameter(ParameterSetName = 'Single')]
         [uint64]$Owner,
 
         [Parameter(ParameterSetName = 'Single')]
@@ -329,7 +353,16 @@ function New-NBDCIMInterface {
                 }
             }
 
-            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw'
+            # NetBox 4.7+ only fields (channelized interfaces, writable MAC):
+            # drop them with a warning when connected to an older server.
+            $skipParams = @('Raw')
+            foreach ($p in @('Channels', 'Channel_Id', 'MAC_Address')) {
+                if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                    $skipParams += $p
+                }
+            }
+
+            $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
             if ($PSCmdlet.ShouldProcess("Device $Device", "Create interface '$Name'")) {
                 InvokeNetboxRequest -URI $URI -Body $URIComponents.Parameters -Method POST -Raw:$Raw

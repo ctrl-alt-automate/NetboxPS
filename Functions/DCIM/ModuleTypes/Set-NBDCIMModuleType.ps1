@@ -33,6 +33,16 @@
 .PARAMETER Comments
     Detailed comments (Markdown is supported).
 
+.PARAMETER Cooling_Method
+    Cooling method. One of: 'air', 'liquid', 'hybrid', 'immersion'.
+    Pass '' to clear the field server-side (sent as JSON null).
+    Requires NetBox 4.7.0 or later; ignored with a warning on older servers.
+
+.PARAMETER End_Of_Life
+    Date after which this module type is no longer supported by the manufacturer.
+    Sent as yyyy-MM-dd. Pass $null to clear. Requires NetBox 4.7.0 or later;
+    ignored with a warning on older servers.
+
 .PARAMETER Tags
     One or more tags to assign to this object (tag names or IDs).
 
@@ -67,6 +77,10 @@ function Set-NBDCIMModuleType {
         [string]$Weight_Unit,
         [string]$Description,
         [string]$Comments,
+        [AllowEmptyString()]
+        [ValidateSet('air', 'liquid', 'hybrid', 'immersion', '', IgnoreCase = $true)]
+        [string]$Cooling_Method,
+        [Nullable[datetime]]$End_Of_Life,
         [string[]]$Tags,
         [hashtable]$Custom_Fields,
         [uint64[]]$Module_Bay_Types,
@@ -75,11 +89,31 @@ function Set-NBDCIMModuleType {
     process {
         Write-Verbose "Updating DCIM Module Type"
         $Segments = [System.Collections.ArrayList]::new(@('dcim','module-types',$Id))
-        # Module_Bay_Types only exists on NetBox 4.7+; drop it (with a warning) on older versions
+
+        # Translate '' -> $null for clearable enum params BEFORE BuildURIComponents,
+        # so the PATCH body carries JSON null (NetBox rejects "" for nullable enums).
+        foreach ($p in @('Cooling_Method')) {
+            if ($PSBoundParameters.ContainsKey($p) -and $PSBoundParameters[$p] -eq '') {
+                $PSBoundParameters[$p] = $null
+            }
+        }
+
+        # NetBox DateField wants yyyy-MM-dd, not the ISO datetime ConvertTo-Json emits.
+        if ($PSBoundParameters.ContainsKey('End_Of_Life') -and $null -ne $PSBoundParameters['End_Of_Life']) {
+            $PSBoundParameters['End_Of_Life'] = ([datetime]$PSBoundParameters['End_Of_Life']).ToString('yyyy-MM-dd')
+        }
+
+        # NetBox 4.7+ only fields: drop them with a warning on older servers.
         $skipParams = @('Id', 'Raw')
+        foreach ($p in @('Cooling_Method', 'End_Of_Life')) {
+            if (Test-NBMinimumVersion -ParameterName $p -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName "The -$p parameter") {
+                $skipParams += $p
+            }
+        }
         if (Test-NBMinimumVersion -ParameterName 'Module_Bay_Types' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Module bay types') {
             $skipParams += 'Module_Bay_Types'
         }
+
         $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
         if ($PSCmdlet.ShouldProcess($Id, 'Update module type')) {
             InvokeNetboxRequest -URI (BuildNewURI -Segments $URIComponents.Segments) -Method PATCH -Body $URIComponents.Parameters -Raw:$Raw
