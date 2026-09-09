@@ -73,7 +73,7 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Install dependencies (powershell 5.1)
@@ -84,7 +84,7 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Build module (pwsh)
@@ -154,7 +154,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh
@@ -627,7 +627,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4.2.0
 
       - name: Start Netbox ${{ matrix.netbox_short }}
         run: |
@@ -715,7 +715,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh

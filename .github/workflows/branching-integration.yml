@@ -80,7 +80,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4.2.0
 
       # ----------------------------------------------------------
       # Build Custom Image with Branching Plugin
@@ -239,7 +239,7 @@ jobs:
         run: |
           Write-Host "Installing Pester..." -ForegroundColor Cyan
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build PowerNetbox module
         shell: pwsh
