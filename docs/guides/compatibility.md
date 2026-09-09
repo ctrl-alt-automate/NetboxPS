@@ -11,7 +11,8 @@ PowerNetbox is tested against multiple Netbox versions to ensure broad compatibi
 
 | Netbox Version | Status | Notes |
 |----------------|--------|-------|
-| 4.6.x | ✅ Full Support | Primary development target |
+| 4.7.x | ✅ Full Support | Primary development target |
+| 4.6.x | ✅ Full Support | All integration tests pass |
 | 4.5.x | ✅ Full Support | All integration tests pass |
 | 4.4.x | ✅ Full Support | All integration tests pass |
 | 4.3.x | ✅ Full Support | Minimum supported, all integration tests pass |
@@ -31,9 +32,11 @@ PowerNetbox uses automated compatibility testing via GitHub Actions. The workflo
 The compatibility workflow runs 94 integration tests against each version:
 
 ```
-Netbox 4.5.2:  94/94 tests passed ✅ (Primary target)
-Netbox 4.4.10: 94/94 tests passed ✅
-Netbox 4.3.7:  94/94 tests passed ✅ (Minimum supported)
+Netbox 4.7.0:  110/110 tests passed ✅ (Primary target)
+Netbox 4.6.10: 110/110 tests passed ✅
+Netbox 4.5.10: 110/110 tests passed ✅
+Netbox 4.4.10: 110/110 tests passed ✅
+Netbox 4.3.7:   96/110 tests passed ✅ (Minimum supported; 14 skipped for 4.4+/4.5+ features)
 ```
 
 ## API Endpoint Changes
@@ -77,6 +80,20 @@ The `Get-NBContentType` function automatically detects your Netbox version and u
 | Wireless | Netbox 3.1+ |
 | Users | Netbox 3.0+ |
 
+### Netbox 4.7 Changes
+
+| Change | Description | PowerNetbox Handling |
+|--------|-------------|---------------------|
+| Service `port_mappings` | `protocol`/`ports` replaced by a unified `port_mappings` list (`tcp/80`, `udp/53`); legacy pair deprecated, removed in 5.0 | New `-Port_Mappings` on `New-/Set-/Get-NBIPAMService` and `-NBIPAMServiceTemplate` (4.7+, warns and is dropped on older servers); `-Ports`/`-Protocol` still work |
+| Per-object bulk errors | Failed bulk create/update returns `{"detail", "errors": [{"index", "errors"}]}` | Error message lists each failing index with its field errors |
+| Selection custom fields | Returned as `{"value", "label"}` objects instead of the raw value | Passed through unchanged; scripts reading `custom_fields.<name>` must use `.value` on 4.7+ |
+| `?exclude=config_context` ignored | Config context is pre-rendered and always included | `-Omit config_context` still works (`?omit=` is honoured) |
+| Token plaintext read-only | Clients can no longer choose the token value on create | No impact (`New-NBToken` never exposed it) |
+| v2 tokens only in netbox-docker 5.0.2+ | `SUPERUSER_API_TOKEN` alone no longer creates a token | `docker-compose.ci.yml` sets `SUPERUSER_API_KEY` for a deterministic `nbt_` token |
+| New interface/port types | `channel`, `100gbase-x-sfp112`, InfiniBand 4X, HPE Synergy; `mdc` port; `breakout-1c8p-8c1p` cable profile | Added to the ValidateSets |
+
+New 4.7 models (cooling infrastructure, module bay types) and fields (`channels`, `end_of_life`, `cooling_method`, ...) are tracked for a follow-up release.
+
 ## Running Compatibility Tests Locally
 
 You can run the compatibility tests locally using Docker:
@@ -91,7 +108,10 @@ docker inspect --format='{{.State.Health.Status}}' powernetbox-netbox-1
 
 # Run tests
 $env:NETBOX_HOST = 'localhost:8000'
+# netbox-docker <= 3.x (Netbox <= 4.4): v1 token
 $env:NETBOX_TOKEN = '0123456789abcdef0123456789abcdef01234567'
+# netbox-docker 5.0.2+ (Netbox 4.6.10 / 4.7+): deterministic v2 token (SUPERUSER_API_KEY + SUPERUSER_API_TOKEN)
+$env:NETBOX_TOKEN = 'nbt_powernetbox1.0123456789abcdef0123456789abcdef01234567'
 Invoke-Pester ./Tests/Integration.Tests.ps1 -Tag 'Live'
 
 # Cleanup
@@ -102,7 +122,9 @@ docker compose -f docker-compose.ci.yml down -v
 
 | Netbox Version | Docker Tag | Notes |
 |----------------|------------|-------|
-| 4.5.2 | `v4.5.2-4.0.0` | netbox-docker 4.0.0 (Granian, PostgreSQL 18, Valkey 9) |
+| 4.7.0 | `v4.7.0-5.1.0` | netbox-docker 5.1.0 (Django 6.1, PostgreSQL 15+ required, v2 tokens only) |
+| 4.6.10 | `v4.6.10-5.0.2` | netbox-docker 5.0.2 (v2 tokens only) |
+| 4.5.10 | `v4.5.10-4.0.2` | netbox-docker 4.0.2 (Granian, PostgreSQL 18, Valkey 9) |
 | 4.4.10 | `v4.4.10-3.4.2` | netbox-docker 3.4.2 |
 | 4.3.7 | `v4.3.7-3.3.0` | netbox-docker 3.3.0 |
 

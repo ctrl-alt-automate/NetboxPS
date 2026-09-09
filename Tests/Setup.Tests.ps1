@@ -443,12 +443,23 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
                     $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
                 }
             }
+            It "For API version >= 4.7.0 should use the baseline + v4.7.0 list" {
+                InModuleScope -ModuleName 'PowerNetbox' {
+                    $script:NetboxConfig.ParsedVersion = [version]'4.7.0'
+                    $ret = Set-NBQueryOption -IgnoreCase
+                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV470.Count)
+                    # 4.7 turned Service.protocol into a method filter (only __n) -> must stay undecorated there
+                    $Script:QueryParameterHash['protocol'] | Should -Contain 'api/ipam/services/'
+                    $Script:QueryParameterHash['protocol'] | Should -Contain 'api/ipam/service-templates/'
+                    $Script:QueryParameterHash.Keys | Should -Contain 'cooling_method'
+                }
+            }
             It "For API versions newer than our last known version, it should use the latest known version" {
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion = [version]'99.99.99'
                     $ret = Set-NBQueryOption -IgnoreCase -WarningAction SilentlyContinue -WarningVariable warn
                     $warn | Should -BeLike '*taking the latest known version*'
-                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV461.Count)
+                    $Script:QueryParameterHash.Keys.Count | Should -BeExactly ($Script:IgnoreCaseParameterBaseline.Count + $Script:IgnoreCaseParameterV470.Count)
                 }
             }
         }

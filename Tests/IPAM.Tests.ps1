@@ -1127,6 +1127,113 @@ Describe "IPAM tests" -Tag 'Ipam' {
             $Result.Uri | Should -Match '/api/ipam/service.templates/1/'
         }
     }
+    Context "Service port mappings (Netbox 4.7+)" {
+        BeforeAll {
+            $script:parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion }
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.7.0' }
+        }
+        AfterAll {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ v = $script:parsedVersionBefore } { $script:NetboxConfig.ParsedVersion = $v }
+        }
+
+        It "New-NBIPAMService should send port_mappings instead of ports/protocol" {
+            $Result = New-NBIPAMService -Name 'DNS' -Port_Mappings 'tcp/53', 'udp/53' -Device 1
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.port_mappings | Should -Be @('tcp/53', 'udp/53')
+            $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'ports'
+            $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'protocol'
+        }
+
+        It "New-NBIPAMService should still send the legacy ports/protocol pair" {
+            $Result = New-NBIPAMService -Name 'HTTP' -Ports 80 -Device 1
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.ports | Should -Be @(80)
+            $bodyObj.protocol | Should -Be 'tcp'
+            $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'port_mappings'
+        }
+
+        It "New-NBIPAMService should send tags" {
+            $Result = New-NBIPAMService -Name 'HTTP' -Ports 80 -Device 1 -Tags 'web', 'prod'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.tags | Should -Be @('web', 'prod')
+        }
+
+        It "New-NBIPAMService should throw when neither -Ports nor -Port_Mappings is given" {
+            { New-NBIPAMService -Name 'HTTP' -Device 1 } | Should -Throw '*-Ports*-Port_Mappings*'
+        }
+
+        It "New-NBIPAMService should reject malformed port mappings" {
+            { New-NBIPAMService -Name 'HTTP' -Port_Mappings 'http/80' -Device 1 } | Should -Throw
+        }
+
+        It "Set-NBIPAMService should send port_mappings" {
+            $Result = Set-NBIPAMService -Id 1 -Port_Mappings 'tcp/443' -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.port_mappings | Should -Be @('tcp/443')
+        }
+
+        It "Get-NBIPAMService should emit repeat-key port_mappings filters" {
+            $Result = Get-NBIPAMService -Port_Mappings 'tcp/80', 'udp/53'
+            $Result.Uri | Should -Match 'port_mappings=tcp%2F80'
+            $Result.Uri | Should -Match 'port_mappings=udp%2F53'
+        }
+
+        It "New-NBIPAMServiceTemplate should send port_mappings" {
+            $Result = New-NBIPAMServiceTemplate -Name 'DNS' -Port_Mappings 'tcp/53', 'udp/53'
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.port_mappings | Should -Be @('tcp/53', 'udp/53')
+            $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'ports'
+        }
+
+        It "New-NBIPAMServiceTemplate should send the default protocol alongside -Ports" {
+            $Result = New-NBIPAMServiceTemplate -Name 'SSH' -Ports 22
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.ports | Should -Be @(22)
+            $bodyObj.protocol | Should -Be 'tcp'
+        }
+
+        It "New-NBIPAMServiceTemplate should throw when neither -Ports nor -Port_Mappings is given" {
+            { New-NBIPAMServiceTemplate -Name 'SSH' } | Should -Throw '*-Ports*-Port_Mappings*'
+        }
+
+        It "Set-NBIPAMServiceTemplate should send port_mappings" {
+            $Result = Set-NBIPAMServiceTemplate -Id 1 -Port_Mappings 'udp/161' -Confirm:$false
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.port_mappings | Should -Be @('udp/161')
+        }
+
+        It "Get-NBIPAMServiceTemplate should emit port_mappings filter" {
+            $Result = Get-NBIPAMServiceTemplate -Port_Mappings 'tcp/80'
+            $Result.Uri | Should -Match 'port_mappings=tcp%2F80'
+        }
+
+        Context "Below Netbox 4.7" {
+            BeforeAll { InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.6.10' } }
+            AfterAll { InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.7.0' } }
+
+            It "Set-NBIPAMService should drop port_mappings with a warning" {
+                $Result = Set-NBIPAMService -Id 1 -Port_Mappings 'tcp/443' -Description 'x' -Confirm:$false -WarningVariable warn -WarningAction SilentlyContinue
+                $warn | Should -Match 'requires Netbox 4.7.0'
+                $bodyObj = $Result.Body | ConvertFrom-Json
+                $bodyObj.PSObject.Properties.Name | Should -Not -Contain 'port_mappings'
+                $bodyObj.description | Should -Be 'x'
+            }
+
+            It "Get-NBIPAMService should drop the port_mappings filter with a warning" {
+                $Result = Get-NBIPAMService -Port_Mappings 'tcp/80' -WarningVariable warn -WarningAction SilentlyContinue
+                $warn | Should -Match 'requires Netbox 4.7.0'
+                $Result.Uri | Should -Not -Match 'port_mappings'
+            }
+
+            It "New-NBIPAMService should throw when only -Port_Mappings is given" {
+                { New-NBIPAMService -Name 'DNS' -Port_Mappings 'udp/53' -Device 1 -WarningAction SilentlyContinue } | Should -Throw '*-Ports*-Port_Mappings*'
+            }
+
+            It "New-NBIPAMServiceTemplate should throw when only -Port_Mappings is given" {
+                { New-NBIPAMServiceTemplate -Name 'DNS' -Port_Mappings 'udp/53' -WarningAction SilentlyContinue } | Should -Throw '*-Ports*-Port_Mappings*'
+            }
+        }
+    }
     #endregion
 
     #region VLANTranslationPolicy Tests

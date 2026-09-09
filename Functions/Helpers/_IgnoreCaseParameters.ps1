@@ -182,6 +182,46 @@ $Script:IgnoreCaseParameterV461 = @{
     'service_id'     = @('api/ipam/ip-addresses/')
     'type'           = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/virtualization/clusters/')
 }
+$Script:IgnoreCaseParameterV470 = @{
+    # v4.4.9 -> v4.7.0, these parameters are case-insensitive for all endpoints
+    'action'         = @()
+    'airflow'        = @()
+    'base_choices'   = @()
+    'button_class'   = @()
+    'cable_end'      = @()
+    'cooling_capability' = @()  # new in 4.7.0 (racks, rack-types)
+    'cooling_method' = @()      # new in 4.7.0 (devices, device-types, module-types)
+    'diameter_unit'  = @()      # new in 4.7.0 (cooling intakes/outflows + templates)
+    'distance_unit'  = @()
+    'face'           = @()
+    'filter_logic'   = @()
+    'fluid_type'     = @()      # new in 4.7.0 (cooling sources)
+    'length_unit'    = @()
+    'max_flow_unit'  = @()      # new in 4.7.0 (cooling feeds)
+    'notifications'  = @()      # new in 4.6.1, not present in 4.5.0
+    'outer_unit'     = @()
+    'phase'          = @()
+    'protocol'       = @('api/ipam/service-templates/', 'api/ipam/services/')   # 4.7: method filter over port_mappings, only __n left
+    'queue_name'     = @()
+    'start_on_boot'  = @()
+    'subdevice_role' = @()
+    'supply'         = @()
+    'term_side'      = @()
+    'ui_editable'    = @()
+    'ui_visible'     = @()
+    'weight_unit'    = @()
+    # existing parameters that are case-insensitive, exceptions for endpoints are listed in the arrays
+    'address'        = @('api/ipam/ip-addresses/')
+    'kind'           = @('api/dcim/interfaces/')
+    'model'          = @('api/dcim/devices/')
+    'object_type'    = @('api/core/jobs/', 'api/extras/bookmarks/', 'api/extras/image-attachments/', 'api/extras/table-configs/', 'api/extras/tagged-objects/', 'api/tenancy/contact-assignments/')
+    'position'       = @('api/dcim/devices/')
+    'priority'       = @('api/ipam/fhrp-group-assignments/')
+    'profile'        = @('api/dcim/module-types/', 'api/dcim/modules/', 'api/extras/config-contexts/')
+    'role'           = @('api/dcim/devices/', 'api/dcim/inventory-item-templates/', 'api/dcim/inventory-items/', 'api/dcim/racks/', 'api/ipam/asns/', 'api/ipam/ip-ranges/', 'api/ipam/prefixes/', 'api/ipam/vlans/', 'api/tenancy/contact-assignments/', 'api/virtualization/virtual-machines/')
+    'service_id'     = @('api/ipam/ip-addresses/')
+    'type'           = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/virtualization/clusters/')
+}
 #endregion
 
 #region Regex parameter dictionary
@@ -338,6 +378,46 @@ $Script:RegexParameterV461 = @{
     'service_id'     = @('api/ipam/ip-addresses/')
     'type'           = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/virtualization/clusters/')
 }
+$Script:RegexParameterV470 = @{
+    # v4.4.9 -> v4.7.0, these parameters are case-insensitive for all endpoints
+    'action'         = @()
+    'airflow'        = @()
+    'base_choices'   = @()
+    'button_class'   = @()
+    'cable_end'      = @()
+    'cooling_capability' = @()  # new in 4.7.0 (racks, rack-types)
+    'cooling_method' = @()      # new in 4.7.0 (devices, device-types, module-types)
+    'diameter_unit'  = @()      # new in 4.7.0 (cooling intakes/outflows + templates)
+    'distance_unit'  = @()
+    'face'           = @()
+    'filter_logic'   = @()
+    'fluid_type'     = @()      # new in 4.7.0 (cooling sources)
+    'length_unit'    = @()
+    'max_flow_unit'  = @()      # new in 4.7.0 (cooling feeds)
+    'notifications'  = @()      # new in 4.6.1, not present in 4.5.0
+    'outer_unit'     = @()
+    'phase'          = @()
+    'protocol'       = @('api/ipam/service-templates/', 'api/ipam/services/')   # 4.7: method filter over port_mappings, only __n left
+    'queue_name'     = @()
+    'start_on_boot'  = @()
+    'subdevice_role' = @()
+    'supply'         = @()
+    'term_side'      = @()
+    'ui_editable'    = @()
+    'ui_visible'     = @()
+    'weight_unit'    = @()
+    # existing parameters that are case-insensitive, exceptions for endpoints are listed in the arrays
+    'address'        = @('api/ipam/ip-addresses/')
+    'kind'           = @('api/dcim/interfaces/')
+    'model'          = @('api/dcim/devices/')
+    'object_type'    = @('api/core/jobs/', 'api/extras/bookmarks/', 'api/extras/image-attachments/', 'api/extras/table-configs/', 'api/extras/tagged-objects/', 'api/tenancy/contact-assignments/')
+    'position'       = @('api/dcim/devices/')
+    'priority'       = @('api/ipam/fhrp-group-assignments/')
+    'profile'        = @('api/dcim/module-types/', 'api/dcim/modules/', 'api/extras/config-contexts/')
+    'role'           = @('api/dcim/devices/', 'api/dcim/inventory-item-templates/', 'api/dcim/inventory-items/', 'api/dcim/racks/', 'api/ipam/asns/', 'api/ipam/ip-ranges/', 'api/ipam/prefixes/', 'api/ipam/vlans/', 'api/tenancy/contact-assignments/', 'api/virtualization/virtual-machines/')
+    'service_id'     = @('api/ipam/ip-addresses/')
+    'type'           = @('api/circuits/circuits/', 'api/circuits/virtual-circuits/', 'api/virtualization/clusters/')
+}
 #endregion
 
 # Set-NBQueryOption will set this to whatever is appropriate for the API version
@@ -350,8 +430,10 @@ $Script:IgnoreCaseParameterDictionary  = [ordered]@{}
 $Script:IgnoreCaseParameterDictionary['4.4'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV449
 $Script:IgnoreCaseParameterDictionary['4.5'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV450
 $Script:IgnoreCaseParameterDictionary['4.6'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV461
+$Script:IgnoreCaseParameterDictionary['4.7'] = $Script:IgnoreCaseParameterBaseline + $Script:IgnoreCaseParameterV470
 
 $Script:RegexParameterDictionary  = [ordered]@{}
 $Script:RegexParameterDictionary['4.4'] = $Script:RegexParameterBaseline + $Script:RegexParameterV449
 $Script:RegexParameterDictionary['4.5'] = $Script:RegexParameterBaseline + $Script:RegexParameterV450
 $Script:RegexParameterDictionary['4.6'] = $Script:RegexParameterBaseline + $Script:RegexParameterV461
+$Script:RegexParameterDictionary['4.7'] = $Script:RegexParameterBaseline + $Script:RegexParameterV470
