@@ -238,13 +238,23 @@ Scenario tests validate complex, real-world workflows against populated Netbox i
 
 #### Test Environments
 
-Scenario tests support three Netbox test environments:
+Scenario tests run against the local Docker stacks started with `./scripts/Start-NetboxDocker.ps1` (same matrix as CI):
 
-| Environment | Version | Hostname | Description |
-|-------------|---------|----------|-------------|
-| `4.4.9` | Netbox 4.4.9 | `plasma-paint.exe.xyz` | Primary target (default) |
-| `4.3.7` | Netbox 4.3.7 | `badger-victor.exe.xyz` | Backward compatibility |
-| `4.5.0` | Netbox 4.5.0-beta | `zulu-how.exe.xyz` | Forward compatibility |
+| Environment | Image tag | Port | Token | Description |
+|-------------|-----------|------|-------|-------------|
+| `4.7.0` | `v4.7.0-5.1.0` | 8000 | `nbt_powernetbox1.<token>` (v2) | Primary target (default) |
+| `4.6.10` | `v4.6.10-5.0.2` | 8001 | `nbt_powernetbox1.<token>` (v2) | Final 4.6.x |
+| `4.5.10` | `v4.5.10-4.0.2` | 8002 | v2, created by the script | Stable 4.5.x |
+| `4.4.10` | `v4.4.10-3.4.2` | 8003 | `0123...4567` (v1) | Full support |
+| `4.3.7` | `v4.3.7-3.3.0` | 8004 | `0123...4567` (v1) | Minimum supported |
+| `custom` | - | - | `NETBOX_HOST` / `NETBOX_TOKEN` / `NETBOX_SCHEME` | Any other instance |
+
+```powershell
+./scripts/Start-NetboxDocker.ps1 -Version 4.7.0 -SetEnvironment
+$env:SCENARIO_ENV = '4.7.0'
+Invoke-Pester ./Tests/Scenario/ -Tag Scenario
+./scripts/Test-AllNetboxVersions.ps1          # Live integration tests on every version
+```
 
 #### Test Data
 

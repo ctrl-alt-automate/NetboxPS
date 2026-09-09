@@ -17,7 +17,8 @@
     Run with: Invoke-Pester -Path ./Tests/Scenario/Workflows.Tests.ps1 -Tag 'Scenario'
 
     Environment variables:
-    - SCENARIO_ENV: Netbox version (4.3.7, 4.4.9, 4.5.0) - defaults to 4.4.9
+    - SCENARIO_ENV: Netbox version (4.7.0, 4.6.10, 4.5.10, 4.4.10, 4.3.7 or custom) - defaults to 4.7.0;
+      the local Docker stack from ./scripts/Start-NetboxDocker.ps1 -Version <ver> -SetEnvironment
     - SCENARIO_SKIP_IMPORT: Set to '1' to skip data import
 
     WARNING: These tests create and delete objects. They clean up after themselves,
@@ -29,7 +30,7 @@ param()
 
 BeforeAll {
     # Determine test environment from environment variable
-    $script:TestEnvironment = if ($env:SCENARIO_ENV) { $env:SCENARIO_ENV } else { '4.4.9' }
+    $script:TestEnvironment = if ($env:SCENARIO_ENV) { $env:SCENARIO_ENV } else { '4.7.0' }
     $script:SkipImport = $env:SCENARIO_SKIP_IMPORT -eq '1'
 
     Remove-Module PowerNetbox -Force -ErrorAction SilentlyContinue

@@ -103,7 +103,16 @@ The `Get-NBContentType` function automatically detects your Netbox version and u
 
 ## Running Compatibility Tests Locally
 
-You can run the compatibility tests locally using Docker:
+The quickest way is the helper script, which starts one Docker stack per NetBox version (fixed ports 8000-8004, correct image tag and API token per netbox-docker generation) and exports `NETBOX_HOST` / `NETBOX_TOKEN` / `NETBOX_SCHEME`:
+
+```powershell
+./scripts/Start-NetboxDocker.ps1 -Version 4.7.0 -Worker -SetEnvironment
+Invoke-Pester ./Tests/Integration.Tests.ps1 -Tag 'Live'
+./scripts/Test-AllNetboxVersions.ps1        # whole matrix, one summary table
+./scripts/Start-NetboxDocker.ps1 -Version 4.7.0 -Down
+```
+
+Or by hand with Docker Compose:
 
 ```bash
 # Start Netbox with a specific version
