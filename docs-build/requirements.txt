@@ -9,11 +9,13 @@ pymdown-extensions==11.0.1
 # Pygments to 2.20.0, which broke pymdownx.superfences: it silently stopped
 # processing every fenced code block site-wide (fences rendered as literal
 # "```" text, # lines became <h1>). These pins reproduce a known-good build.
-# Re-verified 2026-09-09 with a local `mkdocs build`: mkdocs-material 9.7.7 +
-# pymdown-extensions 11.0.1 + markdown 3.10.2 + pygments 2.19.2 renders every
-# code block correctly (528 highlight blocks, zero literal fences). Bump
-# deliberately together with pymdown-extensions and re-run the local render
-# check. (9.7.7 / 11.0.1 clear GHSA advisories: DOM XSS in Material search,
-# ReDoS + b64 path traversal in pymdownx.)
+# Re-verified 2026-09-09 in a clean python:3.12 container: mkdocs-material
+# 9.7.7 + pymdown-extensions 11.0.1 + markdown 3.10.2 + pygments 2.20.0 renders
+# every code block correctly (528 highlight blocks, zero literal fences) -- the
+# 2026-05 superfences breakage was a pymdownx 10.x/pygments 2.20 interaction
+# that 11.x fixed. Bump the four together and re-run the render check
+# (docker run --rm -v "$PWD:/w" -w /w/docs-build python:3.12-slim ...).
+# (9.7.7 / 11.0.1 / 2.20.0 clear GHSA advisories: DOM XSS in Material search,
+# ReDoS + b64 path traversal in pymdownx, ReDoS in Pygments.)
 markdown==3.10.2
-pygments==2.19.2
+pygments==2.20.0
