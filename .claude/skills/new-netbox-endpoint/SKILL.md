@@ -41,7 +41,12 @@ endpoint look identical.
    not `Invoke-RestMethod`, unless the cmdlet bypasses it (file uploads, SVG).
 6. **Build + verify** — `./deploy.ps1 -Environment dev -SkipVersion`,
    then `Invoke-Pester ./Tests/<Module>.Tests.ps1`.
-7. **Revert build artefacts before commit** —
+7. **Live-verify against a local Docker NetBox** (the only live path since
+   2026-09-09; the exe.dev VMs are gone) — see "Live verification on Docker"
+   below. New -> Get by id + one filter -> Set -> Remove, then delete your
+   fixtures. Live-tagged Pester tests only run on push to `dev`, so a local
+   run is the pre-merge proof.
+8. **Revert build artefacts before commit** —
    `git checkout PowerNetbox.psd1` (deploy.ps1 updates its date).
 
 ## Cmdlet templates
@@ -84,6 +89,14 @@ function Get-NB[Module][Resource] {
         # [string]$Status,                                # <-- filter params go here
         # [Parameter(ParameterSetName = 'Query')]
         # [uint64]$Site_Id,
+        # Every list endpoint whose model carries tags exposes `tag` / `tag_id`
+        # filters (check the schema); expose them as this pair. Multiple values
+        # are AND on the server; Set-NBQueryOption -TagMatch Any switches the
+        # key to tag__any (4.6.6+) centrally in BuildNewURI.
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
         [uint16]$Limit,
         [uint32]$Offset,   # uint32, not uint16 — NetBox datasets (IPAM, Circuits) exceed 65 535 items
         [switch]$Brief,
@@ -259,6 +272,62 @@ function Remove-NB[Module][Resource] {
 }
 ```
 
+## Version-gated parameters (field only exists on NetBox X.Y+)
+
+A whole new endpoint needs no gate (older servers 404 and the error says so).
+A new *field on an existing cmdlet* must not be sent to older servers, which
+silently ignore unknown body fields and unknown filters (a filter that is
+ignored returns the WHOLE table). Gate it with the helper, then drop it from
+the request (pattern from `Set-NBDCIMCable`):
+
+```powershell
+$skipParams = @('Id', 'Raw')
+if (Test-NBMinimumVersion -ParameterName 'Cooling_Method' -MinimumVersion '4.7.0' `
+        -BoundParameters $PSBoundParameters -FeatureName 'Cooling method') {
+    $skipParams += 'Cooling_Method'   # warns once, then excluded
+}
+$URIComponents = BuildURIComponents -URISegments $Segments.Clone() `
+    -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
+```
+
+Cmdlets that build the body by hand wrap the assignment instead:
+`if ($PSBoundParameters.ContainsKey('X') -and -not $excludeX) { $Body['x'] = $X }`.
+Unit-test both sides: at `ParsedVersion = 4.7.0` the field is in the body /
+query, at `4.6.10` it is absent and `-WarningVariable` matches
+`requires Netbox 4.7.0` (see `Tests/IPAM.Tests.ps1`, Context "Service port
+mappings (Netbox 4.7+)").
+
+Module-wide behaviours (not per-cmdlet) live in `Set-NBQueryOption` and are
+applied centrally: `-IgnoreCase`/`-MatchMode` (BuildNewURI lookup
+decoration), `-TagMatch` (tag__any), `-Pagination Cursor` (`?start=` in the
+`-All` loop) and `-OptimisticConcurrency` (ETag/If-Match in
+InvokeNetboxRequest). Add a new option there rather than sprinkling switches
+over hundreds of cmdlets.
+
+## Live verification on Docker
+
+```bash
+open -a Docker                                                    # Docker Desktop must be running
+NETBOX_VERSION=v4.7.0-5.1.0 docker compose -p pn47 -f docker-compose.ci.yml up -d
+# ALWAYS pass NETBOX_VERSION on EVERY compose command for that project (also
+# `up -d netbox-worker`, `restart`, ...): without it compose falls back to the
+# default image tag and RECREATES the netbox container on an older release
+# against the newer database (crash loop: "column users_user.is_staff does not exist").
+```
+
+| netbox-docker | NetBox | token to use |
+|---|---|---|
+| <= 3.x | 4.3 / 4.4 | v1 `0123456789abcdef0123456789abcdef01234567` (`Token` header) |
+| 4.0.x | 4.5 | v2 with random key -> create one via `manage.py shell` (snippet in the CI "Setup API Token" step) |
+| 5.0.2+ | 4.6.10 / 4.7 | v2 `nbt_powernetbox1.0123456789abcdef0123456789abcdef01234567` (`Bearer`, from `SUPERUSER_API_KEY`) |
+
+Run a second version on another port with an override file
+(`services: { netbox: { ports: !override ["8001:8080"] } }`) and a different
+`-p` name. `--profile worker` adds an RQ worker (needed for `?background=true`
+bulk writes and other 4.7 background jobs). Connect with
+`Connect-NBAPI -Hostname localhost -Port 8000 -Scheme http -Credential $cred`
+(the module picks `Bearer` for `nbt_` tokens automatically).
+
 ## Test pattern
 
 Most test files mock at the **module API surface** — that is,
@@ -329,6 +398,11 @@ meta-values like `'Both'` for rack elevation), add an exemption to
 | Bulk operations pipeline runs unboundedly | No client throttle by default | `Send-NBBulkRequest` has `MaxItems = 10000` cap; pass `-BatchSize` to size each POST |
 | Pagination `.next` follow to wrong host | Server-controlled URL could be attacker-controlled | `InvokeNetboxRequest` validates origin against original URI via `GetLeftPart(Authority)` (PR #404) |
 | Array-widened filter silently returns only one match | NetBox honors only the FIRST value of a repeated query key when the underlying filter is scalar, even though #447 sends all values | Verify the filter is `schema.type: array` in the OpenAPI schema before changing `[T]` → `[T[]]`. Scalar example: contact-assignments `object_type_id` (PR #456) |
+| `Set-ItResult -Skipped` inside `BeforeAll`/`AfterAll` FAILS the whole Context | Pester 5 only honours it inside `It` | Guard fixture creation with a plain `return`; put `Set-ItResult -Skipped` in each `It` (PR #469 maintainer-edit) |
+| `Assert-MockCalled` / `Assert-VerifiableMock` not found in CI | PSGallery serves Pester 6.x, which removed them; CI is pinned to 5.7.1 but keep tests valid on both | Use `Should -Invoke -CommandName X -ModuleName M -Times N -Exactly` |
+| `-Tags 'web'` returns `400 Related objects must be referenced by numeric ID or by dictionary of attributes` | NetBox never accepted bare tag names in a body | `BuildURIComponents` (and `ConvertToNBTagReference` for hand-built bodies) now turns names into `@{ name = '<tag>' }`; do not bypass it |
+| `$x -is [PSCustomObject]` is `$true` for a plain string | Any PSObject-wrapped value matches `[PSCustomObject]` | Test `-is [string]` / `-is [ValueType]` first, or look at `$x.PSObject.BaseObject` |
+| Get cmdlet test hangs forever in CI | A generic test invoked a cmdlet whose Query set has a Mandatory param -> interactive prompt | Run Pester with `pwsh -NonInteractive`; skip/feed cmdlets with mandatory params in generic loops |
 | Case-insensitive (`__ie`) filter returns the FULL unfiltered list | NetBox SILENTLY ignores an unknown lookup (HTTP 200, everything) — it does not 400; and `__ie` (iexact) support is per-endpoint (e.g. no `role__ie` on `/dcim/devices/`) | Only rewrite a key to `__ie` if that field exposes `*__ie` for THAT endpoint in the schema; never for numeric/datetime/relational/CIDR/choice fields. Intersect against the live schema, don't hand-curate (PR #454) |
 | Param/switch referenced in body or help but missing from `param()` | Author added `.PARAMETER` help + a body reference but forgot the `[switch]$X` declaration → unbound `$null` (and hard-throws under `Set-StrictMode`) | Every `.PARAMETER` and every `$Var` read in the body needs a matching `param()` entry. The `CodeQuality.Tests.ps1` parity gate catches the help side (PR #454 `-IgnoreCase`) |
 | `Get-NB*Option`/config getter throws on a fresh import | A new `$script:NetboxConfig` key read by the getter was never seeded in `SetupNetboxConfigVariable.ps1` | When adding a Set-/Get- pair backed by `$script:NetboxConfig`, seed the key (e.g. `$false`) in `SetupNetboxConfigVariable.ps1`; getters return the value, don't throw (match `Get-NBTimeout`) (PR #454) |
@@ -355,6 +429,7 @@ meta-values like `'Both'` for rack elevation), add an exemption to
 - [ ] `./scripts/Verify-ValidateSetParity.ps1` — no new drift findings
 - [ ] `./scripts/Verify-FilterExclusion.ps1` — if you touched any `Get-NB*.ps1`, see `docs/guides/` if unfamiliar
 - [ ] `grep -nP "[^\x00-\x7F]" Functions/... Tests/...` — no non-ASCII in `.ps1` files
+- [ ] Live run against the Docker stack for the target version (and the lowest supported one if you version-gated anything): create -> read -> update -> delete, fixtures removed
 - [ ] `git checkout PowerNetbox.psd1` — revert build-artefact drift before committing
 
 ## Pointers

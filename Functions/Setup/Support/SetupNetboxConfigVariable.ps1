@@ -21,6 +21,10 @@ function SetupNetboxConfigVariable {
             'BranchStack'   = [System.Collections.Generic.Stack[object]]::new()
             'IgnoreCaseInQueries' = $false
             'MatchMode'     = 'Exact'
+            'Pagination'    = 'Offset'      # Set-NBQueryOption -Pagination Offset|Cursor (Netbox 4.6+ ?start=)
+            'TagMatch'      = 'All'         # Set-NBQueryOption -TagMatch All|Any   (Netbox 4.6.6+ tag__any)
+            'OptimisticConcurrency' = $false  # Set-NBQueryOption -OptimisticConcurrency (Netbox 4.6+ ETag/If-Match)
+            'ETagCache'     = @{}           # object URL -> last seen ETag (only used with OptimisticConcurrency)
         }
     }
     else {

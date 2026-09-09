@@ -198,3 +198,41 @@ Get-NBDCIMDevice -Status 'active' -Brief -Limit 100 -Offset 0
 - [Bulk Operations](bulk-operations.md) - High-performance batch processing
 - [Common Workflows](common-workflows.md) - Real-world examples
 - [NetBox Best Practices](https://github.com/netboxlabs/netbox-best-practices) - Official documentation
+
+## Cursor Pagination (NetBox 4.6+)
+
+`-All` pages with `limit`/`offset` by default. On very large tables (IP addresses, interfaces, change log) offset paging gets slower with every page because the database has to skip the preceding rows. NetBox 4.6 added cursor pagination (`?start=<pk>`), which is constant-time per page.
+
+```powershell
+Set-NBQueryOption -Pagination Cursor
+$ips = Get-NBIPAMAddress -All -PageSize 500     # walks the table by primary key
+Set-NBQueryOption -Pagination Offset            # back to the default
+```
+
+- Results are ordered by primary key, not by the endpoint's default ordering.
+- `count` is not reported per page in cursor mode; the returned array is complete.
+- Below NetBox 4.6 the option is ignored (offset paging, with a one-time warning when you set it).
+- The pagination `next` URL is still validated against the original host (same SSRF guard as offset paging).
+
+## Background Bulk Writes (NetBox 4.7+)
+
+Large bulk creates/updates can exceed proxy or gateway timeouts. NetBox 4.7 can queue a bulk write as a background job:
+
+```powershell
+$devices | New-NBDCIMDevice -BatchSize 500 -Background -Force   # returns job objects (HTTP 202)
+Get-NBJob -Id <job id>                                           # status, and the response the sync call would have returned
+```
+
+Validation happens in the worker, so a 202 only means "accepted"; check the job for the real outcome. Requires a running RQ worker on the NetBox server.
+
+## Optimistic Concurrency (NetBox 4.6+)
+
+When several people or scripts edit the same objects, enable ETag / If-Match checking so a stale write fails instead of overwriting:
+
+```powershell
+Set-NBQueryOption -OptimisticConcurrency
+$dev = Get-NBDCIMDevice -Id 42                      # ETag cached
+Set-NBDCIMDevice -Id 42 -Description 'changed'      # sent with If-Match; 412 if the device changed in between
+```
+
+Needs PowerShell 7+ (response headers are not exposed on Windows PowerShell 5.1; the option then warns once and updates are sent without If-Match).

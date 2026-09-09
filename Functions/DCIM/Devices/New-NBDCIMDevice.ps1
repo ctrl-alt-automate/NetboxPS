@@ -35,6 +35,10 @@
     Default: 0 (no batching - backwards compatible single-item mode)
     Range: 1-1000
 
+.PARAMETER Background
+    Netbox 4.7+: queue each bulk batch as a background job (?background=true) instead of processing it
+    synchronously; the returned items are the job objects (check them with Get-NBJob). Ignored with a
+    warning on older Netbox versions. Only meaningful together with -BatchSize pipeline input.
 .PARAMETER Force
     Skip confirmation prompts for bulk operations.
 
@@ -263,6 +267,8 @@ function New-NBDCIMDevice {
         [ValidateRange(1, 1000)]
         [int]$BatchSize = 100,
 
+        [switch]$Background,
+
         [Parameter(ParameterSetName = 'Bulk')]
         [switch]$Force,
 
@@ -318,6 +324,7 @@ function New-NBDCIMDevice {
             if ($Force -or $PSCmdlet.ShouldProcess($target, 'Create devices (bulk)')) {
                 Write-Verbose "Processing $($bulkItems.Count) devices in bulk mode with batch size $BatchSize"
 
+                $useBackground = $Background -and -not (Test-NBMinimumVersion -ParameterName 'Background' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Background bulk processing (-Background)')
                 $bulkParams = @{
                     URI          = $URI
                     Items        = $bulkItems.ToArray()
@@ -325,6 +332,7 @@ function New-NBDCIMDevice {
                     BatchSize    = $BatchSize
                     ShowProgress = $true
                     ActivityName = 'Creating devices'
+                    Background   = $useBackground
                 }
                 $result = Send-NBBulkRequest @bulkParams
 

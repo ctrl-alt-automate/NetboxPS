@@ -167,7 +167,7 @@ function New-NBDCIMCable {
         if ($PSBoundParameters.ContainsKey('Length_Unit')) { $body.length_unit = $Length_Unit }
         if ($PSBoundParameters.ContainsKey('Description')) { $body.description = $Description }
         if ($PSBoundParameters.ContainsKey('Comments')) { $body.comments = $Comments }
-        if ($PSBoundParameters.ContainsKey('Tags')) { $body.tags = $Tags }
+        if ($PSBoundParameters.ContainsKey('Tags')) { $body.tags = ConvertToNBTagReference -Tags $Tags }
         if ($PSBoundParameters.ContainsKey('Custom_Fields')) { $body.custom_fields = $Custom_Fields }
         if ($PSBoundParameters.ContainsKey('Cable_Profile') -and -not $excludeProfile) { $body.profile = $Cable_Profile }
 

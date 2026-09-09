@@ -106,6 +106,20 @@ function InvokeNetboxRequest {
             $URI.Query = "limit=$PageSize"
         }
 
+        # Cursor pagination (Set-NBQueryOption -Pagination Cursor): Netbox 4.6+ '?start=<pk>' walks the table by
+        # primary key instead of limit/offset, which stays constant-time on very large tables. The server puts
+        # the next 'start' value into '.next', so the loop below (including the origin check) is unchanged.
+        # An explicit offset always wins, and older servers fall back to offset paging.
+        if ($script:NetboxConfig.Pagination -eq 'Cursor' -and $URI.Query -notmatch '(^\??|&)offset=') {
+            if ($script:NetboxConfig.ParsedVersion -and $script:NetboxConfig.ParsedVersion -lt [version]'4.6.0') {
+                Write-Verbose "Cursor pagination requires Netbox 4.6+ (connected to $($script:NetboxConfig.ParsedVersion)); using offset pagination"
+            }
+            elseif ($URI.Query -notmatch '(^\??|&)start=') {
+                $URI.Query = "$($URI.Query.TrimStart('?'))&start=0"
+                Write-Verbose "Cursor pagination enabled (?start=)"
+            }
+        }
+
         $allResults = [System.Collections.ArrayList]::new()
         $pageNum = 0
         $nextUrl = $null
@@ -197,6 +211,31 @@ function InvokeNetboxRequest {
         $Headers[$key] = $requestHeaders[$key]
     }
 
+    # Optimistic concurrency (Set-NBQueryOption -OptimisticConcurrency): Netbox 4.6+ returns an ETag on
+    # single-object GETs and honours If-Match on PATCH/PUT/DELETE (HTTP 412 on mismatch). Remember the
+    # ETag per object URL and replay it on the next write to that object. Reading response headers
+    # needs Invoke-RestMethod -ResponseHeadersVariable, i.e. PowerShell 7+.
+    $etagMode = $script:NetboxConfig.OptimisticConcurrency -eq $true
+    $etagKey = $null
+    if ($etagMode) {
+        if ($PSVersionTable.PSEdition -ne 'Core') {
+            if (-not $script:NetboxConfig.OptimisticConcurrencyWarned) {
+                Write-Warning "Optimistic concurrency (ETag/If-Match) needs PowerShell 7+ to read response headers; requests are sent without If-Match on Windows PowerShell 5.1."
+                $script:NetboxConfig.OptimisticConcurrencyWarned = $true
+            }
+            $etagMode = $false
+        }
+        else {
+            if ($null -eq $script:NetboxConfig.ETagCache) { $script:NetboxConfig.ETagCache = @{} }
+            $etagKey = $URI.Uri.GetLeftPart([System.UriPartial]::Path)
+            if (($Method -eq 'PATCH' -or $Method -eq 'PUT' -or $Method -eq 'DELETE') -and
+                $script:NetboxConfig.ETagCache.ContainsKey($etagKey) -and -not $Headers.ContainsKey('If-Match')) {
+                $Headers['If-Match'] = $script:NetboxConfig.ETagCache[$etagKey]
+                Write-Verbose "If-Match: $($Headers['If-Match'])"
+            }
+        }
+    }
+
     $splat = @{
         'Method'      = $Method
         'Uri'         = $URI.Uri.AbsoluteUri
@@ -204,6 +243,9 @@ function InvokeNetboxRequest {
         'TimeoutSec'  = $Timeout
         'ContentType' = 'application/json'
         'ErrorAction' = 'Stop'
+    }
+    if ($etagMode) {
+        $splat['ResponseHeadersVariable'] = 'nbResponseHeaders'
     }
 
     $splat += Get-NBInvokeParams
@@ -240,6 +282,22 @@ function InvokeNetboxRequest {
         try {
             Write-Verbose "[$attempt/$MaxRetries] $Method $($URI.Uri.AbsoluteUri)"
             $result = Invoke-RestMethod @splat
+
+            if ($etagMode) {
+                if ($Method -eq 'DELETE') {
+                    $null = $script:NetboxConfig.ETagCache.Remove($etagKey)
+                }
+                else {
+                    $respHeaders = Get-Variable -Name nbResponseHeaders -ValueOnly -ErrorAction SilentlyContinue
+                    if ($respHeaders) {
+                        $etagName = @($respHeaders.Keys | Where-Object { $_ -ieq 'ETag' })[0]
+                        if ($etagName) {
+                            $script:NetboxConfig.ETagCache[$etagKey] = [string](@($respHeaders[$etagName])[0])
+                            Write-Verbose "Cached ETag for $etagKey"
+                        }
+                    }
+                }
+            }
 
             # Success - return result
             if ($Raw) {
@@ -382,6 +440,7 @@ function GetHttpStatusName {
         405 = 'Method Not Allowed'
         408 = 'Request Timeout'
         409 = 'Conflict'
+        412 = 'Precondition Failed'
         429 = 'Too Many Requests'
         500 = 'Internal Server Error'
         502 = 'Bad Gateway'
@@ -408,6 +467,7 @@ function GetErrorCategory {
         405 { return [System.Management.Automation.ErrorCategory]::InvalidOperation }
         408 { return [System.Management.Automation.ErrorCategory]::OperationTimeout }
         409 { return [System.Management.Automation.ErrorCategory]::ResourceExists }
+        412 { return [System.Management.Automation.ErrorCategory]::WriteError }
         429 { return [System.Management.Automation.ErrorCategory]::LimitsExceeded }
         { $_ -ge 500 } { return [System.Management.Automation.ErrorCategory]::ConnectionError }
         default { return [System.Management.Automation.ErrorCategory]::InvalidOperation }
@@ -474,6 +534,13 @@ function BuildDetailedErrorMessage {
                 "- Verify the resource ID exists in Netbox"
                 "- Check if the resource was deleted"
                 "- Ensure the API endpoint is correct for your Netbox version"
+            ) -join "`n"
+        }
+        412 {
+            @(
+                "- The object changed on the server after it was read (ETag / If-Match mismatch)"
+                "- Re-read the object with its Get-NB* cmdlet and retry the update"
+                "- Optimistic concurrency is controlled by Set-NBQueryOption -OptimisticConcurrency"
             ) -join "`n"
         }
         429 {

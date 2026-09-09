@@ -82,7 +82,14 @@
 .PARAMETER Region
     Filter by region (name or slug).
 
-.PARAMETER Limit
+.PARAMETER Tag
+        Filter by tag slug(s). Several values are combined with AND (object must carry all of them);
+        use Set-NBQueryOption -TagMatch Any (Netbox 4.6.6+) for OR semantics.
+
+    .PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
+    .PARAMETER Limit
     Maximum number of results to return per request (1-1000).
 
 .PARAMETER Offset
@@ -166,6 +173,12 @@ function Get-NBDCIMSite {
 
         [Parameter(ParameterSetName = 'Query')]
         [string]$Region,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Tag,
+
+        [Parameter(ParameterSetName = 'Query')]
+        [uint64[]]$Tag_Id,
 
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

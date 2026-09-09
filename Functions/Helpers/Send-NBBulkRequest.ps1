@@ -29,7 +29,12 @@
     Name to display in the progress bar.
 
 .PARAMETER MaxItems
-    MaxItems.
+    Refuse to process more than this many items in one call (guard against runaway pipelines). Default: 10000.
+.PARAMETER Background
+    Netbox 4.7+: append '?background=true' so each batch is queued as a background job instead of being
+    processed synchronously (avoids proxy/gateway timeouts on large batches). The API answers 202 Accepted
+    with the job object; the job objects are returned as the Succeeded items, and validation happens in the
+    worker, so inspect the job (Get-NBJob) for the real outcome. Requires a running RQ worker on the server.
 
 .OUTPUTS
     [BulkOperationResult] Object containing succeeded and failed items.
@@ -64,7 +69,9 @@ function Send-NBBulkRequest {
 
         [switch]$ShowProgress,
 
-        [string]$ActivityName = 'Bulk operation'
+        [string]$ActivityName = 'Bulk operation',
+
+        [switch]$Background
     )
 
     $result = [BulkOperationResult]::new()
@@ -108,10 +115,21 @@ function Send-NBBulkRequest {
             Write-Verbose "[$currentBatch/$totalBatches] Sending batch of $($batch.Count) items"
 
             # For bulk operations, we send an array directly
-            $response = InvokeNetboxRequest -URI $URI -Method $Method -Body $batch -Raw
+            $batchUri = $URI
+            if ($Background) {
+                # Netbox 4.7+: ?background=true -> 202 Accepted + job object
+                $batchUri = [System.UriBuilder]::new($URI.Uri)
+                $batchUri.Query = (@($URI.Query.TrimStart('?'), 'background=true') | Where-Object { $_ }) -join '&'
+            }
+            $response = InvokeNetboxRequest -URI $batchUri -Method $Method -Body $batch -Raw
 
             # Process response - Netbox returns an array of results for bulk operations
-            if ($response -is [array]) {
+            if ($Background -and $response.job) {
+                # Netbox 4.7+ background write: 202 {"job": {"id", "url", "status"}} - the job is the result
+                Write-Verbose "[$currentBatch/$totalBatches] Queued as background job $($response.job.id) ($($response.job.status))"
+                $result.AddSuccess($response.job)
+            }
+            elseif ($response -is [array]) {
                 foreach ($item in $response) {
                     if ($item.id) {
                         $result.AddSuccess($item)
