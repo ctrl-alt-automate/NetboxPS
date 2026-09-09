@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Retrieves Rack Types objects from Netbox DCIM module.
 
@@ -50,7 +50,7 @@
     .PARAMETER Tag_Id
         Filter by tag ID(s); combines like -Tag.
 
-    
+
 
 .PARAMETER Cooling_Capability
     Filter by cooling capability (one or more of 'air-only', 'hybrid',

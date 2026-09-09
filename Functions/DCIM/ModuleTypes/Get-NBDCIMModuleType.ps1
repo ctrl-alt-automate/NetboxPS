@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Retrieves Module Types objects from Netbox DCIM module.
 
@@ -50,7 +50,7 @@
     .PARAMETER Tag_Id
         Filter by tag ID(s); combines like -Tag.
 
-    
+
 
 .PARAMETER Cooling_Method
     Filter by cooling method: 'air', 'liquid', 'hybrid' or 'immersion'
