@@ -4,7 +4,8 @@ function Connect-NBAPI {
         Connects to the Netbox API and ensures Credential work properly
 
     .DESCRIPTION
-        Connects to the Netbox API and ensures Credential work properly
+        Connects to the Netbox API and ensures Credential work properly.
+        After a successful connection, the query options IgnoreCase and MatchMode are set to their respective values (or defaults).
 
     .PARAMETER Hostname
         The hostname for the resource such as netbox.domain.com
@@ -43,6 +44,13 @@ function Connect-NBAPI {
         and only on endpoints where that lookup is available; unsupported fields stay case-sensitive.
         See Set-NBQueryOption for details.
 
+    .PARAMETER MatchMode
+        Sets the match mode for query parameters. Valid values are:
+        - Exact: Only exact matches will be returned (default).
+        - Wildcard: Query parameters will be treated as Powershell wildcards.
+        - Regex: Query parameters will be treated as regular expressions (Netbox's `regex`).
+        See Set-NBQueryOption for details.
+
     .EXAMPLE
         PS C:\> Connect-NBAPI -Hostname "netbox.domain.com"
 
@@ -52,6 +60,11 @@ function Connect-NBAPI {
         PS C:\> Connect-NBAPI -Hostname "netbox.domain.com" -IgnoreCase
 
         This will prompt for Credential, then proceed to attempt a connection to Netbox with case-insensitive query parameters enabled
+
+    .EXAMPLE
+        PS C:\> Connect-NBAPI -URI "https://netbox.domain.com:8443" -Credential $cred -IgnoreCase -MatchMode 'Wildcard'
+
+        Same, but with a full URI, credential object, and both query options set.
 
     .NOTES
         AddedInVersion: v1.0.4
@@ -74,7 +87,7 @@ function Connect-NBAPI {
         $Credential,
 
         [Parameter(ParameterSetName = 'Manual')]
-        [ValidateSet('https', 'http', IgnoreCase = $true)]
+        [ValidateSet('https', 'http')]
         [string]$Scheme = 'https',
 
         [Parameter(ParameterSetName = 'Manual')]
@@ -92,7 +105,10 @@ function Connect-NBAPI {
         [ValidateRange(1, 65535)]
         [uint16]$TimeoutSeconds = 30,
 
-        [switch]$IgnoreCase
+        [switch]$IgnoreCase,
+
+        [ValidateSet('Exact', 'Wildcard', 'Regex')]
+        [string]$MatchMode = 'Exact'
     )
 
     if (-not $Credential) {
@@ -186,11 +202,13 @@ function Connect-NBAPI {
         Write-Verbose "Found compatible version [$versionString] (parsed: $($script:NetboxConfig.ParsedVersion))!"
     }
 
-    # This needs a valid ParsedVersion to work, so it must be called after the version check
-    $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
-
     $script:NetboxConfig.Connected = $true
     Write-Verbose "Successfully connected!"
+
+    # This needs a valid ParsedVersion to work, so it must be called after the version check
+    $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
+    $null = Set-NBQueryOption -MatchMode $MatchMode
+
 
     Write-Verbose "Connection process completed"
 }

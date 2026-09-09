@@ -20,6 +20,25 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
         }
     }
 
+    Context 'Regex conversion tests' {
+        It "<WildcardString> should return <Expected> for <InputString>" -ForEach @(
+                @{ InputString = 'abc*';        WildcardString = 'abc*';        ExpectedRegex = '^abc.*$';      ExpectedResult = $true }
+                @{ InputString = 'abcd';        WildcardString = 'abc*';        ExpectedRegex = '^abc.*$';      ExpectedResult = $true }
+                @{ InputString = 'ab';          WildcardString = 'abc*';        ExpectedRegex = '^abc.*$';      ExpectedResult = $false }
+                @{ InputString = 'abcd';        WildcardString = '*[b]*';       ExpectedRegex = '^.*[b].*$';    ExpectedResult = $true }
+                @{ InputString = 'abcd';        WildcardString = '*[b-z]*';     ExpectedRegex = '^.*[b-z].*$';  ExpectedResult = $true }
+            ) {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ WildcardString = $WildcardString; InputString = $InputString; ExpectedRegex = $ExpectedRegex; ExpectedResult = $ExpectedResult } {
+                $likeResult = $InputString -like $WildcardString
+                $likeResult | Should -Be $ExpectedResult -Because 'Wildcard comparison should return expected result'
+                $converted = Convert-PSWildcardToRegex -String $WildcardString
+                $converted | Should -BeExactly $ExpectedRegex -Because 'Converted regex should match expected regex'
+                $convertedResult = $InputString -match $converted
+                $convertedResult | Should -Be $ExpectedResult -Because 'Converted regex should return expected result'
+            }
+        }
+    }
+
     Context "Building URIBuilder" {
         BeforeAll {
             # Configure the module's NetboxConfig since BuildNewURI now reads from it directly
@@ -109,13 +128,14 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             }
         }
 
-        Context 'Build case insensitive query parameters' {
+        Context 'Build query parameters with query options' {
             BeforeAll {
-                $stateBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'IgnoreCase' }
+                $ignoreCaseBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'IgnoreCase' }
+                $matchModeBefore = Get-NBQueryOption | Where-Object { $_.Name -eq 'MatchMode' }
                 # We need to set the parsed version to a value for testing, but we will restore it after the tests
                 $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion
-                    $script:NetboxConfig.ParsedVersion = '4.6.1'
+                    $script:NetboxConfig.ParsedVersion = [version]'4.6.1'
                 }
 
                 # We must be connected to check the API version
@@ -123,14 +143,15 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                 $null = Set-NBQueryOption -IgnoreCase
             }
             AfterAll {
-                $null = Set-NBQueryOption -IgnoreCase:$stateBefore.Value
+                $null = Set-NBQueryOption -IgnoreCase:$ignoreCaseBefore.Value
+                $null = Set-NBQueryOption -MatchMode:$matchModeBefore.Value
                 InModuleScope -ModuleName 'PowerNetbox' {
                     $script:NetboxConfig.ParsedVersion = $parsedVersionBefore
                 }
             }
-            It "Should not use __ie if parameter is not in the list" {
+            It "Should not use __ie/__regex/__iregex if parameter is not in the list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
-                    $Script:IgnoreCaseParameterHash=@{}  # simulate parameter not in the list
+                    $Script:QueryParameterHash=@{}  # simulate parameter not in the list
                     $URIParameters = @{
                         'name' = 'NameValue'
                     }
@@ -140,9 +161,9 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                     $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?name=NameValue'
                 }
             }
-            It "Should  not use __ie if parameter is in the list but endpoint is in the ignore list" {
+            It "Should  not use __ie/__regex/__iregex if parameter is in the list but endpoint is in the ignore list" {
                 InModuleScope -ModuleName 'PowerNetbox' {
-                    $Script:IgnoreCaseParameterHash['name'] = @('api/seg1/seg2/','api/otherexcludedendpoint/')  # simulate endpoint in ignore list
+                    $Script:QueryParameterHash['name'] = @('api/seg1/seg2/','api/otherexcludedendpoint/')  # simulate endpoint in ignore list
                     $URIParameters = @{
                         'name' = 'NameValue'
                     }
@@ -152,31 +173,61 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
                     $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?name=NameValue'
                 }
             }
-            It "Should use __ie if parameter is in the list and endpoint list is empty" {
-                InModuleScope -ModuleName 'PowerNetbox' {
-                    $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
-                    $Script:IgnoreCaseParameterHash['name'] = @()  # simulate endpoint list is empty
-                    $URIParameters = @{
-                        'name' = 'NameValue'
-                    }
-
-                    $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
-                    $URIBuilder.Query | Should -Match 'name__ie=NameValue'
-                    $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?name__ie=NameValue'
+            Context "Query option combinations <Usecase>" -Foreach @(
+                @{ IgnoreCase = $false; MatchMode = 'Exact';    ParamDecoration = '';          Usecase = 'Exact' }
+                @{ IgnoreCase = $false; MatchMode = 'Regex';    ParamDecoration = '__regex';   Usecase = 'Regex'  }
+                @{ IgnoreCase = $false; MatchMode = 'Wildcard'; ParamDecoration = '__regex';   Usecase = 'Wildcard' }
+                @{ IgnoreCase = $true;  MatchMode = 'Exact';    ParamDecoration = '__ie';      Usecase = 'IgnoreCase+Exact' }
+                @{ IgnoreCase = $true;  MatchMode = 'Regex';    ParamDecoration = '__iregex';  Usecase = 'IgnoreCase+Regex' }
+                @{ IgnoreCase = $true;  MatchMode = 'Wildcard'; ParamDecoration = '__iregex';  Usecase = 'IgnoreCase+Wildcard' }
+            ) {
+                BeforeAll {
+                    Mock 'CheckNetboxIsConnected' -ModuleName 'PowerNetbox' -MockWith {}        # We must look like connected
                 }
-            }
-            It "Should use __ie if parameter is in the list and endpoint is not in the ignore list; it should also work with array values" {
-                InModuleScope -ModuleName 'PowerNetbox' {
-                    $Script:NetboxConfig.IgnoreCaseInQueries = $true                 # can be set by Connect-NBAPI
-                    $Script:IgnoreCaseParameterHash['name'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
-                    $URIParameters = @{
-                        'name' = @('NameValue', 'AnotherNameValue')  # test that array values are also supported with __ie
-                        'casesensitiveparam' = 'value2'
-                    }
+                BeforeEach {
+                    $null = Set-NbQueryOption -IgnoreCase:$IgnoreCase
+                    $null = Set-NbQueryOption -MatchMode:$MatchMode
+                }
+                AfterAll {
+                    $null = Set-NBQueryOption -IgnoreCase:$false
+                    $null = Set-NBQueryOption -MatchMode:'Exact'
+                }
+                It "<Usecase> should use [<ParamDecoration>] if parameter is in the list and endpoint list is empty" {
+                    InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ IgnoreCase = $IgnoreCase; MatchMode = $MatchMode; ParamDecoration = $ParamDecoration } {
+                        $Script:QueryParameterHash['ParamSupportQO'] = @()  # simulate endpoint list is empty
+                        $URIParameters = @{
+                            'ParamSupportQO' = 'NameValue'
+                        }
 
-                    $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
-                    $URIBuilder.Query | Should -Match '(?=.*name__ie=NameValue)(?=.*name__ie=AnotherNameValue)(?=.*casesensitiveparam=value2)'
-                    $URIBuilder.URI.AbsoluteURI | Should -Match 'https://netbox.domain.com/api/seg1/seg2/\?(?=.*name__ie=NameValue)(?=.*name__ie=AnotherNameValue)(?=.*casesensitiveparam=value2)'
+                        $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                        if ($MatchMode -ne 'Wildcard') {
+                            $URIBuilder.Query | Should -Match "ParamSupportQO$($ParamDecoration)=NameValue"
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?ParamSupportQO$($ParamDecoration)=NameValue"
+                        } else {
+                            $URIBuilder.Query | Should -Match "ParamSupportQO$($ParamDecoration)=%5ENameValue%24"
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?ParamSupportQO$($ParamDecoration)=%5ENameValue%24" -Because "regex strings are ^parametervalue$'"
+                        }
+                    }
+                }
+                It "<Usecase> should use [<ParamDecoration>] if parameter is in the list and endpoint is not in the ignore list; it should also work with array values" {
+                    InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ IgnoreCase = $IgnoreCase; MatchMode = $MatchMode; ParamDecoration = $ParamDecoration } {
+                        $Script:QueryParameterHash['ParamSupportQO'] = @('api/otherendpoint/')  # simulate endpoint not in ignore list
+                        $URIParameters = @{
+                            'ParamSupportQO' = @('NameValue', 'AnotherNameValue')  # test that array values are also supported with __ie
+                            'NoQoSupport' = 'value2'                               # test a parameter that is not in the list, to ensure it does not get decorated
+                        }
+
+                        $URIBuilder = BuildNewURI -Segments 'seg1', 'seg2' -Parameters $URIParameters -SkipConnectedCheck
+                        if ($MatchMode -ne 'Wildcard') {
+                            $matchString = "(?=.*ParamSupportQO$($ParamDecoration)=NameValue)(?=.*ParamSupportQO$($ParamDecoration)=AnotherNameValue)(?=.*NoQoSupport=value2)"
+                            $URIBuilder.Query | Should -Match $matchString
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?$matchString"
+                        } else {
+                            $matchString = "(?=.*ParamSupportQO$($ParamDecoration)=%5ENameValue%24)(?=.*ParamSupportQO$($ParamDecoration)=%5EAnotherNameValue%24)(?=.*NoQoSupport=value2)"
+                            $URIBuilder.Query | Should -Match $matchString
+                            $URIBuilder.URI.AbsoluteURI | Should -Match "https://netbox.domain.com/api/seg1/seg2/\?$matchString"
+                        }
+                    }
                 }
             }
         }
