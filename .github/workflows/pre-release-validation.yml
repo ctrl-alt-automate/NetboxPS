@@ -73,7 +73,7 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Install dependencies (powershell 5.1)
@@ -84,7 +84,7 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Build module (pwsh)
@@ -154,7 +154,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh
@@ -719,7 +719,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh
