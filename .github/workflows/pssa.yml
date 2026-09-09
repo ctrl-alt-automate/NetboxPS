@@ -24,10 +24,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache PSScriptAnalyzer
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: ps-cache
         with:
           path: ~/.local/share/powershell/Modules

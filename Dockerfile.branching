@@ -6,20 +6,21 @@
 # netbox-branching plugin from NetboxLabs for CI integration testing.
 #
 # Usage:
-#   docker build --build-arg NETBOX_VERSION=v4.5.2-4.0.0 \
-#                --build-arg BRANCHING_VERSION=0.8.0 \
+#   docker build --build-arg NETBOX_VERSION=v4.7.0-5.1.0 \
+#                --build-arg BRANCHING_VERSION=1.2.0 \
 #                -f Dockerfile.branching -t netbox-branching .
 #
-# Compatibility Matrix:
-#   - Netbox 4.5.x: branching 0.7.4+ or 0.8.0 (netbox-docker 4.0.0)
-#   - Netbox 4.4.x: branching 0.7.2, 0.7.3, 0.7.4, 0.8.0 (netbox-docker 3.x)
+# Compatibility Matrix (upstream COMPATIBILITY.md):
+#   - Netbox 4.7.x: branching 1.2.0 (netbox-docker 5.1.0)
+#   - Netbox 4.4.1 - 4.6.x: branching 0.9.0 - 1.1.3 (netbox-docker 3.x / 4.0.x / 5.0.x)
+#   - Netbox 4.4.x - 4.5.x: branching 0.7.4, 0.8.0
 #   - Netbox 4.3.x: branching 0.5.7, 0.6.0, 0.6.1, 0.6.2 (netbox-docker 3.x)
 
-ARG NETBOX_VERSION=v4.5.2-4.0.0
+ARG NETBOX_VERSION=v4.7.0-5.1.0
 FROM netboxcommunity/netbox:${NETBOX_VERSION}
 
 # Branching plugin version - must match Netbox version per compatibility matrix
-ARG BRANCHING_VERSION=0.8.0
+ARG BRANCHING_VERSION=1.2.0
 
 # Install the branching plugin using uv (Netbox Docker uses uv for packages)
 RUN uv pip install netboxlabs-netbox-branching==${BRANCHING_VERSION}

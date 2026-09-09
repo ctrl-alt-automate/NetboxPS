@@ -13,12 +13,12 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/ctrl-alt-automate/PowerNetbox" alt="License"></a>
   <a href="https://github.com/ctrl-alt-automate/PowerNetbox/actions/workflows/pssa.yml"><img src="https://github.com/ctrl-alt-automate/PowerNetbox/actions/workflows/pssa.yml/badge.svg" alt="Lint"></a>
   <a href="https://docs.powernetbox.dev/"><img src="https://img.shields.io/badge/docs-powernetbox.dev-blue?logo=materialformkdocs&logoColor=white" alt="Documentation"></a>
-  <a href="https://github.com/netbox-community/netbox"><img src="https://img.shields.io/badge/Netbox-4.6.0-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6TTIgMTdsMTAgNSAxMC01TTIgMTJsMTAgNSAxMC01Ii8+PC9zdmc+" alt="Netbox Version"></a>
+  <a href="https://github.com/netbox-community/netbox"><img src="https://img.shields.io/badge/Netbox-4.7.0-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6TTIgMTdsMTAgNSAxMC01TTIgMTJsMTAgNSAxMC01Ii8+PC9zdmc+" alt="Netbox Version"></a>
 </p>
 
 <p align="center">
   <b>The</b> comprehensive PowerShell module for the <a href="https://github.com/netbox-community/netbox">Netbox</a> REST API with <b>100% coverage</b> — 520+ cmdlets across DCIM, IPAM, Virtualization, Circuits, Tenancy, VPN, Wireless, and the netbox-branching plugin.<br>
-  Cross-platform (PowerShell 5.1 / 7+), fully compatible with <b>Netbox 4.6.0</b> (supports 4.3+).
+  Cross-platform (PowerShell 5.1 / 7+), fully compatible with <b>Netbox 4.7.0</b> (supports 4.3+).
 </p>
 
 <p align="center">
@@ -68,6 +68,8 @@ and authentication details, and worked examples are in the documentation:
 
 ---
 
+## Filter parameter usage in API queries
+
 ### Case sensitivity - insensitivity
 
 The NetBox API, by default, treats all query parameter values as case-sensitive. As PowerShell is [as case-insensitive as possible](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_case-sensitivity), the module offers an option to use case-insensitive query values.
@@ -76,9 +78,22 @@ The NetBox API, by default, treats all query parameter values as case-sensitive.
 
 `Set-NBQueryOption -IgnoreCase:$true` or `Connect-NBAPI -IgnoreCase`.
 
-#### Requirements and limitations
+### Using wildcards/regex when filtering queries
 
-Depending on the version of the NetBox API used, the API supports this option for a specific set of parameters and endpoints. Due to this current limitation, the module can only support case insensitivity for the same set of cases.
+By default, the module uses filter queries, that ask for an exact match.\
+You can influence this behaviour by choosing between three modes: Exact, Wildcard, Regex. Every API string parameter, which supports regex/iregex operators, is enabled
+
+1. Exact: The search string is sent 1:1 through the API
+2. Wildcard: [Wildcard characters](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_wildcards) in the search string, are taken into account for filtering query results.
+3. Regex: Search strings accept Regex tokens for filtering result sets. Please keep in mind, that regex is matching parts of a string!
+
+#### Activating advanced match modes
+
+`Set-NBQueryOption -MatchMode Wildcard|Regex` or `Connect-NBAPI -Matchmode`.
+
+### Requirements and limitations
+
+Depending on the version of the NetBox API used, the API supports these options for a specific set of parameters and endpoints. Due to this current limitation, the module can only support case insensitivity and wildcard searches for the same set of cases.
 
 - Minimum version of Netbox API is 4.4+.
 - A list of parameters offered by each API version can be found in the repository. See [_IgnoreCaseParameters.ps1](./Functions/Helpers/_IgnoreCaseParameters.ps1).
@@ -87,7 +102,7 @@ Depending on the version of the NetBox API used, the API supports this option fo
 ## Requirements
 
 PowerShell **5.1** (Windows Desktop) or **7.0+** (Windows / macOS / Linux), and
-NetBox **4.3+** (tested against 4.3.7, 4.4.10, 4.5.10, 4.6.0). Version-specific
+NetBox **4.3+** (tested against 4.3.7, 4.4.10, 4.5.10, 4.6.10, 4.7.0). Version-specific
 behaviour and the support matrix are documented in the
 [Compatibility guide](https://docs.powernetbox.dev/guides/compatibility/).
 

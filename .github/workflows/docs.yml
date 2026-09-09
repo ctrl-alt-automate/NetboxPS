@@ -25,15 +25,17 @@ permissions:
   pages: write
   id-token: write
 
+# One build per ref: a PR's docs build must not cancel (or be cancelled by) a build on another
+# PR or the dev/main deploy. Only the Pages *deploy* has to be serialised, see the deploy job.
 concurrency:
-  group: pages
+  group: pages-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # full history for git-log-based since-version reads
 
@@ -110,6 +112,10 @@ jobs:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     needs: build
     runs-on: ubuntu-latest
+    # GitHub Pages allows one deployment at a time; queue instead of cancelling
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

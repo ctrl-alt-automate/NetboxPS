@@ -18,6 +18,12 @@ function Set-NBIPAMServiceTemplate {
     .PARAMETER Protocol
         The protocol (tcp, udp, sctp)
 
+    .PARAMETER Port_Mappings
+        Netbox 4.7+: one or more 'protocol/port' strings (e.g. 'tcp/80', 'udp/53'). Lets a single
+        service expose the same port on multiple protocols. Use this instead of -Ports/-Protocol,
+        which Netbox 4.7 deprecates (still accepted; removed in Netbox 5.0). Ignored with a warning
+        on older Netbox versions.
+
     .PARAMETER Description
         A description of the service template
 
@@ -56,6 +62,9 @@ function Set-NBIPAMServiceTemplate {
         [ValidateSet('tcp', 'udp', 'sctp')]
         [string]$Protocol,
 
+        [ValidatePattern('^(tcp|udp|sctp)/\d{1,5}$')]
+        [string[]]$Port_Mappings,
+
         [string]$Description,
 
         [string]$Comments,
@@ -72,7 +81,11 @@ function Set-NBIPAMServiceTemplate {
         Write-Verbose "Updating IPAM Service Template"
         $Segments = [System.Collections.ArrayList]::new(@('ipam', 'service-templates', $Id))
 
-        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Id', 'Raw'
+        # Netbox 4.7+ only: drop -Port_Mappings (with a warning) on older servers
+        $skipParams = @('Id', 'Raw')
+        if (Test-NBMinimumVersion -ParameterName 'Port_Mappings' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Multi-protocol port mappings (-Port_Mappings)') { $skipParams += 'Port_Mappings' }
+
+        $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
         $URI = BuildNewURI -Segments $URIComponents.Segments
 

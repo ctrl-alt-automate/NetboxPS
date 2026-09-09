@@ -99,8 +99,8 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
     }
 
     Context "Cable Profile Support (4.5+)" {
-        # The 26 real CableProfileChoices values from netbox/dcim/choices.py
-        # as of v4.5.7. Kept as script-scope so tests can iterate.
+        # The real CableProfileChoices values from netbox/dcim/choices.py
+        # as of v4.7.0 (26 as of v4.5.7 + breakout-1c8p-8c1p). Kept as script-scope so tests can iterate.
         BeforeAll {
             $script:ValidCableProfiles = @(
                 # Single (1 connector)
@@ -115,6 +115,7 @@ Describe "DCIM Additional Tests" -Tag 'DCIM' {
                 'breakout-1c2p-2c1p',       # added in 4.5.7 (#21760)
                 'breakout-1c4p-4c1p',
                 'breakout-1c6p-6c1p',
+                'breakout-1c8p-8c1p',       # added in 4.7.0
                 'breakout-2c4p-8c1p-shuffle'
             )
         }

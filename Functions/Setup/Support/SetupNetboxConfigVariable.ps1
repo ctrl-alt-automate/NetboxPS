@@ -20,6 +20,7 @@ function SetupNetboxConfigVariable {
             'ParsedVersion' = $null
             'BranchStack'   = [System.Collections.Generic.Stack[object]]::new()
             'IgnoreCaseInQueries' = $false
+            'MatchMode'     = 'Exact'
         }
     }
     else {

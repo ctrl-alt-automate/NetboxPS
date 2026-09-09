@@ -63,7 +63,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install dependencies (pwsh)
         if: matrix.pwsh
@@ -73,7 +73,7 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Install dependencies (powershell 5.1)
@@ -84,7 +84,7 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Build module (pwsh)
@@ -148,13 +148,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh
@@ -279,7 +279,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install PSScriptAnalyzer
         shell: pwsh
@@ -344,7 +344,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate documentation
         id: docs
@@ -468,7 +468,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Compare with PSGallery release
         id: compare
@@ -615,8 +615,12 @@ jobs:
           # Stable 4.5.x (final 4.5.x, netbox-docker 4.0.2)
           - netbox: "v4.5.10-4.0.2"
             netbox_short: "4.5.10"
-          - netbox: "v4.6.3-5.0.1"
-            netbox_short: "4.6.3"
+          # Stable 4.6.x (final 4.6.x, netbox-docker 5.0.2)
+          - netbox: "v4.6.10-5.0.2"
+            netbox_short: "4.6.10"
+          # Latest - primary target (netbox-docker 5.1.0)
+          - netbox: "v4.7.0-5.1.0"
+            netbox_short: "4.7.0"
 
     env:
       NETBOX_VERSION: ${{ matrix.netbox }}
@@ -624,10 +628,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4.2.0
 
       - name: Start Netbox ${{ matrix.netbox_short }}
         run: |
@@ -715,7 +719,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh
@@ -764,7 +768,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build and verify module
         id: verify

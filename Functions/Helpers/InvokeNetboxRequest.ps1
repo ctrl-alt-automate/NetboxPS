@@ -289,6 +289,20 @@ function InvokeNetboxRequest {
                     $errorData = $errorBody | ConvertFrom-Json -ErrorAction Stop
                     if ($errorData.detail) {
                         $errorMessage = $errorData.detail
+                        # Netbox 4.7+ bulk create/update failures return
+                        # {"detail": ..., "errors": [{"index": N, "errors": {field: [msg]}}]}
+                        # so the caller can correlate each error with the offending object.
+                        if ($errorData.errors -is [System.Array] -and $errorData.errors.Count -gt 0) {
+                            $perObject = foreach ($entry in $errorData.errors) {
+                                $fieldErrors = if ($entry.errors) {
+                                    ($entry.errors.PSObject.Properties | ForEach-Object {
+                                        "$($_.Name): $($_.Value -join ', ')"
+                                    }) -join '; '
+                                } else { "$($entry | ConvertTo-Json -Compress -Depth 5)" }
+                                "[$($entry.index)] $fieldErrors"
+                            }
+                            $errorMessage = "$errorMessage`n" + ($perObject -join "`n")
+                        }
                     }
                     elseif ($errorData.error) {
                         $errorMessage = $errorData.error

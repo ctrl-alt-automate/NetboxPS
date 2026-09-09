@@ -71,7 +71,7 @@ jobs:
             is_beta: false
             expected_failures: []
 
-          # Netbox 4.6.x - Latest stable (primary target)
+          # Netbox 4.6.x - Stable (final 4.6.x release)
           # New in 4.6:
           # - New endpoints: virtual-machine-types, cable-bundles, rack-groups
           # - VirtualMachine.device field (cluster now optional)
@@ -82,8 +82,21 @@ jobs:
           # - Cursor-based pagination (?start= alternative to ?offset=)
           # - REST API partial tag assignment (add_tags/remove_tags)
           # - Django 6.0 upgrade (server-side)
-          - netbox: "v4.6.3-5.0.1"
-            netbox_short: "4.6.3"
+          - netbox: "v4.6.10-5.0.2"
+            netbox_short: "4.6.10"
+            is_beta: false
+            expected_failures: []
+
+          # Netbox 4.7.x - Latest stable (primary target)
+          # New in 4.7:
+          # - New endpoints: cooling-sources/feeds/intakes/outflows (+ templates), module-bay-types
+          # - Service/ServiceTemplate port_mappings (protocol/ports deprecated)
+          # - Interface channels/channel_id, DeviceType/ModuleType end_of_life, cooling_method
+          # - Bulk write ?background=true, per-object bulk error format
+          # - Selection custom fields returned as {value,label} objects
+          # - netbox-docker 5.1.0 only provisions v2 API tokens (SUPERUSER_API_KEY + SUPERUSER_API_TOKEN)
+          - netbox: "v4.7.0-5.1.0"
+            netbox_short: "4.7.0"
             is_beta: false
             expected_failures: []
 
@@ -93,10 +106,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4.2.0
 
       - name: Start Netbox ${{ matrix.netbox_short }}
         run: |
@@ -201,7 +214,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
 
       - name: Build module
         shell: pwsh

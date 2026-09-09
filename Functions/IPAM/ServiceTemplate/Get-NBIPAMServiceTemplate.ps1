@@ -19,6 +19,10 @@ function Get-NBIPAMServiceTemplate {
     .PARAMETER Protocol
         Filter by protocol (tcp, udp, sctp)
 
+    .PARAMETER Port_Mappings
+        Netbox 4.7+: filter by whole 'protocol/port' mappings (e.g. 'tcp/80', 'udp/53'). Ignored
+        with a warning on older Netbox versions.
+
     .PARAMETER Port
         Filter by port number
 
@@ -97,6 +101,9 @@ function Get-NBIPAMServiceTemplate {
         [Parameter(ParameterSetName = 'Query')]
         [uint16]$Port,
 
+        [Parameter(ParameterSetName = 'Query')]
+        [string[]]$Port_Mappings,
+
         [ValidateRange(1, 1000)]
         [uint16]$Limit,
 
@@ -125,7 +132,11 @@ function Get-NBIPAMServiceTemplate {
             default {
                 $Segments = [System.Collections.ArrayList]::new(@('ipam', 'service-templates'))
 
-                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName 'Raw', 'All', 'PageSize'
+                # Netbox 4.7+ only: drop -Port_Mappings (with a warning) on older servers
+                $skipParams = @('Raw', 'All', 'PageSize')
+                if (Test-NBMinimumVersion -ParameterName 'Port_Mappings' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Multi-protocol port mappings (-Port_Mappings)') { $skipParams += 'Port_Mappings' }
+
+                $URIComponents = BuildURIComponents -URISegments $Segments.Clone() -ParametersDictionary $PSBoundParameters -SkipParameterByName $skipParams
 
                 $URI = BuildNewURI -Segments $URIComponents.Segments -Parameters $URIComponents.Parameters
 
