@@ -211,7 +211,7 @@ Describe "DCIM Module Bay Types Tests" -Tag 'DCIM' {
             $bodyObj.description | Should -Be 'd'
             $bodyObj.owner | Should -Be 6
             $bodyObj.comments | Should -Be 'c'
-            $bodyObj.tags | Should -Be @('x')
+            $bodyObj.tags[0].name | Should -Be 'x'
             $bodyObj.custom_fields.foo | Should -Be 'bar'
         }
 

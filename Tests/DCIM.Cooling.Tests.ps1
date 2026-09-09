@@ -213,7 +213,7 @@ Describe "DCIM Cooling Tests" -Tag 'DCIM' {
             $bodyObj.description | Should -Be 'desc'
             $bodyObj.owner | Should -Be 7
             $bodyObj.comments | Should -Be 'notes'
-            $bodyObj.tags | Should -Be @('a', 'b')
+            $bodyObj.tags.name | Should -Be @('a', 'b')
             $bodyObj.custom_fields.vendor | Should -Be 'ACME'
         }
 
@@ -261,7 +261,7 @@ Describe "DCIM Cooling Tests" -Tag 'DCIM' {
             $bodyObj.description | Should -Be 'd'
             $bodyObj.owner | Should -Be 3
             $bodyObj.comments | Should -Be 'c'
-            $bodyObj.tags | Should -Be @('x')
+            $bodyObj.tags[0].name | Should -Be 'x'
             $bodyObj.custom_fields.k | Should -Be 'v'
         }
 
@@ -459,7 +459,7 @@ Describe "DCIM Cooling Tests" -Tag 'DCIM' {
             $bodyObj.tenant | Should -Be 6
             $bodyObj.owner | Should -Be 7
             $bodyObj.comments | Should -Be 'notes'
-            $bodyObj.tags | Should -Be @('a', 'b')
+            $bodyObj.tags.name | Should -Be @('a', 'b')
             $bodyObj.custom_fields.loop | Should -Be 'A'
         }
 
@@ -502,7 +502,7 @@ Describe "DCIM Cooling Tests" -Tag 'DCIM' {
             $bodyObj.tenant | Should -Be 8
             $bodyObj.owner | Should -Be 3
             $bodyObj.comments | Should -Be 'c'
-            $bodyObj.tags | Should -Be @('x')
+            $bodyObj.tags[0].name | Should -Be 'x'
             $bodyObj.custom_fields.k | Should -Be 'v'
         }
 

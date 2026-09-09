@@ -68,6 +68,9 @@
 
 .PARAMETER Tag
     Filter by tag slug. Accepts multiple values.
+.PARAMETER Tag_Id
+    Filter by tag ID(s); combines like -Tag.
+
 
 .PARAMETER Query
     Free-text search across the object (NetBox 'q' parameter).
@@ -122,6 +125,7 @@ function Get-NBDCIMModuleBayType {
         [Parameter(ParameterSetName = 'Query')][string[]]$Description,
         [Parameter(ParameterSetName = 'Query')][uint64[]]$Owner_Id,
         [Parameter(ParameterSetName = 'Query')][string[]]$Tag,
+        [Parameter(ParameterSetName = 'Query')][uint64[]]$Tag_Id,
         [Parameter(ParameterSetName = 'Query')][string]$Query,
         [ValidateRange(1, 1000)]
         [uint16]$Limit,

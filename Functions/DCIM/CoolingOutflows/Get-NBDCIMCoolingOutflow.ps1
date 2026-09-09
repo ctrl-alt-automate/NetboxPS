@@ -79,6 +79,9 @@
 
 .PARAMETER Tag
     Filter by tag slug (one or more values).
+.PARAMETER Tag_Id
+        Filter by tag ID(s); combines like -Tag.
+
 
 .PARAMETER Query
     Free-text search across the object (NetBox 'q' parameter).
@@ -175,6 +178,11 @@ function Get-NBDCIMCoolingOutflow {
 
         [Parameter(ParameterSetName = 'Query')]
         [string[]]$Tag,
+
+
+        [Parameter(ParameterSetName = 'Query')]
+
+        [uint64[]]$Tag_Id,
 
         [Parameter(ParameterSetName = 'Query')]
         [string]$Query,

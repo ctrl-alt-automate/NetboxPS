@@ -147,7 +147,8 @@ Describe "DCIM Cooling Component Functions" -Tag 'Build', 'DCIM' {
             $body.cooling_outflow | Should -Be 44
             $body.description | Should -Be 'desc'
             $body.owner | Should -Be 2
-            $body.tags | Should -Be @('liquid', 7)
+            $body.tags[0].name | Should -Be 'liquid'
+            $body.tags[1] | Should -Be 7
             $body.custom_fields.loop | Should -Be 'A'
         }
 
@@ -206,7 +207,7 @@ Describe "DCIM Cooling Component Functions" -Tag 'Build', 'DCIM' {
             $body.cooling_outflow | Should -Be 44
             $body.description | Should -Be 'd'
             $body.owner | Should -Be 2
-            $body.tags | Should -Be @('liquid')
+            $body.tags[0].name | Should -Be 'liquid'
             $body.custom_fields.loop | Should -Be 'B'
         }
 
@@ -331,7 +332,7 @@ Describe "DCIM Cooling Component Functions" -Tag 'Build', 'DCIM' {
             $body.cooling_intake | Should -Be 55
             $body.description | Should -Be 'desc'
             $body.owner | Should -Be 2
-            $body.tags | Should -Be @('liquid')
+            $body.tags[0].name | Should -Be 'liquid'
             $body.custom_fields.loop | Should -Be 'A'
         }
 
@@ -365,7 +366,7 @@ Describe "DCIM Cooling Component Functions" -Tag 'Build', 'DCIM' {
             $body.cooling_intake | Should -Be 55
             $body.description | Should -Be 'd'
             $body.owner | Should -Be 2
-            $body.tags | Should -Be @('a')
+            $body.tags[0].name | Should -Be 'a'
             $body.custom_fields.loop | Should -Be 'C'
         }
 
