@@ -70,3 +70,7 @@ DCIM/Racks/Set-NBDCIMRack.ps1::Form_Factor
 # airflow enum does include "" + null, but the parity matcher treats the
 # '' as a PowerNetbox-only null-clearing sentinel, not an enum value.
 DCIM/Devices/Set-NBDCIMDevice.ps1::Airflow
+# NetBox 4.7 cooling infrastructure (CoolingSource fluid_type, CoolingFeed
+# max_flow_unit) - same '' sentinel pattern for PATCH null-clearing.
+DCIM/CoolingSources/Set-NBDCIMCoolingSource.ps1::Fluid_Type
+DCIM/CoolingFeeds/Set-NBDCIMCoolingFeed.ps1::Max_Flow_Unit
