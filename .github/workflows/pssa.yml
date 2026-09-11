@@ -7,12 +7,20 @@ on:
       - 'Functions/**'
       - '*.ps1'
       - '*.psm1'
+      # PSScriptAnalyzer is a required status check on dev. A required check that never
+      # reports blocks the PR permanently, so this must also fire for changes that cannot
+      # touch PowerShell files - otherwise every workflow-only PR needs an admin merge.
+      - '.github/workflows/**'
   pull_request:
     branches: [dev, main, master]
     paths:
       - 'Functions/**'
       - '*.ps1'
       - '*.psm1'
+      # PSScriptAnalyzer is a required status check on dev. A required check that never
+      # reports blocks the PR permanently, so this must also fire for changes that cannot
+      # touch PowerShell files - otherwise every workflow-only PR needs an admin merge.
+      - '.github/workflows/**'
 
 permissions:
   contents: read
