@@ -157,13 +157,13 @@ function Wait-NBBranch {
             $lastStatus = $currentStatus
             Write-Verbose "Branch '$currentName' (id=$currentId) status: $currentStatus"
 
-            # Target reached — return the fully-resolved branch object.
+            # Target reached - return the fully-resolved branch object.
             if ($currentStatus -eq $TargetStatus) {
                 Write-Verbose "Branch '$currentName' reached target status '$TargetStatus'"
                 return $branch
             }
 
-            # Terminal failure — surface plugin-reported errors if present.
+            # Terminal failure - surface plugin-reported errors if present.
             if ($currentStatus -eq 'failed') {
                 $errorDetail = if ($branch.errors) {
                     " Details: $(@($branch.errors) -join '; ')"
@@ -174,7 +174,7 @@ function Wait-NBBranch {
                 throw "Branch '$currentName' entered 'failed' state while waiting for '$TargetStatus'.$errorDetail"
             }
 
-            # Still transitional — sleep and poll again.
+            # Still transitional - sleep and poll again.
             if ($currentStatus -in $transitionalStatuses) {
                 if ((Get-Date) -ge $deadline) {
                     throw "Timed out after $TimeoutSeconds seconds waiting for branch '$currentName' to reach status '$TargetStatus' (last observed: '$lastStatus')."
@@ -184,7 +184,7 @@ function Wait-NBBranch {
             }
 
             # Any other terminal status (ready/merged/archived/pending-migrations)
-            # that isn't our target means we'll never reach it — fail fast rather
+            # that isn't our target means we'll never reach it - fail fast rather
             # than burn the whole timeout.
             throw "Branch '$currentName' is in terminal status '$currentStatus', cannot reach target '$TargetStatus'."
         }

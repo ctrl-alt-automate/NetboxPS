@@ -20,7 +20,7 @@ Be respectful, inclusive, and constructive. We're all here to build great softwa
 
 ### Prerequisites
 
-- PowerShell 5.1+ (Desktop) or PowerShell 7+ (Core)
+- PowerShell 7.6 LTS, 7.4 LTS, or Windows PowerShell 5.1 (see the [Compatibility guide](https://docs.powernetbox.dev/guides/compatibility/#powershell-support))
 - Git
 - A Netbox instance for testing (or use Docker)
 - [Pester](https://pester.dev/) 5.0+ for running tests
@@ -213,10 +213,14 @@ PRs must pass these automated checks before merge:
 
 | Check | Required |
 |-------|----------|
-| PSScriptAnalyzer (Lint) | ✅ |
-| Pester Tests (Ubuntu) | ✅ |
-| Pester Tests (Windows) | ✅ |
+| PSScriptAnalyzer | ✅ |
+| Pester Tests (ubuntu-latest, PS 7.6) | ✅ |
+| Pester Tests (windows-latest, PS 7.6) | ✅ |
+| Pester Tests (windows-latest, PS 5.1) | ✅ |
 | Code Review (1 approval) | ✅ |
+
+The full matrix runs seven legs (three operating systems on PowerShell 7.4 and 7.6, plus
+Windows PowerShell 5.1); the four above are the ones branch protection requires.
 
 ### Review Process
 
