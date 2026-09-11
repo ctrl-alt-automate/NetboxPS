@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    name: Pester Tests (${{ matrix.os }}, ${{ matrix.pwsh && 'PS 7.x' || 'PS 5.1' }})
+    name: Pester Tests (${{ matrix.os }}, PS ${{ matrix.ps }})
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -21,25 +21,108 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        pwsh: [true]
+        # PowerShell versions are installed explicitly (see "Set up PowerShell" below) rather
+        # than taking whatever the runner image ships, so this list is the actual contract.
+        # 7.4 LTS reaches end-of-support on 2026-11-10 (.NET 8 lifecycle) - remove that leg
+        # on or after that date. 7.6 LTS (.NET 10) is supported to 2028-11-14.
+        ps: ['7.4', '7.6']
         include:
-          # Also test PowerShell 5.1 (Desktop) on Windows
+          # Windows PowerShell 5.1 (Desktop) ships with Windows, so there is nothing to install.
+          # Deliberately retained - the support policy is "supported, frozen" (see issue #496).
+          # It is also the only leg that catches non-ASCII characters in .ps1 files, which
+          # parse as Windows-1252 on 5.1 and fail with confusing "Missing closing ')'" errors.
           - os: windows-latest
-            pwsh: false
+            ps: '5.1'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Set up PowerShell ${{ matrix.ps }}
+        if: matrix.ps != '5.1'
+        shell: pwsh
+        run: |
+          $channel = '${{ matrix.ps }}'
+
+          # metadata.json is the PowerShell team's authoritative channel -> tag map. Both
+          # channels in this matrix are LTS releases. When a channel reaches end-of-support it
+          # drops out of LTSReleaseTag and this step fails loudly - that failure IS the signal
+          # to remove the corresponding matrix leg.
+          $meta = Invoke-RestMethod 'https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/metadata.json'
+          $tag = @($meta.LTSReleaseTag) | Where-Object { $_ -like "v$channel.*" } | Select-Object -First 1
+          if (-not $tag) {
+              throw "No LTS release tag for channel $channel in metadata.json (found: $($meta.LTSReleaseTag -join ', ')). If $channel has reached end-of-support, remove its matrix leg."
+          }
+          $version = $tag.TrimStart('v')
+          Write-Host "Channel $channel resolves to $tag"
+
+          # Release archives are self-contained (they bundle the .NET runtime), so no SDK or
+          # runtime needs to be present on the runner. Note the asset name casing differs:
+          # lowercase 'powershell-' for Linux/macOS, capitalised 'PowerShell-' for the Windows zip.
+          if ($IsWindows) {
+              $asset = "PowerShell-$version-win-x64.zip"
+          } elseif ($IsMacOS) {
+              $asset = "powershell-$version-osx-arm64.tar.gz"
+          } else {
+              $asset = "powershell-$version-linux-x64.tar.gz"
+          }
+
+          $dest = Join-Path $HOME "pwsh-$channel"
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+
+          $url = "https://github.com/PowerShell/PowerShell/releases/download/$tag/$asset"
+          $archive = Join-Path ([System.IO.Path]::GetTempPath()) $asset
+          Write-Host "Downloading $url"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+
+          if ($asset.EndsWith('.zip')) {
+              Expand-Archive -Path $archive -DestinationPath $dest -Force
+          } else {
+              tar -xzf $archive -C $dest
+              chmod +x (Join-Path $dest 'pwsh')
+          }
+
+          # Entries written to $GITHUB_PATH are PREPENDED to PATH for subsequent steps, so this
+          # pwsh takes precedence over the runner's preinstalled one.
+          $dest | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      # Runs as its own step because $GITHUB_PATH only takes effect for SUBSEQUENT steps.
+      # Without this check the matrix would merely claim a version rather than prove one.
+      - name: Verify PowerShell version
+        if: matrix.ps != '5.1'
+        shell: pwsh
+        run: |
+          $expected = '${{ matrix.ps }}'
+          $actual = $PSVersionTable.PSVersion
+          Write-Host "pwsh on PATH : $((Get-Command pwsh).Source)"
+          Write-Host "PSVersion    : $actual"
+          Write-Host "PSEdition    : $($PSVersionTable.PSEdition)"
+          if ("$($actual.Major).$($actual.Minor)" -ne $expected) {
+              throw "Expected PowerShell $expected but this shell reports $actual - the matrix is not testing what it claims."
+          }
+          Write-Host "Verified: running PowerShell $actual"
+
+      - name: Verify Windows PowerShell version
+        if: matrix.ps == '5.1'
+        shell: powershell
+        run: |
+          $actual = $PSVersionTable.PSVersion
+          Write-Host "PSVersion : $actual"
+          Write-Host "PSEdition : $($PSVersionTable.PSEdition)"
+          if ("$($actual.Major).$($actual.Minor)" -ne '5.1') {
+              throw "Expected Windows PowerShell 5.1 but this shell reports $actual."
+          }
+          Write-Host "Verified: running Windows PowerShell $actual"
+
       - name: Cache PowerShell modules
         uses: actions/cache@v6
         id: ps-cache
         with:
-          path: ${{ runner.os != 'Windows' && '~/.local/share/powershell/Modules' || (matrix.pwsh && '~/Documents/PowerShell/Modules' || '~/Documents/WindowsPowerShell/Modules') }}
-          key: ps-modules-${{ matrix.os }}-${{ matrix.pwsh }}-v1
+          path: ${{ runner.os != 'Windows' && '~/.local/share/powershell/Modules' || (matrix.ps == '5.1' && '~/Documents/WindowsPowerShell/Modules' || '~/Documents/PowerShell/Modules') }}
+          key: ps-modules-${{ matrix.os }}-ps${{ matrix.ps }}-v2
 
       - name: Install dependencies (pwsh)
-        if: matrix.pwsh && steps.ps-cache.outputs.cache-hit != 'true'
+        if: matrix.ps != '5.1' && steps.ps-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           # Register PSGallery if not present (required for Windows Server 2025)
@@ -47,11 +130,13 @@ jobs:
               Register-PSRepository -Default
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
+          # Both pinned with RequiredVersion: an unpinned Install-Module floats across majors
+          # (Pester 5 -> 6 removed Assert-MockCalled and broke every workflow).
           Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
-          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -RequiredVersion 1.25.0
 
       - name: Install dependencies (powershell)
-        if: "!matrix.pwsh && steps.ps-cache.outputs.cache-hit != 'true'"
+        if: matrix.ps == '5.1' && steps.ps-cache.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           # Register PSGallery if not present (required for Windows Server 2025)
@@ -60,22 +145,26 @@ jobs:
           }
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module Pester -Force -Scope CurrentUser -RequiredVersion 5.7.1 -SkipPublisherCheck
-          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -RequiredVersion 1.25.0
 
       - name: Build module (pwsh)
-        if: matrix.pwsh
+        if: matrix.ps != '5.1'
         shell: pwsh
         run: ./deploy.ps1 -Environment dev -SkipVersion
 
       - name: Build module (powershell)
-        if: '!matrix.pwsh'
+        if: matrix.ps == '5.1'
         shell: powershell
         run: ./deploy.ps1 -Environment dev -SkipVersion
 
       - name: Run Pester tests (pwsh)
-        if: matrix.pwsh
+        if: matrix.ps != '5.1'
         shell: pwsh
         run: |
+          # Code coverage is measured on exactly one leg - the canonical measurement. Running it
+          # on all six pwsh legs would cost time for six identical numbers.
+          $isCoverageLeg = ('${{ matrix.os }}' -eq 'ubuntu-latest') -and ('${{ matrix.ps }}' -eq '7.6')
+
           $config = New-PesterConfiguration
           $config.Run.Path = './Tests/*.Tests.ps1'
           $config.Run.PassThru = $true
@@ -85,7 +174,7 @@ jobs:
           $config.TestResult.OutputFormat = 'NUnitXml'
           $config.Output.Verbosity = 'Detailed'
           # Code coverage configuration
-          $config.CodeCoverage.Enabled = $true
+          $config.CodeCoverage.Enabled = $isCoverageLeg
           $config.CodeCoverage.Path = @('./PowerNetbox/PowerNetbox.psm1')
           $config.CodeCoverage.OutputPath = 'coverage.xml'
           $config.CodeCoverage.OutputFormat = 'JaCoCo'
@@ -100,8 +189,8 @@ jobs:
               exit 1
           }
 
-          # Enforce coverage threshold on Linux runner (single canonical measurement)
-          if ($env:RUNNER_OS -eq 'Linux') {
+          # Enforce the coverage threshold on the canonical leg only
+          if ($isCoverageLeg) {
               $coverage = [math]::Round($result.CodeCoverage.CoveragePercent, 2)
               Write-Host "Code coverage: $coverage% (threshold: 70%)"
               if ($coverage -lt 70) {
@@ -112,7 +201,7 @@ jobs:
           }
 
       - name: Run Pester tests (powershell)
-        if: '!matrix.pwsh'
+        if: matrix.ps == '5.1'
         shell: powershell
         run: |
           $config = New-PesterConfiguration
@@ -131,15 +220,17 @@ jobs:
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: test-results-${{ matrix.os }}-${{ matrix.pwsh && 'pwsh' || 'ps51' }}
+          name: test-results-${{ matrix.os }}-ps${{ matrix.ps }}
           path: TestResults.xml
           retention-days: 30
 
+      # Only the canonical coverage leg produces coverage.xml, and artifact names must be
+      # unique across the matrix.
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
-        if: always() && matrix.pwsh
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.ps == '7.6'
         with:
-          name: coverage-${{ matrix.os }}
+          name: coverage
           path: coverage.xml
           retention-days: 30
 
@@ -149,7 +240,7 @@ jobs:
         with:
           script: |
             const os = '${{ matrix.os }}';
-            const ps = '${{ matrix.pwsh }}' === 'true' ? '7.x (Core)' : '5.1 (Desktop)';
+            const ps = '${{ matrix.ps }}' === '5.1' ? '5.1 (Desktop)' : '${{ matrix.ps }} (Core)';
             const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 
             const issues = await github.rest.issues.listForRepo({
