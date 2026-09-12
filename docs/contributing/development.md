@@ -24,8 +24,15 @@ Both `dev` and `main` branches are protected:
 | Check | Description |
 |-------|-------------|
 | PSScriptAnalyzer | PowerShell linting |
-| Pester Tests (Ubuntu) | Unit tests on Linux |
-| Pester Tests (Windows) | Unit tests on Windows |
+| Pester Tests (ubuntu-latest, PS 7.6) | Unit tests on Linux, PowerShell 7.6 LTS |
+| Pester Tests (windows-latest, PS 7.6) | Unit tests on Windows, PowerShell 7.6 LTS |
+| Pester Tests (windows-latest, PS 5.1) | Unit tests on Windows PowerShell 5.1 |
+
+The test workflow runs seven legs in total (Linux, Windows and macOS on PowerShell 7.4 and
+7.6, plus Windows PowerShell 5.1); the four above are the ones branch protection requires.
+
+The Windows PowerShell 5.1 leg is required deliberately - see
+[Keep .ps1 files ASCII-only](#keep-ps1-files-ascii-only) below.
 
 ### Requirements
 
@@ -33,6 +40,47 @@ Both `dev` and `main` branches are protected:
 - ✅ At least 1 code review approval
 - ❌ Force push disabled
 - ❌ Branch deletion disabled
+
+## Keep .ps1 files ASCII-only
+
+Use only ASCII characters in `.ps1` files - no em-dashes, arrows, curly quotes or accented
+characters. Markdown files are unaffected; this rule is about PowerShell sources only.
+
+If code needs to *emit* a non-ASCII character, build it from its code point instead of
+pasting the glyph. `Functions/Helpers/ConvertTo-NBRackConsole.ps1` is the pattern to copy:
+
+```powershell
+TopLeft    = [string][char]0x2554  # the glyph may appear in the trailing comment
+Horizontal = [string][char]0x2550
+```
+
+The source stays ASCII, so it parses identically on every edition, and the comment still
+shows a reader what the constant renders as.
+
+**Why:** Windows PowerShell 5.1 reads script files as Windows-1252, not UTF-8. A multi-byte
+UTF-8 character is decoded as two garbage characters, which usually breaks the parse
+somewhere *after* the offending line. The result is an error that points at the wrong place
+and does not mention encoding at all:
+
+```
+Missing closing ')' in expression.
+Missing closing '}' in statement block.
+```
+
+PowerShell 7 parses the same file without complaint, so this only ever fails on the Windows
+PowerShell 5.1 leg - which is one of the reasons that leg is a required check. If a build
+fails with an inexplicable "missing closing bracket" error on 5.1 only, search the file for
+non-ASCII characters first:
+
+```powershell
+# Every .ps1 in the repo that contains a non-ASCII character
+Get-ChildItem ./Functions -Recurse -Filter *.ps1 |
+    Select-String -Pattern '[^\x00-\x7F]'
+```
+
+The only hits this should return are the annotated glyphs in
+`ConvertTo-NBRackConsole.ps1`, which live in trailing comments. Anything else is a bug
+waiting for the next Windows PowerShell 5.1 run.
 
 ## Why These Practices?
 

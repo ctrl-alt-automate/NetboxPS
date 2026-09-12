@@ -1,8 +1,8 @@
-# Netbox Version Compatibility
+# Compatibility
 
 PowerNetbox is tested against multiple Netbox versions to ensure broad compatibility.
 
-## Supported Versions
+## NetBox Versions
 
 > The exact versions exercised in CI are shown on the
 > [home page compatibility table](../index.md#compatibility), which is
@@ -22,6 +22,53 @@ PowerNetbox is tested against multiple Netbox versions to ensure broad compatibi
 | 3.x | ❌ Not Supported | Missing required API endpoints |
 
 **Minimum supported version: Netbox 4.3+**
+
+## PowerShell Support
+
+These are the versions exercised in CI on every push and pull request. Each leg installs
+its PowerShell version explicitly and verifies `$PSVersionTable` before running the suite,
+so this table is a contract rather than an intention.
+
+| PowerShell | Edition | Status | Supported until |
+|------------|---------|--------|-----------------|
+| 7.6 LTS | Core | Baseline | 2028-11-14 (.NET 10) |
+| 7.4 LTS | Core | Tested | **2026-11-10** (.NET 8) - the CI leg is removed on that date |
+| 5.1 | Desktop | Supported, frozen | Tied to the Windows release that ships it |
+
+PowerShell 7.0-7.3 and 7.5 are past end-of-support and are not tested. They will generally
+work, but no compatibility claim is made for them.
+
+### Windows PowerShell 5.1: supported, frozen
+
+The module loads and every cmdlet works on Windows PowerShell 5.1. There is no plan to drop
+it: Windows PowerShell has no end-of-life date of its own, because it is supported as a
+component of the Windows release that bundles it. Windows Server 2022 runs to October 2031
+and Windows Server 2025 to November 2034.
+
+"Frozen" means:
+
+- Features that require .NET capabilities 5.1 does not have ship as **PowerShell 7+
+  features**, with a warning and documented degradation rather than a hard failure.
+- No new 5.1-specific code is written.
+
+The support decision is revisited only if one of these happens:
+
+1. Microsoft announces an actual deprecation of Windows PowerShell 5.1.
+2. The edition-specific code in the module grows materially beyond its current footprint.
+3. A NetBox API feature turns out to be unimplementable on .NET Framework.
+
+### PowerShell 7+ only features
+
+One feature is genuinely gated on PowerShell 7, because it needs a capability that
+.NET Framework does not provide:
+
+| Feature | Requires | Behaviour on 5.1 |
+|---------|----------|------------------|
+| `Set-NBQueryOption -OptimisticConcurrency` (ETag / If-Match) | `Invoke-RestMethod -ResponseHeadersVariable` to read response headers | A warning is emitted once, and requests are sent without `If-Match` |
+
+Everything else that branches on edition - TLS configuration, certificate validation
+bypass, multipart image upload - takes a different code path to reach **the same
+behaviour**, and needs no change to your scripts.
 
 ## Compatibility Testing
 

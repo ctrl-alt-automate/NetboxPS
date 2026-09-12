@@ -461,7 +461,7 @@ function Register-NBArgumentCompleters {
     # $env:PSModulePath. A fork developer who also has a PSGallery build
     # installed then ends up with two PowerNetbox modules in one session,
     # breaking Pester ("Multiple script or manifest modules named
-    # 'PowerNetbox'") — see #418. Reading FunctionsToExport from the manifest
+    # 'PowerNetbox'") - see #418. Reading FunctionsToExport from the manifest
     # is auto-load-free, also works under $PSModuleAutoLoadingPreference='None',
     # and mirrors whatever deploy.ps1 wrote (dev build = all functions,
     # prod build = public only).

@@ -42,10 +42,13 @@ PowerShellVersion = '5.1'
 # PowerShellHostVersion = ''
 
 # Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-DotNetFrameworkVersion = '2.0'
+# Windows PowerShell 5.1 itself requires .NET Framework 4.5.2 or later, and TLS 1.2 in
+# Set-NBCipherSSL requires 4.5+. The previous value of '2.0' understated the requirement.
+DotNetFrameworkVersion = '4.5.2'
 
 # Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-ClrVersion = '2.0.50727'
+# .NET Framework 4.x runs on CLR 4.0; the previous value of '2.0.50727' was the CLR 2.0 build.
+ClrVersion = '4.0'
 
 # Processor architecture (None, X86, Amd64) required by this module
 # ProcessorArchitecture = ''
