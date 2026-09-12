@@ -23,6 +23,31 @@ PowerNetbox is tested against multiple Netbox versions to ensure broad compatibi
 
 **Minimum supported version: Netbox 4.3+**
 
+## Deprecations ahead of Netbox 5.0
+
+Netbox 5.0 removes several fields that still work today. PowerNetbox keeps sending them - your
+scripts do not change behaviour - but warns once per connection so the migration is not a
+surprise at upgrade time. Warnings are version-gated: nothing is reported while you are
+connected to a release where the old field is still the only option.
+
+| What | Deprecated in | Removed in | Use instead |
+|------|---------------|------------|-------------|
+| v1 API tokens (40-char hex, `Token` auth header) | Netbox 4.6 | Netbox 5.0 | A v2 token (`nbt_`-prefixed, `Bearer` auth). Create one under **Users > API Tokens**. |
+| `-Ports` / `-Protocol` on `New-`/`Set-NBIPAMService` and `-NBIPAMServiceTemplate` | Netbox 4.7 | Netbox 5.0 | `-Port_Mappings`, e.g. `-Port_Mappings 'tcp/80','udp/53'` |
+| `-Form_Factor`, `-Width`, `-Outer_Width`, `-Outer_Depth`, `-Outer_Height` on `New-`/`Set-NBDCIMRack` | Netbox 4.7 | Netbox 5.0 | Set the geometry on the rack type |
+
+The v1 token warning is raised by `Connect-NBAPI` when the connected server is Netbox 4.6 or
+newer. Migrating is a one-liner once the new token exists:
+
+```powershell
+Connect-NBAPI -URI https://netbox.example.com -Credential (
+    [PSCredential]::new('api', (ConvertTo-SecureString 'nbt_...' -AsPlainText -Force))
+)
+```
+
+Each distinct warning appears once per connection, so a bulk pipeline reports it once rather
+than once per object. Reconnecting resets that.
+
 ## PowerShell Support
 
 These are the versions exercised in CI on every push and pull request. Each leg installs

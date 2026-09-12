@@ -18,6 +18,12 @@ function Test-NBDeprecatedParameter {
     .PARAMETER DeprecatedInVersion
         The Netbox version where this parameter was deprecated/removed.
 
+    .PARAMETER RemovedInVersion
+        The Netbox version that will remove the field entirely. Supplying this switches the
+        helper to warn-only mode: the caller is told the parameter is on its way out, but the
+        function returns $false so the value is still sent. Use this while a deprecated field
+        is deprecated-but-functional; omit it once the server ignores the field.
+
     .PARAMETER BoundParameters
         The $PSBoundParameters from the calling function.
 
@@ -33,6 +39,12 @@ function Test-NBDeprecatedParameter {
             $PSBoundParameters.Remove('Is_Staff') | Out-Null
         }
 
+    .EXAMPLE
+        # Deprecated but still functional until Netbox 5.0 - warn, but keep sending the value:
+        $null = Test-NBDeprecatedParameter -ParameterName 'Ports' -DeprecatedInVersion '4.7.0' `
+            -RemovedInVersion '5.0' -BoundParameters $PSBoundParameters `
+            -ReplacementMessage 'Use -Port_Mappings instead.'
+
     .NOTES
     AddedInVersion: v4.5.0.0
         This function requires that Connect-NBAPI has been called and
@@ -46,6 +58,8 @@ function Test-NBDeprecatedParameter {
 
         [Parameter(Mandatory)]
         [string]$DeprecatedInVersion,
+
+        [string]$RemovedInVersion,
 
         [Parameter(Mandatory)]
         [hashtable]$BoundParameters,
@@ -68,13 +82,33 @@ function Test-NBDeprecatedParameter {
     }
 
     if ($currentVersion -ge $deprecatedVersion) {
-        # Parameter is deprecated in this version
-        $warningMsg = "The '$ParameterName' parameter is deprecated in Netbox $DeprecatedInVersion and will be ignored."
+        # Parameter is deprecated in this version. Two flavours:
+        #  - no -RemovedInVersion: the server ignores the field, so drop it from the request
+        #  - with -RemovedInVersion: still functional, so warn but keep sending it
+        $stillSent = -not [string]::IsNullOrEmpty($RemovedInVersion)
+
+        $warningMsg = if ($stillSent) {
+            "The '-$ParameterName' parameter is deprecated in Netbox $DeprecatedInVersion and will be removed in Netbox $RemovedInVersion."
+        } else {
+            "The '$ParameterName' parameter is deprecated in Netbox $DeprecatedInVersion and will be ignored."
+        }
         if ($ReplacementMessage) {
             $warningMsg += " $ReplacementMessage"
         }
-        Write-Warning $warningMsg
-        return $true  # Exclude from request
+
+        # Report each distinct message once per connection. A bulk pipeline would otherwise
+        # emit hundreds of identical warnings and train users to silence all of them.
+        if ($null -eq $script:NetboxConfig.DeprecationWarned) {
+            $script:NetboxConfig.DeprecationWarned = @{}
+        }
+        if (-not $script:NetboxConfig.DeprecationWarned.ContainsKey($warningMsg)) {
+            $script:NetboxConfig.DeprecationWarned[$warningMsg] = $true
+            Write-Warning $warningMsg
+        } else {
+            Write-Verbose "Deprecation already reported this session: $warningMsg"
+        }
+
+        return (-not $stillSent)
     }
 
     # Older version - parameter is still valid

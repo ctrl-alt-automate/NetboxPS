@@ -103,6 +103,14 @@ function New-NBIPAMService {
         $Segments = [System.Collections.ArrayList]::new(@('ipam', 'services'))
 
         # Netbox 4.7 replaced protocol/ports with a unified port_mappings list; the legacy pair is
+        # Netbox 4.7 deprecates -Ports/-Protocol in favour of -Port_Mappings. They still work
+        # (removed in Netbox 5.0), so warn but keep sending whichever the caller used.
+        foreach ($p in @('Ports', 'Protocol')) {
+            $null = Test-NBDeprecatedParameter -ParameterName $p -DeprecatedInVersion '4.7.0' `
+                -RemovedInVersion '5.0' -BoundParameters $PSBoundParameters `
+                -ReplacementMessage 'Use -Port_Mappings (e.g. tcp/80, udp/53) instead.'
+        }
+
         # still accepted (deprecated) so we send whichever the caller used.
         $excludePortMappings = Test-NBMinimumVersion -ParameterName 'Port_Mappings' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Multi-protocol port mappings (-Port_Mappings)'
 
