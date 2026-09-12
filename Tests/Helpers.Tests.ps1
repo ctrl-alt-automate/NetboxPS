@@ -1236,4 +1236,70 @@ Describe "Helpers tests" -Tag 'Core', 'Helpers' {
             }
         }
     }
+
+    Context 'Test-NBDeprecatedParameter' {
+        BeforeAll {
+            $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion }
+        }
+        AfterAll {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ V = $parsedVersionBefore } {
+                $script:NetboxConfig.ParsedVersion = $V
+            }
+        }
+
+        It "Excludes the parameter and warns when no removal version is given" {
+            InModuleScope -ModuleName 'PowerNetbox' {
+                $script:NetboxConfig.ParsedVersion = [version]'4.7.0'
+                $script:NetboxConfig.DeprecationWarned = @{}
+                $result = Test-NBDeprecatedParameter -ParameterName 'Is_Staff' -DeprecatedInVersion '4.5.0' `
+                    -BoundParameters @{ 'Is_Staff' = $true } -WarningVariable w -WarningAction SilentlyContinue
+                $result | Should -BeTrue
+                ($w -join ' ') | Should -Match 'ignored'
+            }
+        }
+
+        It "Keeps the parameter but still warns when -RemovedInVersion is given" {
+            InModuleScope -ModuleName 'PowerNetbox' {
+                $script:NetboxConfig.ParsedVersion = [version]'4.7.0'
+                $script:NetboxConfig.DeprecationWarned = @{}
+                $result = Test-NBDeprecatedParameter -ParameterName 'Ports' -DeprecatedInVersion '4.7.0' `
+                    -RemovedInVersion '5.0' -BoundParameters @{ 'Ports' = @(80) } `
+                    -ReplacementMessage 'Use -Port_Mappings instead.' -WarningVariable w -WarningAction SilentlyContinue
+                $result | Should -BeFalse
+                ($w -join ' ') | Should -Match 'removed in Netbox 5\.0'
+                ($w -join ' ') | Should -Match 'Port_Mappings'
+                ($w -join ' ') | Should -Not -Match 'ignored'
+            }
+        }
+
+        It "Warns only once per distinct message" {
+            InModuleScope -ModuleName 'PowerNetbox' {
+                $script:NetboxConfig.ParsedVersion = [version]'4.7.0'
+                $script:NetboxConfig.DeprecationWarned = @{}
+                $splat = @{
+                    ParameterName       = 'Ports'
+                    DeprecatedInVersion = '4.7.0'
+                    RemovedInVersion    = '5.0'
+                    BoundParameters     = @{ 'Ports' = @(80) }
+                }
+                $null = Test-NBDeprecatedParameter @splat -WarningVariable first -WarningAction SilentlyContinue
+                $null = Test-NBDeprecatedParameter @splat -WarningVariable second -WarningAction SilentlyContinue
+                @($first).Count | Should -Be 1
+                @($second).Count | Should -Be 0
+            }
+        }
+
+        It "Does not warn on a Netbox version older than the deprecation" {
+            InModuleScope -ModuleName 'PowerNetbox' {
+                $script:NetboxConfig.ParsedVersion = [version]'4.6.10'
+                $script:NetboxConfig.DeprecationWarned = @{}
+                $result = Test-NBDeprecatedParameter -ParameterName 'Ports' -DeprecatedInVersion '4.7.0' `
+                    -RemovedInVersion '5.0' -BoundParameters @{ 'Ports' = @(80) } `
+                    -WarningVariable w -WarningAction SilentlyContinue
+                $result | Should -BeFalse
+                @($w).Count | Should -Be 0
+            }
+        }
+    }
+
 }

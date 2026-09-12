@@ -1540,4 +1540,61 @@ Describe "IPAM tests" -Tag 'Ipam' {
         }
     }
     #endregion
+
+    #region Netbox 5.0 deprecation warnings
+    Context "Service legacy -Ports/-Protocol deprecation" {
+        BeforeAll {
+            $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion }
+        }
+        AfterAll {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ V = $parsedVersionBefore } {
+                $script:NetboxConfig.ParsedVersion = $V
+            }
+        }
+        BeforeEach {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.DeprecationWarned = @{} }
+        }
+
+        It "Warns on Netbox 4.7 but still sends the legacy fields" {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.7.0' }
+
+            $Result = New-NBIPAMService -Name 'HTTP' -Protocol 'tcp' -Ports @(80) -Device 1 `
+                -WarningVariable w -WarningAction SilentlyContinue
+
+            ($w -join ' ') | Should -Match 'Port_Mappings'
+            ($w -join ' ') | Should -Match '5\.0'
+
+            # The regression that actually matters: deprecated is not removed.
+            $bodyObj = $Result.Body | ConvertFrom-Json
+            $bodyObj.ports | Should -Be @(80)
+            $bodyObj.protocol | Should -Be 'tcp'
+        }
+
+        It "Does not warn on Netbox 4.6" {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.6.10' }
+
+            $Result = New-NBIPAMService -Name 'HTTP' -Protocol 'tcp' -Ports @(80) -Device 1 `
+                -WarningVariable w -WarningAction SilentlyContinue
+
+            @($w | Where-Object { $_ -match 'Port_Mappings' }).Count | Should -Be 0
+            ($Result.Body | ConvertFrom-Json).ports | Should -Be @(80)
+        }
+
+        It "<Command> warns on Netbox 4.7" -ForEach @(
+            @{ Command = 'Set-NBIPAMService' }
+            @{ Command = 'New-NBIPAMServiceTemplate' }
+            @{ Command = 'Set-NBIPAMServiceTemplate' }
+        ) {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.7.0' }
+
+            $splat = @{ Ports = @(80); Protocol = 'tcp'; WarningVariable = 'w'; WarningAction = 'SilentlyContinue' }
+            if ($Command -like 'Set-*') { $splat['Id'] = 1; $splat['Confirm'] = $false }
+            if ($Command -like '*Template') { $splat['Name'] = 'HTTP' } elseif ($Command -like 'New-*') { $splat['Name'] = 'HTTP'; $splat['Device'] = 1 }
+
+            $null = & $Command @splat
+            ($w -join ' ') | Should -Match 'Port_Mappings'
+        }
+    }
+    #endregion
+
 }

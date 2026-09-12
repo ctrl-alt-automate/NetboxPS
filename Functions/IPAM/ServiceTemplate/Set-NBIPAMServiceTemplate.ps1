@@ -81,6 +81,14 @@ function Set-NBIPAMServiceTemplate {
         Write-Verbose "Updating IPAM Service Template"
         $Segments = [System.Collections.ArrayList]::new(@('ipam', 'service-templates', $Id))
 
+        # Netbox 4.7 deprecates -Ports/-Protocol in favour of -Port_Mappings. They still work
+        # (removed in Netbox 5.0), so warn but keep sending whichever the caller used.
+        foreach ($p in @('Ports', 'Protocol')) {
+            $null = Test-NBDeprecatedParameter -ParameterName $p -DeprecatedInVersion '4.7.0' `
+                -RemovedInVersion '5.0' -BoundParameters $PSBoundParameters `
+                -ReplacementMessage 'Use -Port_Mappings (e.g. tcp/80, udp/53) instead.'
+        }
+
         # Netbox 4.7+ only: drop -Port_Mappings (with a warning) on older servers
         $skipParams = @('Id', 'Raw')
         if (Test-NBMinimumVersion -ParameterName 'Port_Mappings' -MinimumVersion '4.7.0' -BoundParameters $PSBoundParameters -FeatureName 'Multi-protocol port mappings (-Port_Mappings)') { $skipParams += 'Port_Mappings' }

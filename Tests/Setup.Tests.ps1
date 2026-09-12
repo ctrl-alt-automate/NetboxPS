@@ -515,4 +515,40 @@ Describe "Setup tests" -Tag 'Core', 'Setup' {
             $Result.Uri | Should -Match 'format=yaml'
         }
     }
+
+    Context "Legacy v1 API token warning" {
+        BeforeAll {
+            Mock -CommandName 'CheckNetboxIsConnected' -ModuleName 'PowerNetbox' -MockWith { return $true }
+            $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion }
+        }
+        AfterAll {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ V = $parsedVersionBefore } {
+                $script:NetboxConfig.ParsedVersion = $V
+            }
+        }
+
+        It "Netbox <Version> with a <TokenKind> token should warn: <ShouldWarn>" -ForEach @(
+            @{ Version = '4.6.1';  TokenKind = 'v1'; ShouldWarn = $true;  Token = '0123456789abcdef0123456789abcdef01234567' }
+            @{ Version = '4.7.0';  TokenKind = 'v1'; ShouldWarn = $true;  Token = '0123456789abcdef0123456789abcdef01234567' }
+            @{ Version = '4.6.1';  TokenKind = 'v2'; ShouldWarn = $false; Token = 'nbt_powernetbox1.0123456789abcdef0123456789abcdef01234567' }
+            @{ Version = '4.5.10'; TokenKind = 'v1'; ShouldWarn = $false; Token = '0123456789abcdef0123456789abcdef01234567' }
+        ) {
+            # The mock has to carry the version literally: -MockWith scriptblocks run in module
+            # scope and cannot see the -ForEach variables of the test.
+            Mock -CommandName 'InvokeNetboxRequest' -ModuleName 'PowerNetbox' -MockWith `
+                ([scriptblock]::Create("[pscustomobject]@{ 'netbox-version' = '$Version' }"))
+
+            Set-NBCredential -Token (ConvertTo-SecureString -String $Token -AsPlainText -Force) | Out-Null
+            Connect-NBAPI -Hostname 'netbox.domain.local' -Scheme 'https' -Port 443 `
+                -WarningVariable warnings -WarningAction SilentlyContinue | Out-Null
+
+            $legacy = @($warnings | Where-Object { $_ -match 'v1' -and $_ -match '5\.0' })
+            if ($ShouldWarn) {
+                $legacy.Count | Should -BeGreaterThan 0 -Because "a v1 token on Netbox $Version is deprecated"
+            } else {
+                $legacy.Count | Should -Be 0 -Because "no v1 deprecation applies to a $TokenKind token on Netbox $Version"
+            }
+        }
+    }
+
 }

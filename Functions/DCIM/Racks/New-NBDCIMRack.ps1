@@ -201,12 +201,13 @@ function New-NBDCIMRack {
         Write-Verbose "Creating DCIM Rack"
         $Segments = [System.Collections.ArrayList]::new(@('dcim', 'racks'))
 
-        # Rack-level geometry is now inferred from the rack type (NetBox 4.7);
-        # these params still work but go away in NetBox 5.0.
+        # Rack-level geometry is now inferred from the rack type (Netbox 4.7); these params
+        # still work but go away in Netbox 5.0. Version-gated: on 4.6 and older the rack type
+        # does not carry the geometry, so these fields are the only way to express it.
         foreach ($p in @('Form_Factor', 'Width', 'Outer_Width', 'Outer_Depth', 'Outer_Height')) {
-            if ($PSBoundParameters.ContainsKey($p)) {
-                Write-Verbose "-$p is deprecated in NetBox 4.7 in favour of the rack type and will be removed in NetBox 5.0."
-            }
+            $null = Test-NBDeprecatedParameter -ParameterName $p -DeprecatedInVersion '4.7.0' `
+                -RemovedInVersion '5.0' -BoundParameters $PSBoundParameters `
+                -ReplacementMessage 'Set the geometry on the rack type instead.'
         }
 
         # NetBox 4.7+ only fields: drop them with a warning on older servers.

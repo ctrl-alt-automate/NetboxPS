@@ -25,6 +25,7 @@ function SetupNetboxConfigVariable {
             'TagMatch'      = 'All'         # Set-NBQueryOption -TagMatch All|Any   (Netbox 4.6.6+ tag__any)
             'OptimisticConcurrency' = $false  # Set-NBQueryOption -OptimisticConcurrency (Netbox 4.6+ ETag/If-Match)
             'ETagCache'     = @{}           # object URL -> last seen ETag (only used with OptimisticConcurrency)
+            'DeprecationWarned' = @{}       # warning text -> $true, so each deprecation is reported once per connection
         }
     }
     else {

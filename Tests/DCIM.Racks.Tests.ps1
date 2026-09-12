@@ -229,4 +229,56 @@ Describe "DCIM Racks Tests" -Tag 'DCIM', 'Racks' {
         }
     }
     #endregion
+
+    #region Netbox 5.0 deprecation warnings
+    Context "Rack geometry deprecation" {
+        BeforeAll {
+            $parsedVersionBefore = InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion }
+        }
+        AfterAll {
+            InModuleScope -ModuleName 'PowerNetbox' -Parameters @{ V = $parsedVersionBefore } {
+                $script:NetboxConfig.ParsedVersion = $V
+            }
+        }
+        BeforeEach {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.DeprecationWarned = @{} }
+        }
+
+        It "New-NBDCIMRack warns on <Parameter> on Netbox 4.7 and still sends it" -ForEach @(
+            @{ Parameter = 'Width';        Value = 19 }
+            @{ Parameter = 'Outer_Width';  Value = 600 }
+            @{ Parameter = 'Outer_Depth';  Value = 1000 }
+            @{ Parameter = 'Outer_Height'; Value = 2000 }
+        ) {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.7.0' }
+
+            $splat = @{ Name = 'rack-01'; Site = 1; $Parameter = $Value; WarningVariable = 'w'; WarningAction = 'SilentlyContinue' }
+            $Result = New-NBDCIMRack @splat
+
+            ($w -join ' ') | Should -Match "-$Parameter"
+            ($w -join ' ') | Should -Match '5\.0'
+            ($Result.Body | ConvertFrom-Json).$($Parameter.ToLower()) | Should -Be $Value
+        }
+
+        It "Set-NBDCIMRack warns on -Form_Factor on Netbox 4.7" {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.7.0' }
+
+            $null = Set-NBDCIMRack -Id 1 -Form_Factor '4-post-frame' -Confirm:$false `
+                -WarningVariable w -WarningAction SilentlyContinue
+
+            ($w -join ' ') | Should -Match '-Form_Factor'
+        }
+
+        It "Does not warn on Netbox 4.6, where the rack type does not carry the geometry" {
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.ParsedVersion = [version]'4.6.10' }
+
+            $Result = New-NBDCIMRack -Name 'rack-01' -Site 1 -Width 19 `
+                -WarningVariable w -WarningAction SilentlyContinue
+
+            @($w | Where-Object { $_ -match 'deprecated' }).Count | Should -Be 0
+            ($Result.Body | ConvertFrom-Json).width | Should -Be 19
+        }
+    }
+    #endregion
+
 }

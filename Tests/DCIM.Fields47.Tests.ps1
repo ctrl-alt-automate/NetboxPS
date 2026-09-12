@@ -272,13 +272,20 @@ Describe "DCIM NetBox 4.7 field tests" -Tag 'DCIM', 'Fields47' {
             { New-NBDCIMRack -Name 'R1' -Site 1 -Cooling_Capability 'water' } | Should -Throw
         }
 
-        It "New-NBDCIMRack still sends the deprecated geometry fields (verbose note only)" {
+        It "New-NBDCIMRack warns about the deprecated geometry fields but still sends them" {
+            # The warning was a Write-Verbose note until #484; it is a real warning from 4.7 on,
+            # because the rack type carries the geometry from that release. Sending the fields
+            # anyway is the part that must not change - they work until Netbox 5.0.
+            InModuleScope -ModuleName 'PowerNetbox' { $script:NetboxConfig.DeprecationWarned = @{} }
+
             $Result = New-NBDCIMRack -Name 'R1' -Site 1 -Width 19 -Form_Factor '4-post-cabinet' -Outer_Width 600 -WarningVariable warn -WarningAction SilentlyContinue
             $body = $Result.Body | ConvertFrom-Json
             $body.width | Should -Be 19
             $body.form_factor | Should -Be '4-post-cabinet'
             $body.outer_width | Should -Be 600
-            $warn | Should -BeNullOrEmpty
+
+            ($warn -join ' ') | Should -Match 'Width'
+            ($warn -join ' ') | Should -Match 'removed in Netbox 5\.0'
         }
 
         It "Set-NBDCIMRack sends cooling fields, '' clears capability, `$null clears capacity" {

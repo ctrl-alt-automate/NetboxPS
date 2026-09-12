@@ -205,6 +205,21 @@ function Connect-NBAPI {
     $script:NetboxConfig.Connected = $true
     Write-Verbose "Successfully connected!"
 
+    # A new connection starts with a clean deprecation slate, so each deprecation warning is
+    # reported once per connection rather than once per process.
+    $script:NetboxConfig.DeprecationWarned = @{}
+
+    # v1 (legacy) tokens are deprecated as of Netbox 4.6 and removed in Netbox 5.0. The
+    # 'nbt_' discriminator is the same one Get-NBRequestHeaders uses to pick the auth scheme.
+    if (($null -ne $script:NetboxConfig.ParsedVersion) -and ($script:NetboxConfig.ParsedVersion -ge [version]'4.6')) {
+        $tokenValue = $script:NetboxConfig.Credential.GetNetworkCredential().Password
+        if ($tokenValue -notmatch '^nbt_') {
+            Write-Warning ("This connection uses a legacy (v1) API token. v1 tokens are deprecated as of " +
+                "Netbox 4.6 and will be removed in Netbox 5.0. Create a v2 token under Users > API Tokens " +
+                "in the Netbox UI and reconnect. See https://netboxlabs.com/docs/netbox/models/users/token/")
+        }
+    }
+
     # This needs a valid ParsedVersion to work, so it must be called after the version check
     $null = Set-NBQueryOption -IgnoreCase:$IgnoreCase
     $null = Set-NBQueryOption -MatchMode $MatchMode
